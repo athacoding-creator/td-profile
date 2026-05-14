@@ -1,0 +1,50 @@
+import { useRef, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+import { Upload, X } from "lucide-react";
+
+const MAX_SIZE = 5 * 1024 * 1024;
+
+export async function uploadImage(bucket: string, file: File): Promise<string | null> {
+  if (file.size > MAX_SIZE) { toast.error("Ukuran gambar maksimal 5MB"); return null; }
+  if (!file.type.startsWith("image/")) { toast.error("File harus berupa gambar"); return null; }
+  const ext = file.name.split(".").pop() || "jpg";
+  const path = `${crypto.randomUUID()}.${ext}`;
+  const { error } = await supabase.storage.from(bucket).upload(path, file, { cacheControl: "3600", upsert: false });
+  if (error) { toast.error(error.message); return null; }
+  return supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
+}
+
+export function ImagePicker({ value, onChange, bucket = "hero" }: { value: string; onChange: (url: string) => void; bucket?: string }) {
+  const ref = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  return (
+    <div className="space-y-2">
+      <input
+        ref={ref} type="file" accept="image/*" className="hidden"
+        onChange={async (e) => {
+          const f = e.target.files?.[0]; e.target.value = "";
+          if (!f) return;
+          setBusy(true); const url = await uploadImage(bucket, f); setBusy(false);
+          if (url) onChange(url);
+        }}
+      />
+      {value ? (
+        <div className="relative inline-block">
+          <img src={value} alt="" className="h-28 w-44 rounded-lg object-cover" />
+          <button type="button" onClick={() => onChange("")}
+            className="absolute -right-2 -top-2 rounded-full bg-destructive p-1 text-destructive-foreground">
+            <X className="h-3 w-3" />
+          </button>
+        </div>
+      ) : (
+        <Button type="button" variant="outline" size="sm" disabled={busy} onClick={() => ref.current?.click()}>
+          <Upload className="mr-2 h-4 w-4" /> {busy ? "Mengunggah…" : "Upload gambar"}
+        </Button>
+      )}
+      <Input value={value} onChange={(e) => onChange(e.target.value)} placeholder="…atau URL gambar" className="text-xs" />
+    </div>
+  );
+}

@@ -1,0 +1,94 @@
+import { Link } from "react-router-dom";
+import { useAdmin } from "./AdminLayout";
+import {
+  CalendarDays, Sparkles, Users, Gift, ShoppingBag, Image as ImageIcon, LogIn, Settings as SettingsIcon, Hand,
+} from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import ActivityStatsCard from "./ActivityStatsCard";
+
+const groups = [
+  {
+    title: "Konten",
+    items: [
+      { to: "/admin/event", icon: CalendarDays, title: "Event", desc: "Buat & kelola event, export peserta, QR absensi", tag: "Real-time" },
+      { to: "/admin/program", icon: Sparkles, title: "Program", desc: "Kategori payung event (Ngaji Asyik, AMIDA, dll)" },
+      { to: "/admin/hero", icon: ImageIcon, title: "Hero Banner", desc: "Atur tampilan slider/banner di halaman utama" },
+    ],
+  },
+  {
+    title: "Peserta & Aktivitas",
+    items: [
+      { to: "/admin/pendaftar", icon: Users, title: "Pendaftar", desc: "Tracking jamaah per event" },
+      { to: "/admin/login", icon: LogIn, title: "Login", desc: "Riwayat login pengguna" },
+      
+    ],
+  },
+  {
+    title: "Reward & Pengaturan",
+    items: [
+      { to: "/admin/merchandise", icon: ShoppingBag, title: "Merchandise", desc: "Kelola katalog reward & stok" },
+      { to: "/admin/penukaran", icon: Gift, title: "Penukaran", desc: "Verifikasi & approve penukaran poin" },
+      { to: "/admin/pengaturan", icon: SettingsIcon, title: "Pengaturan", desc: "Bonus poin & pengaturan aplikasi" },
+    ],
+  },
+];
+
+export default function Dashboard() {
+  const data = useAdmin();
+  const { profile } = useAuth();
+  const name = profile?.full_name?.split(" ")[0] || "Admin";
+
+  return (
+    <div className="space-y-6">
+      {/* Welcome banner */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-primary via-primary to-primary/60 p-6 md:p-8 text-primary-foreground">
+        <div className="relative z-10">
+          <h1 className="font-display text-2xl md:text-3xl font-bold flex items-center gap-2">
+            Selamat Datang, {name}! <Hand className="h-6 w-6 md:h-7 md:w-7" />
+          </h1>
+          <p className="mt-1 text-sm opacity-90">Kelola konten Yayasan Teras Dakwah Indonesia dari sini</p>
+        </div>
+        <div className="pointer-events-none absolute -right-10 -top-10 h-48 w-48 rounded-full bg-primary-foreground/10 blur-2xl" />
+      </div>
+
+      {/* Unified stats card */}
+      <ActivityStatsCard attendance={data.attendance} redemptions={data.redemptions} registrations={data.registrations} logins={data.logins} />
+
+      {/* Grouped menu */}
+      <div className="space-y-6">
+        <h2 className="font-display text-lg font-bold">Menu Pengelolaan</h2>
+        {groups.map((g) => (
+          <section key={g.title} className="space-y-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{g.title}</h3>
+            <div className="grid gap-4 md:grid-cols-2">
+              {g.items.map((it) => {
+                const Icon = it.icon;
+                return (
+                  <Link
+                    key={it.to}
+                    to={it.to}
+                    className="group relative flex items-start gap-4 rounded-2xl bg-card p-5 transition hover:-translate-y-0.5 hover:ring-2 hover:ring-primary/40"
+                    style={{ boxShadow: "var(--shadow-card)" }}
+                  >
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                      <Icon className="h-6 w-6" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <h4 className="font-semibold text-foreground">{it.title}</h4>
+                        {("tag" in it && (it as any).tag) && (
+                          <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-semibold text-accent">{(it as any).tag}</span>
+                        )}
+                      </div>
+                      <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{it.desc}</p>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        ))}
+      </div>
+    </div>
+  );
+}

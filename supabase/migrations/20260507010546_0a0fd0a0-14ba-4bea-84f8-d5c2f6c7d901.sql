@@ -1,0 +1,21 @@
+ALTER TABLE public.events REPLICA IDENTITY FULL;
+ALTER TABLE public.programs REPLICA IDENTITY FULL;
+ALTER TABLE public.app_settings REPLICA IDENTITY FULL;
+ALTER TABLE public.redemptions REPLICA IDENTITY FULL;
+ALTER TABLE public.login_events REPLICA IDENTITY FULL;
+ALTER TABLE public.registrations REPLICA IDENTITY FULL;
+ALTER TABLE public.rewards REPLICA IDENTITY FULL;
+ALTER TABLE public.attendance REPLICA IDENTITY FULL;
+ALTER TABLE public.point_transactions REPLICA IDENTITY FULL;
+ALTER TABLE public.profiles REPLICA IDENTITY FULL;
+
+ALTER PUBLICATION supabase_realtime ADD TABLE public.events;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.programs;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.app_settings;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.redemptions;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.login_events;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.registrations;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.rewards;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.attendance;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.point_transactions;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.profiles;
