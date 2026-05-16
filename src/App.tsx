@@ -9,6 +9,7 @@ import { RequireAuth } from "@/components/RequireAuth";
 import Index from "./pages/Index";
 
 const Auth = lazy(() => import("./pages/Auth"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
 const EventDetail = lazy(() => import("./pages/EventDetail"));
 const ScanQR = lazy(() => import("./pages/ScanQR"));
@@ -64,6 +65,7 @@ const App = () => (
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/onboarding" element={<RequireAuth><Onboarding /></RequireAuth>} />
                 <Route path="/event/:id" element={<EventDetail />} />
                 <Route path="/event/:id/scan" element={<RequireAuth><ScanQR /></RequireAuth>} />
