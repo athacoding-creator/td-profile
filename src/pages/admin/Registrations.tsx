@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAdmin } from "./AdminLayout";
 import { Section } from "./components";
+import { MessageCircle } from "lucide-react";
 
 export default function RegistrationsPage() {
   const { events, registrations } = useAdmin();
@@ -35,18 +36,34 @@ export default function RegistrationsPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="text-left text-xs text-muted-foreground">
-              <tr><th className="py-2">Tanggal</th><th>Nama</th><th>Gender</th><th>Kota</th><th>Event</th></tr>
+              <tr><th className="py-2">Tanggal</th><th>Nama</th><th>WhatsApp</th><th>Gender</th><th>Kota</th><th>Event</th></tr>
             </thead>
             <tbody>
-              {filtered.map((r) => (
-                <tr key={r.id} className="border-t border-border/60">
-                  <td className="py-2">{new Date(r.created_at).toLocaleString("id-ID")}</td>
-                  <td>{r.profiles?.full_name || "—"}</td>
-                  <td>{r.profiles?.gender || "—"}</td>
-                  <td>{r.profiles?.city || "—"}</td>
-                  <td className="text-xs">{r.events?.title}</td>
-                </tr>
-              ))}
+              {filtered.map((r) => {
+                const phone = r.profiles?.phone || "";
+                return (
+                  <tr key={r.id} className="border-t border-border/60">
+                    <td className="py-2">{new Date(r.created_at).toLocaleString("id-ID")}</td>
+                    <td>{r.profiles?.full_name || "—"}</td>
+                    <td>
+                      {phone ? (
+                        <a
+                          href={`https://wa.me/${phone}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-primary hover:underline"
+                        >
+                          <MessageCircle className="h-3.5 w-3.5" />
+                          {phone}
+                        </a>
+                      ) : "—"}
+                    </td>
+                    <td>{r.profiles?.gender || "—"}</td>
+                    <td>{r.profiles?.city || "—"}</td>
+                    <td className="text-xs">{r.events?.title}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
