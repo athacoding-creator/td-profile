@@ -24,12 +24,38 @@ export const HeroSlider = () => {
   const [current, setCurrent] = useState(0);
 
   useEffect(() => {
+    const now = new Date();
+    const weekAhead = new Date(now.getTime() + 7 * 24 * 3600 * 1000);
     supabase
-      .from("hero_slides")
-      .select("id,title,subtitle,image_url,cta_label,cta_href")
-      .eq("is_active", true)
-      .order("sort_order", { ascending: true })
-      .then(({ data }) => setSlides(data ?? []));
+      .from("events")
+      .select("id,title,venue,poster_url,starts_at")
+      .eq("status", "active")
+      .gte("starts_at", now.toISOString())
+      .lte("starts_at", weekAhead.toISOString())
+      .order("starts_at", { ascending: true })
+      .then(({ data }) => {
+        const mapped: Slide[] = (data ?? [])
+          .filter((e: any) => e.poster_url)
+          .map((e: any) => {
+            const d = new Date(e.starts_at);
+            const tgl = d.toLocaleDateString("id-ID", {
+              weekday: "long",
+              day: "numeric",
+              month: "long",
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+            return {
+              id: e.id,
+              title: e.title,
+              subtitle: `${tgl} • ${e.venue}`,
+              image_url: e.poster_url,
+              cta_label: "Lihat & Daftar",
+              cta_href: `/event/${e.id}`,
+            };
+          });
+        setSlides(mapped);
+      });
   }, []);
 
   useEffect(() => {
