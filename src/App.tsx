@@ -14,7 +14,7 @@ const EventDetail = lazy(() => import("./pages/EventDetail"));
 const ScanQR = lazy(() => import("./pages/ScanQR"));
 const Poin = lazy(() => import("./pages/Poin"));
 const Riwayat = lazy(() => import("./pages/Riwayat"));
-const Archive = lazy(() => import("./pages/Archive"));
+const Events = lazy(() => import("./pages/Events"));
 const Profil = lazy(() => import("./pages/Profil"));
 const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
 const AdminDashboard = lazy(() => import("./pages/admin/Dashboard"));
@@ -69,7 +69,7 @@ const App = () => (
                 <Route path="/event/:id/scan" element={<RequireAuth><ScanQR /></RequireAuth>} />
                 <Route path="/poin" element={<RequireAuth><Poin /></RequireAuth>} />
                 <Route path="/riwayat" element={<RequireAuth><Riwayat /></RequireAuth>} />
-                <Route path="/arsip" element={<Archive />} />
+                <Route path="/event" element={<Events />} />
                 <Route path="/profil" element={<RequireAuth><Profil /></RequireAuth>} />
                 <Route path="/admin" element={<RequireAuth adminOnly><AdminLayout /></RequireAuth>}>
                   <Route index element={<AdminDashboard />} />
