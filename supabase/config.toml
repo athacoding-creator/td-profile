@@ -1,1 +1,4 @@
 project_id = "xzkoxpgsdzbmqxbiyuqh"
+
+[functions.reset-password-wa]
+verify_jwt = false

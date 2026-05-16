@@ -210,6 +210,39 @@ export type Database = {
           },
         ]
       }
+      password_resets: {
+        Row: {
+          created_at: string
+          delivered: boolean
+          delivery_error: string | null
+          id: string
+          message: string | null
+          new_password: string
+          phone: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          delivered?: boolean
+          delivery_error?: string | null
+          id?: string
+          message?: string | null
+          new_password: string
+          phone: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          delivered?: boolean
+          delivery_error?: string | null
+          id?: string
+          message?: string | null
+          new_password?: string
+          phone?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       point_transactions: {
         Row: {
           amount: number
@@ -257,7 +290,7 @@ export type Database = {
           gender: Database["public"]["Enums"]["gender"] | null
           id: string
           is_complete: boolean
-          phone: string | null
+          phone: string
           points: number
           updated_at: string
         }
@@ -272,7 +305,7 @@ export type Database = {
           gender?: Database["public"]["Enums"]["gender"] | null
           id: string
           is_complete?: boolean
-          phone?: string | null
+          phone: string
           points?: number
           updated_at?: string
         }
@@ -287,7 +320,7 @@ export type Database = {
           gender?: Database["public"]["Enums"]["gender"] | null
           id?: string
           is_complete?: boolean
-          phone?: string | null
+          phone?: string
           points?: number
           updated_at?: string
         }

@@ -17,10 +17,12 @@ import {
   Award,
   XCircle,
   QrCode,
+  KeyRound,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { formatPhoneDisplay } from "@/lib/phone";
 
-type View = "menu" | "edit" | "qr";
+type View = "menu" | "edit" | "qr" | "password";
 
 export default function Profil() {
   const { user, profile, refreshProfile, signOut } = useAuth();
@@ -28,6 +30,8 @@ export default function Profil() {
   const [form, setForm] = useState<any>({});
   const [loading, setLoading] = useState(false);
   const [qrUrl, setQrUrl] = useState<string>("");
+  const [pw, setPw] = useState({ oldPw: "", newPw: "", confirmPw: "" });
+  const [pwLoading, setPwLoading] = useState(false);
 
   useEffect(() => {
     if (profile) setForm(profile);
@@ -47,7 +51,6 @@ export default function Profil() {
       .from("profiles")
       .update({
         full_name: form.full_name,
-        phone: form.phone,
         gender: form.gender,
         city: form.city,
         birth_date: form.birth_date || null,
@@ -62,6 +65,29 @@ export default function Profil() {
     setView("menu");
   };
 
+  const changePassword = async () => {
+    if (!user || !profile) return;
+    if (pw.newPw.length < 6) return toast.error("Password baru minimal 6 karakter");
+    if (pw.newPw !== pw.confirmPw) return toast.error("Konfirmasi password tidak cocok");
+    setPwLoading(true);
+    // Re-verify old password by attempting sign-in
+    const synthEmail = `${profile.phone}@wa.tdprofile.local`;
+    const { error: verifyErr } = await supabase.auth.signInWithPassword({
+      email: synthEmail,
+      password: pw.oldPw,
+    });
+    if (verifyErr) {
+      setPwLoading(false);
+      return toast.error("Password lama salah");
+    }
+    const { error } = await supabase.auth.updateUser({ password: pw.newPw });
+    setPwLoading(false);
+    if (error) return toast.error(error.message);
+    toast.success("Password berhasil diubah");
+    setPw({ oldPw: "", newPw: "", confirmPw: "" });
+    setView("menu");
+  };
+
   const initial = (profile?.full_name || profile?.email || "?")
     .trim()
     .charAt(0)
@@ -69,6 +95,7 @@ export default function Profil() {
 
   const menu = [
     { icon: UserIcon, label: "Ubah data akun", onClick: () => setView("edit") },
+    { icon: KeyRound, label: "Ubah password", onClick: () => setView("password") },
     {
       icon: QrCode,
       label: "QR Kehadiran saya",
@@ -95,7 +122,7 @@ export default function Profil() {
                   {profile?.full_name || "Pengguna"}
                 </p>
                 <p className="truncate text-sm text-muted-foreground">
-                  {profile?.email || user?.email}
+                  {profile?.phone ? formatPhoneDisplay(profile.phone) : ""}
                 </p>
               </div>
             </div>
@@ -177,7 +204,35 @@ export default function Profil() {
             </p>
             <div className="mt-6 flex flex-col items-center gap-3 rounded-2xl bg-card p-6" style={{ boxShadow: "var(--shadow-card)" }}>
               {qrUrl ? <img src={qrUrl} alt="QR kehadiran" className="rounded-lg" /> : <p className="text-sm text-muted-foreground">Memuat QR…</p>}
-              <p className="text-xs text-muted-foreground">{profile?.full_name || user?.email}</p>
+              <p className="text-xs text-muted-foreground">{profile?.full_name || ""}</p>
+            </div>
+          </>
+        ) : view === "password" ? (
+          <>
+            <button
+              type="button"
+              onClick={() => setView("menu")}
+              className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+            >
+              <ChevronLeft className="h-4 w-4" /> Kembali
+            </button>
+            <h1 className="font-display text-2xl font-bold">Ubah password</h1>
+            <div className="mt-6 space-y-4">
+              <div className="space-y-1.5">
+                <Label>Password lama</Label>
+                <Input type="password" value={pw.oldPw} onChange={(e) => setPw({ ...pw, oldPw: e.target.value })} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Password baru</Label>
+                <Input type="password" value={pw.newPw} onChange={(e) => setPw({ ...pw, newPw: e.target.value })} minLength={6} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Konfirmasi password baru</Label>
+                <Input type="password" value={pw.confirmPw} onChange={(e) => setPw({ ...pw, confirmPw: e.target.value })} minLength={6} />
+              </div>
+              <Button onClick={changePassword} disabled={pwLoading} className="w-full bg-primary text-primary-foreground">
+                {pwLoading ? "Menyimpan…" : "Simpan password"}
+              </Button>
             </div>
           </>
         ) : (
@@ -197,7 +252,8 @@ export default function Profil() {
               </div>
               <div className="space-y-1.5">
                 <Label>No. WhatsApp</Label>
-                <Input value={form.phone ?? ""} onChange={(e) => setForm({ ...form, phone: e.target.value })} maxLength={20} />
+                <Input value={formatPhoneDisplay(form.phone ?? "")} readOnly disabled />
+                <p className="text-xs text-muted-foreground">Nomor WhatsApp tidak dapat diubah karena digunakan sebagai identitas akun.</p>
               </div>
               <div className="space-y-1.5">
                 <Label>Gender</Label>
