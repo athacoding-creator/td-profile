@@ -6,35 +6,56 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Header } from "@/components/Header";
+import { normalizePhone, isValidPhone, phoneToEmail } from "@/lib/phone";
 
 export default function Auth() {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
-  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const normalized = normalizePhone(phone);
+    if (!isValidPhone(normalized)) {
+      toast.error("Nomor WhatsApp tidak valid. Contoh: 081234567890");
+      return;
+    }
     setLoading(true);
     try {
+      const email = phoneToEmail(normalized);
       if (mode === "signup") {
+        if (!name.trim()) {
+          toast.error("Nama wajib diisi");
+          setLoading(false);
+          return;
+        }
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/`,
-            data: { full_name: name, phone },
+            data: { full_name: name.trim(), phone: normalized },
           },
         });
-        if (error) throw error;
-        toast.success("Akun dibuat. Silakan masuk.");
+        if (error) {
+          if (/already registered|already exists|duplicate/i.test(error.message)) {
+            throw new Error("Nomor WhatsApp ini sudah terdaftar. Silakan masuk.");
+          }
+          throw error;
+        }
+        toast.success("Akun dibuat!");
         navigate("/onboarding");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        if (error) {
+          if (/invalid login/i.test(error.message)) {
+            throw new Error("Nomor WhatsApp atau password salah.");
+          }
+          throw error;
+        }
         navigate("/");
       }
     } catch (err: any) {
@@ -56,25 +77,34 @@ export default function Auth() {
         </p>
         <form onSubmit={submit} className="mt-8 space-y-4">
           {mode === "signup" && (
-            <>
-              <div className="space-y-1.5">
-                <Label>Nama lengkap</Label>
-                <Input value={name} onChange={(e) => setName(e.target.value)} required maxLength={100} />
-              </div>
-              <div className="space-y-1.5">
-                <Label>No. WhatsApp</Label>
-                <Input value={phone} onChange={(e) => setPhone(e.target.value)} required maxLength={20} />
-              </div>
-            </>
+            <div className="space-y-1.5">
+              <Label>Nama lengkap</Label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} required maxLength={100} />
+            </div>
           )}
           <div className="space-y-1.5">
-            <Label>Email</Label>
-            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <Label>No. WhatsApp</Label>
+            <Input
+              type="tel"
+              inputMode="numeric"
+              placeholder="081234567890"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              required
+              maxLength={20}
+            />
           </div>
           <div className="space-y-1.5">
             <Label>Password</Label>
             <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
           </div>
+          {mode === "signin" && (
+            <div className="text-right">
+              <Link to="/forgot-password" className="text-xs text-muted-foreground hover:text-foreground hover:underline">
+                Lupa password?
+              </Link>
+            </div>
+          )}
           <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground">
             {loading ? "Memproses…" : mode === "signin" ? "Masuk" : "Daftar"}
           </Button>
