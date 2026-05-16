@@ -152,46 +152,49 @@ function EventList({ events, programs, onChanged }: { events: any[]; programs: a
     XLSX.utils.book_append_sheet(wb, wsInfo, "Info Event");
 
     // Sheet 2 — Peserta per akun (satu baris per akun, urut tanggal daftar asc)
+    const fmtTanggal = (d: string | Date) => {
+      const x = new Date(d);
+      const dd = String(x.getDate()).padStart(2, "0");
+      const mm = String(x.getMonth() + 1).padStart(2, "0");
+      const yy = String(x.getFullYear()).slice(-2);
+      const hh = String(x.getHours()).padStart(2, "0");
+      const mi = String(x.getMinutes()).padStart(2, "0");
+      return `${dd}/${mm}/${yy}, ${hh}.${mi}`;
+    };
     const rows = (data ?? []).map((r: any, i: number) => {
       const att = attendedMap.get(r.user_id);
       const scannedAt = att?.scanned_at;
       return {
         No: i + 1,
-        "Tanggal Daftar": new Date(r.created_at).toLocaleString("id-ID"),
+        Tanggal: fmtTanggal(r.created_at),
         Nama: r.profiles?.full_name ?? "-",
-        "WhatsApp": r.profiles?.phone ?? "-",
-        Gender: r.profiles?.gender === "L" ? "Laki-laki" : r.profiles?.gender === "P" ? "Perempuan" : (r.profiles?.gender ?? "-"),
-        Kota: r.profiles?.city ?? "-",
-        Email: r.profiles?.email ?? "-",
+        WhatsApp: r.profiles?.phone ?? "-",
+        Event: ev.title ?? "-",
         "Status Hadir": scannedAt ? "Hadir" : "Tidak Hadir",
-        "Waktu Hadir": scannedAt ? new Date(scannedAt).toLocaleString("id-ID") : "-",
-        "Poin Diperoleh": att?.points_awarded ?? 0,
+        Poin: att?.points_awarded ?? 0,
+        Pesan: "",
       };
     });
     rows.push({
       No: "" as any,
-      "Tanggal Daftar": "",
+      Tanggal: "",
       Nama: "TOTAL",
-      "WhatsApp": "",
-      Gender: "",
-      Kota: "",
-      Email: "",
+      WhatsApp: "",
+      Event: "",
       "Status Hadir": `${totalHadir} / ${totalReg}`,
-      "Waktu Hadir": "",
-      "Poin Diperoleh": rows.reduce((s: number, r: any) => s + (r["Poin Diperoleh"] || 0), 0) as any,
+      Poin: rows.reduce((s: number, r: any) => s + (r.Poin || 0), 0) as any,
+      Pesan: "",
     });
     const ws = XLSX.utils.json_to_sheet(rows);
     ws["!cols"] = [
       { wch: 5 },   // No
-      { wch: 22 },  // Tanggal Daftar
+      { wch: 18 },  // Tanggal
       { wch: 28 },  // Nama
       { wch: 18 },  // WhatsApp
-      { wch: 12 },  // Gender
-      { wch: 18 },  // Kota
-      { wch: 30 },  // Email
+      { wch: 36 },  // Event
       { wch: 14 },  // Status Hadir
-      { wch: 22 },  // Waktu Hadir
-      { wch: 14 },  // Poin Diperoleh
+      { wch: 10 },  // Poin
+      { wch: 30 },  // Pesan
     ];
     ws["!freeze"] = { xSplit: 0, ySplit: 1 } as any;
     XLSX.utils.book_append_sheet(wb, ws, "Peserta");
