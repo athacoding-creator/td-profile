@@ -64,7 +64,7 @@ export function useAdminData(): AdminData {
   const loadRegistrations = async () => {
     const { data } = await supabase
       .from("registrations")
-      .select("id, created_at, event_id, user_id, events(title, programs(name)), profiles:user_id(full_name, email, gender, city)")
+      .select("id, created_at, event_id, user_id, events(title, programs(name)), profiles:user_id(full_name, email, phone, gender, city)")
       .order("created_at", { ascending: false }).limit(200);
     setRegistrations(data ?? []);
   };
