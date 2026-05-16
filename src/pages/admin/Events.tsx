@@ -125,52 +125,75 @@ function EventList({ events, programs, onChanged }: { events: any[]; programs: a
 
   const exportXLSX = async (ev: any) => {
     const { data } = await supabase.from("registrations")
-      .select("created_at, user_id, profiles(full_name, phone, gender, city)").eq("event_id", ev.id)
+      .select("created_at, user_id, profiles(full_name, phone, gender, city, email)").eq("event_id", ev.id)
       .order("created_at", { ascending: true });
     const { data: att } = await supabase.from("attendance")
-      .select("scanned_at, user_id").eq("event_id", ev.id);
-    const attendedMap = new Map((att ?? []).map((a: any) => [a.user_id, a.scanned_at]));
+      .select("scanned_at, user_id, points_awarded").eq("event_id", ev.id);
+    const attendedMap = new Map((att ?? []).map((a: any) => [a.user_id, a]));
 
     // Sheet 1 — Info Event
     const wb = XLSX.utils.book_new();
+    const totalReg = (data ?? []).length;
+    const totalHadir = attendedMap.size;
     const infoRows = [
       { Field: "Judul Event", Value: ev.title },
-      { Field: "Venue", Value: ev.venue ?? "-" },
+      { Field: "Tipe", Value: ev.event_type ?? "-" },
       { Field: "Program", Value: ev.programs?.name ?? "-" },
+      { Field: "Venue", Value: ev.venue ?? "-" },
+      { Field: "Kota", Value: ev.city ?? "-" },
       { Field: "Mulai", Value: new Date(ev.starts_at).toLocaleString("id-ID") },
       { Field: "Selesai", Value: ev.ends_at ? new Date(ev.ends_at).toLocaleString("id-ID") : "-" },
-      { Field: "Total Pendaftar", Value: (data ?? []).length },
-      { Field: "Total Hadir", Value: attendedMap.size },
+      { Field: "Total Pendaftar", Value: totalReg },
+      { Field: "Total Hadir", Value: totalHadir },
+      { Field: "Total Tidak Hadir", Value: Math.max(0, totalReg - totalHadir) },
     ];
     const wsInfo = XLSX.utils.json_to_sheet(infoRows);
-    wsInfo["!cols"] = [{ wch: 18 }, { wch: 44 }];
+    wsInfo["!cols"] = [{ wch: 20 }, { wch: 50 }];
     XLSX.utils.book_append_sheet(wb, wsInfo, "Info Event");
 
-    // Sheet 2 — Peserta per akun (format rapi)
+    // Sheet 2 — Peserta per akun (satu baris per akun, urut tanggal daftar asc)
     const rows = (data ?? []).map((r: any, i: number) => {
-      const scannedAt = attendedMap.get(r.user_id);
+      const att = attendedMap.get(r.user_id);
+      const scannedAt = att?.scanned_at;
       return {
         No: i + 1,
         "Tanggal Daftar": new Date(r.created_at).toLocaleString("id-ID"),
         Nama: r.profiles?.full_name ?? "-",
-        "No. WhatsApp": r.profiles?.phone ?? "-",
+        "WhatsApp": r.profiles?.phone ?? "-",
         Gender: r.profiles?.gender === "L" ? "Laki-laki" : r.profiles?.gender === "P" ? "Perempuan" : (r.profiles?.gender ?? "-"),
         Kota: r.profiles?.city ?? "-",
-        Hadir: scannedAt ? "Ya" : "Tidak",
+        Email: r.profiles?.email ?? "-",
+        "Status Hadir": scannedAt ? "Hadir" : "Tidak Hadir",
         "Waktu Hadir": scannedAt ? new Date(scannedAt).toLocaleString("id-ID") : "-",
+        "Poin Diperoleh": att?.points_awarded ?? 0,
       };
+    });
+    rows.push({
+      No: "" as any,
+      "Tanggal Daftar": "",
+      Nama: "TOTAL",
+      "WhatsApp": "",
+      Gender: "",
+      Kota: "",
+      Email: "",
+      "Status Hadir": `${totalHadir} / ${totalReg}`,
+      "Waktu Hadir": "",
+      "Poin Diperoleh": rows.reduce((s: number, r: any) => s + (r["Poin Diperoleh"] || 0), 0) as any,
     });
     const ws = XLSX.utils.json_to_sheet(rows);
     ws["!cols"] = [
       { wch: 5 },   // No
       { wch: 22 },  // Tanggal Daftar
       { wch: 28 },  // Nama
-      { wch: 18 },  // No. WhatsApp
+      { wch: 18 },  // WhatsApp
       { wch: 12 },  // Gender
       { wch: 18 },  // Kota
-      { wch: 8 },   // Hadir
+      { wch: 30 },  // Email
+      { wch: 14 },  // Status Hadir
       { wch: 22 },  // Waktu Hadir
+      { wch: 14 },  // Poin Diperoleh
     ];
+    ws["!freeze"] = { xSplit: 0, ySplit: 1 } as any;
     XLSX.utils.book_append_sheet(wb, ws, "Peserta");
 
     const safe = (ev.title || "event").replace(/[^a-z0-9]+/gi, "-").toLowerCase().slice(0, 40);

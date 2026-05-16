@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { MapPin, Lock } from "lucide-react";
+import { MapPin, Lock, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Header } from "@/components/Header";
@@ -12,14 +12,12 @@ export default function Index() {
   const [events, setEvents] = useState<any[]>([]);
 
   useEffect(() => {
-    const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
     supabase
       .from("events")
-      .select("id,title,venue,poster_url,gender,starts_at")
-      .eq("status", "active")
-      .gte("starts_at", cutoff)
-      .order("starts_at", { ascending: true })
-      .limit(24)
+      .select("id,title,venue,poster_url,gender,starts_at,ends_at,status")
+      .in("status", ["active", "finished"])
+      .order("starts_at", { ascending: false })
+      .limit(6)
       .then(({ data }) => setEvents(data ?? []));
   }, []);
 
@@ -31,12 +29,14 @@ export default function Index() {
       <section className="container mt-4 md:mt-6">
         <div className="flex items-end justify-between">
           <h2 className="font-display text-2xl md:text-3xl font-semibold text-foreground">Event terbaru</h2>
-          <Link to="/arsip" className="text-sm text-accent hover:underline">Lihat arsip →</Link>
+          <Link to="/event" className="text-sm text-accent hover:underline">Lihat semua →</Link>
         </div>
 
         <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6">
           {events.map((e) => {
             const locked = profile?.gender && e.gender !== "ALL" && e.gender !== profile.gender;
+            const endTime = e.ends_at ? new Date(e.ends_at).getTime() : new Date(e.starts_at).getTime() + 6 * 3600 * 1000;
+            const finished = e.status === "finished" || Date.now() > endTime;
             return (
               <Link
                 to={`/event/${e.id}`}
@@ -46,7 +46,7 @@ export default function Index() {
               >
                 <div className="aspect-[3/4] overflow-hidden">
                   {e.poster_url ? (
-                    <img src={e.poster_url} alt={e.title} loading="lazy" className={`h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 ${locked ? "grayscale" : ""}`} />
+                    <img src={e.poster_url} alt={e.title} loading="lazy" className={`h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 ${locked || finished ? "grayscale" : ""}`} />
                   ) : (
                     <div className="flex h-full items-center justify-center bg-muted text-muted-foreground">No poster</div>
                   )}
@@ -54,6 +54,11 @@ export default function Index() {
                 {locked && (
                   <div className="absolute right-2 top-2 rounded-full bg-card/90 p-1.5">
                     <Lock className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                )}
+                {!locked && finished && (
+                  <div className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-card/90 px-2 py-1 text-[10px] font-semibold text-muted-foreground">
+                    <CheckCircle2 className="h-3 w-3" /> Selesai
                   </div>
                 )}
                 <div className="space-y-2 p-4">
