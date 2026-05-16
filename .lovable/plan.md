@@ -1,51 +1,109 @@
-## Ringkasan masalah
+## Tujuan
 
-1. Event yang sudah lewat (status `finished` setelah auto-archive admin) hilang dari "Event terbaru" maupun "Arsip" karena query Index hanya ambil `status='active'` dan Archive hanya ambil event >30 hari.
-2. Dashboard user menampilkan semua event sekaligus; kamu mau hanya 6 (seperti saforiginal.id).
-3. Bottom nav saat ini: Beranda / Event(→/poin) / Riwayat / Profil — tab "Event" sebenarnya membuka halaman Poin. Kamu mau tab Event jadi halaman daftar semua event (mendatang + expired), dan Poin dipindah ke menu Profil (sudah ada link di sana).
-4. Excel export per event harus berformat tabel rapi per akun (mengikuti contoh donatur yang diupload: No, Tanggal, Nama, WhatsApp, Campaign/Event, dll).
+Ganti login Email/Gmail jadi login **No. WhatsApp + Password**. Nomor WA jadi identitas unik tiap user. Lupa password → kirim password acak ke WhatsApp user, user bisa ganti sendiri dari Profil.
 
 ---
 
-## Rencana perubahan
+## Pendekatan teknis (penting dipahami)
 
-### 1. Dashboard user (`src/pages/Index.tsx`)
-- Query: ambil event `status IN ('active','finished')`, urut `starts_at desc`, **limit 6**.
-- Event yang sudah lewat (cek `ends_at`/`starts_at+6h` < now) ditampilkan dengan poster grayscale + badge "Selesai" (mirip pattern locked yang sudah ada).
-- Ganti link "Lihat arsip →" jadi "Lihat semua event →" yang menuju halaman Event baru (`/event`).
+Supabase Auth tidak punya tipe "phone+password tanpa SMS" yang bisa pakai gateway WA pihak ketiga secara native. Solusi paling stabil & cepat: **pakai sistem email Supabase yang sudah ada, tapi email-nya kita bikin sintetis dari nomor WA**, misalnya:
 
-### 2. Halaman Event baru (`src/pages/Events.tsx`)
-- Route baru `/event` (list). Detail tetap `/event/:id`.
-- Dua section: **Event Mendatang** (active, `ends_at`/fallback ≥ now, urut asc) dan **Event Selesai** (finished atau sudah lewat, urut desc, paginasi/load more sederhana).
-- Reuse kartu event yang sama dengan dashboard.
+```
+628123456789@wa.tdprofile.local
+```
 
-### 3. Bottom navigation (`src/components/BottomNav.tsx`)
-- Urutan baru: Beranda · **Event** (→`/event`) · Riwayat · Profil.
-- Hapus entri Poin dari bottom nav. Akses Poin tetap lewat menu di halaman Profil (`/poin`, sudah ada).
+User TIDAK pernah melihat email ini. Di UI mereka hanya isi **No WhatsApp + Password**. Frontend yang mengubah nomor → email sintetis sebelum dikirim ke Supabase.
 
-### 4. Halaman Archive lama (`src/pages/Archive.tsx`)
-- Tidak lagi dipakai dari Dashboard. Tetap dibiarkan ada (route `/arsip`) untuk kompatibilitas tapi tidak ditautkan dari mana pun, atau dihapus. Rekomendasi: **hapus** untuk hindari duplikasi dengan halaman Event baru.
-
-### 5. Excel export per event (`src/pages/admin/Events.tsx` fungsi `exportXLSX`)
-Format mengikuti contoh:
-- Sheet 1 **Info Event**: Judul, Tipe, Program, Venue, Kota, Mulai, Selesai, Total Pendaftar, Total Hadir, Total Tidak Hadir.
-- Sheet 2 **Peserta** (satu baris per akun, urut Tanggal Daftar asc):
-
-  | No | Tanggal Daftar | Nama | WhatsApp | Gender | Kota | Email | Status Hadir | Waktu Hadir | Poin Diperoleh |
-
-  - "Status Hadir" = `Hadir` / `Tidak Hadir` (mengikuti gaya kolom Status di contoh).
-  - Tambahkan baris **Total** di bawah kolom angka.
-  - Kolom diberi lebar yang proporsional + freeze header row.
-- Nama file: `peserta-{slug-judul}-{tanggal}.xlsx`.
-
-### 6. Routing (`src/App.tsx`)
-- Tambah `const Events = lazy(...)` dan `<Route path="/event" element={<Events />} />`.
-- Hapus route `/arsip` jika file Archive dihapus.
+Keuntungan:
+- Tidak perlu provider SMS Supabase (mahal & ribet untuk Indonesia).
+- Password tetap di-hash & dikelola Supabase Auth (aman).
+- Reset password bisa kita kontrol sendiri via Edge Function + WhatsApp gateway.
+- `auth.users.id` (UUID) tetap jadi primary key — semua tabel existing (`profiles`, `registrations`, `attendance`, dst) tidak berubah strukturnya.
 
 ---
 
-## Catatan teknis
+## Cakupan perubahan
 
-- RLS `events_public_read` sudah mengizinkan baca `active` + `finished`, jadi tidak perlu migrasi DB.
-- Auto-mark expired→finished saat ini hanya jalan ketika admin buka panel. Untuk konsistensi, frontend user juga akan menentukan "selesai" berdasarkan `ends_at`/`starts_at+6h` (tampilan), tanpa update DB.
-- Tidak ada perubahan skema DB, edge function, atau auth.
+### 1. Bersihkan data lama (Anda pilih "Mulai bersih")
+
+Migration: hapus semua user dari `auth.users` (cascade akan menghapus `profiles`, `user_roles`, `registrations`, `attendance`, `point_transactions`, `redemptions`, `login_events`). Admin pertama harus didaftarkan ulang setelah ini — kita siapkan 1 akun admin seed via nomor WA Anda.
+
+### 2. Schema database
+
+- Tambah kolom **`phone` UNIQUE NOT NULL** di `profiles` (normalisasi ke 628xxx).
+- Update trigger `handle_new_user` supaya baca nomor WA dari metadata signup dan simpan ke `profiles.phone`.
+- Update trigger `check_profile_complete` — `phone` sudah selalu terisi sejak daftar, jadi tidak perlu diisi lagi di Profil (field phone di form Profil jadi read-only).
+- Index unik di `profiles.phone` agar tidak bisa ada nomor WA duplikat.
+
+### 3. Halaman Auth (`src/pages/Auth.tsx`)
+
+- Hapus field Email & Gmail.
+- Form Daftar: **Nama Lengkap, No. WhatsApp, Password**.
+- Form Masuk: **No. WhatsApp, Password**.
+- Tambah link "Lupa password?" → halaman baru `/forgot-password`.
+- Helper `normalizePhone()`: `08xxx` / `+628xxx` / `8xxx` → `628xxx`. Validasi panjang 10–15 digit.
+- `phoneToEmail(phone)` → `${phone}@wa.tdprofile.local` (dipakai untuk signUp / signInWithPassword).
+- Error mapping: kalau Supabase return "User already registered" → tampilkan "Nomor WhatsApp sudah terdaftar".
+
+### 4. Halaman baru `/forgot-password`
+
+- Input: No. WhatsApp.
+- Submit → panggil Edge Function `reset-password-wa` (lihat #6).
+- Tampilkan: "Password baru sudah dikirim ke WhatsApp Anda. Cek pesan, lalu masuk dan ubah password dari menu Profil."
+
+### 5. Halaman Profil (`src/pages/Profil.tsx`)
+
+- Field **No. WhatsApp jadi read-only** (tidak bisa diubah dari sini — nomor = identitas login).
+- Tambah menu baru: **"Ubah Password"** → form: password lama, password baru, konfirmasi. Pakai `supabase.auth.updateUser({ password })` setelah re-verifikasi password lama via sign-in ulang.
+- Hapus tampilan "email" (karena email sintetis, tidak ada artinya untuk user). Tampilkan nomor WA sebagai identitas akun.
+
+### 6. Edge Function `reset-password-wa`
+
+Input: `{ phone }` (akan dinormalisasi server-side).
+
+Alur:
+1. Validasi format nomor (Zod).
+2. Cari user via service role: `SELECT id FROM profiles WHERE phone = ?`.
+3. Jika tidak ada → tetap return sukses (anti-enumeration), tidak kirim apa-apa.
+4. Generate password acak 8 karakter alfanumerik.
+5. `supabaseAdmin.auth.admin.updateUserById(id, { password: newPass })`.
+6. Kirim WhatsApp ke nomor user via gateway (Fonnte / Wablas / Twilio — **pluggable**, gateway dipilih nanti).
+7. Catat event di tabel baru `password_resets` (audit: user_id, created_at, ip).
+
+Karena Anda belum menentukan gateway, function akan dibuat dengan **adapter pattern**: ada fungsi `sendWhatsApp(phone, message)` di-stub dulu (log ke console + masukkan ke tabel `password_resets` dengan kolom `message`). Begitu Anda kasih tahu gateway-nya, tinggal isi adapter itu — tidak perlu refactor besar.
+
+### 7. Hapus Onboarding gender? 
+
+Onboarding gender tetap dipertahankan (tidak terkait auth). Tapi karena `phone` sudah terisi otomatis dari signup, profil cuma butuh: gender, kota, tanggal lahir, alamat → bonus poin tetap berfungsi.
+
+### 8. Admin dashboard
+
+- Halaman Pendaftar/Profil user: tampilkan No WhatsApp lebih prominen + tombol "Hubungi via WA" (link `https://wa.me/{phone}`).
+- Tidak ada perubahan major lain — export Excel sudah pakai phone (sudah diperbaiki di iterasi sebelumnya).
+
+### 9. Update `useAuth.tsx`
+
+- Profile type sudah punya `phone` — tinggal pastikan `email` tidak ditampilkan di UI manapun (atau tampilkan nomor WA).
+
+---
+
+## Pertimbangan penting yang harus Anda setujui
+
+1. **"Mulai bersih" = SEMUA akun, poin, registrasi, kehadiran terhapus.** Tidak bisa di-rollback. Pastikan ini bukan database produksi yang sudah ada datanya berharga.
+2. **Password acak akan terkirim ke WA dalam plaintext** — itu memang standar untuk reset flow. User wajib ganti setelah login.
+3. Gateway WA belum dipilih → function reset password akan **menyimpan password baru ke tabel `password_resets`** sebagai placeholder. Anda bisa baca dari sana sementara untuk testing, atau bilang ke saya nanti gatewaynya supaya saya pasang adapternya.
+4. Akun **admin pertama** setelah wipe: kasih tahu saya nomor WA yang mau dijadikan admin — saya seed di migration.
+
+---
+
+## Urutan eksekusi
+
+1. Migration: wipe users, tambah `phone` unique di `profiles`, update trigger, buat tabel `password_resets`, seed admin.
+2. Edit `Auth.tsx` + helper normalisasi nomor.
+3. Buat `/forgot-password`.
+4. Update `Profil.tsx` (phone read-only, menu Ubah Password, hilangkan email).
+5. Edge Function `reset-password-wa` dengan stub gateway.
+6. Update routing di `App.tsx`.
+7. Sentuhan kecil di admin (tombol WhatsApp).
+
+Saya butuh konfirmasi Anda untuk **3 hal di atas** (terutama wipe data & nomor admin) sebelum mulai eksekusi.
