@@ -217,7 +217,6 @@ export type Database = {
           delivery_error: string | null
           id: string
           message: string | null
-          new_password: string
           phone: string
           user_id: string
         }
@@ -227,7 +226,6 @@ export type Database = {
           delivery_error?: string | null
           id?: string
           message?: string | null
-          new_password: string
           phone: string
           user_id: string
         }
@@ -237,7 +235,6 @@ export type Database = {
           delivery_error?: string | null
           id?: string
           message?: string | null
-          new_password?: string
           phone?: string
           user_id?: string
         }
@@ -526,6 +523,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_get_event_qr: { Args: { _id: string }; Returns: string }
+      admin_get_program_qr: { Args: { _id: string }; Returns: string }
       archive_old_events: { Args: never; Returns: undefined }
       find_active_event_by_program_token: {
         Args: { _token: string }
@@ -537,6 +536,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      record_attendance: {
+        Args: { _event_id: string; _token: string }
+        Returns: string
       }
     }
     Enums: {
