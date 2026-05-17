@@ -98,7 +98,6 @@ Deno.serve(async (req) => {
     await admin.from("password_resets").insert({
       user_id: profile.id,
       phone,
-      new_password: newPassword,
       message,
       delivered: delivery.ok,
       delivery_error: delivery.ok ? null : delivery.error ?? null,

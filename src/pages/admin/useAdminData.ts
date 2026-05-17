@@ -30,7 +30,7 @@ export function useAdminData(): AdminData {
   const loadEvents = async () => {
     const { data, error } = await supabase
       .from("events")
-      .select("*, programs(id, name, code, qr_token)")
+      .select("*, programs(id, name, code)")
       .order("starts_at", { ascending: false });
     if (error) console.error("loadEvents", error);
     setEvents(data ?? []);

@@ -58,9 +58,9 @@ export default function Poin() {
       user_id: user.id,
       reward_id: r.id,
       cost_points: r.cost_points,
+      status: "pending",
     });
     if (error) return toast.error(error.message);
-    await supabase.from("profiles").update({ points: (profile.points ?? 0) - r.cost_points }).eq("id", user.id);
     await refreshProfile();
     await loadRedeems();
     toast.success("Penukaran diproses!");
