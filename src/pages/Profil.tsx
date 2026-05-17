@@ -7,6 +7,14 @@ import { BottomNav } from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import {
   ChevronRight,
@@ -18,9 +26,25 @@ import {
   XCircle,
   QrCode,
   KeyRound,
+  Camera,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { formatPhoneDisplay } from "@/lib/phone";
+
+const OCCUPATIONS = [
+  "Pelajar",
+  "Mahasiswa",
+  "Karyawan Swasta",
+  "PNS / ASN",
+  "Wiraswasta",
+  "Guru / Dosen",
+  "Profesional (Dokter, Pengacara, dll)",
+  "Ibu Rumah Tangga",
+  "Belum Bekerja",
+  "Lainnya",
+];
+
+type Wilayah = { id: string; name: string };
 
 type View = "menu" | "edit" | "qr" | "password";
 
