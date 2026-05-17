@@ -56,10 +56,52 @@ export default function Profil() {
   const [qrUrl, setQrUrl] = useState<string>("");
   const [pw, setPw] = useState({ oldPw: "", newPw: "", confirmPw: "" });
   const [pwLoading, setPwLoading] = useState(false);
+  const [provinces, setProvinces] = useState<Wilayah[]>([]);
+  const [regencies, setRegencies] = useState<Wilayah[]>([]);
+  const [districts, setDistricts] = useState<Wilayah[]>([]);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   useEffect(() => {
     if (profile) setForm(profile);
   }, [profile]);
+
+  // Load provinces when entering edit
+  useEffect(() => {
+    if (view !== "edit" || provinces.length) return;
+    fetch("https://www.emsifa.com/api-wilayah-indonesia/api/provinces.json")
+      .then((r) => r.json())
+      .then(setProvinces)
+      .catch(() => toast.error("Gagal memuat daftar provinsi"));
+  }, [view, provinces.length]);
+
+  // Cascade: load regencies when province changes
+  useEffect(() => {
+    if (!form?.province_code) { setRegencies([]); return; }
+    fetch(`https://www.emsifa.com/api-wilayah-indonesia/api/regencies/${form.province_code}.json`)
+      .then((r) => r.json()).then(setRegencies).catch(() => setRegencies([]));
+  }, [form?.province_code]);
+
+  // Cascade: load districts when regency changes
+  useEffect(() => {
+    if (!form?.regency_code) { setDistricts([]); return; }
+    fetch(`https://www.emsifa.com/api-wilayah-indonesia/api/districts/${form.regency_code}.json`)
+      .then((r) => r.json()).then(setDistricts).catch(() => setDistricts([]));
+  }, [form?.regency_code]);
+
+  const uploadAvatar = async (file: File) => {
+    if (!user) return;
+    if (file.size > 5 * 1024 * 1024) return toast.error("Maks 5MB");
+    if (!file.type.startsWith("image/")) return toast.error("File harus gambar");
+    setUploadingAvatar(true);
+    const ext = file.name.split(".").pop() || "jpg";
+    const path = `${user.id}/${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
+    if (error) { setUploadingAvatar(false); return toast.error(error.message); }
+    const url = supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl;
+    setForm({ ...form, avatar_url: url });
+    setUploadingAvatar(false);
+    toast.success("Foto diunggah");
+  };
 
   useEffect(() => {
     if (view === "qr" && user && !qrUrl) {
@@ -76,9 +118,19 @@ export default function Profil() {
       .update({
         full_name: form.full_name,
         gender: form.gender,
-        city: form.city,
         birth_date: form.birth_date || null,
         address: form.address,
+        avatar_url: form.avatar_url || null,
+        province_code: form.province_code || null,
+        province_name: form.province_name || null,
+        regency_code: form.regency_code || null,
+        regency_name: form.regency_name || null,
+        district_code: form.district_code || null,
+        district_name: form.district_name || null,
+        city: form.regency_name || form.city || null,
+        occupation: form.occupation || null,
+        instansi: form.instansi || null,
+        hobi: form.hobi || null,
       })
       .eq("id", user.id);
     setLoading(false);
