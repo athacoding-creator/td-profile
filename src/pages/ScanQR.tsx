@@ -21,15 +21,9 @@ export default function ScanQR() {
 
   const validate = async (token: string) => {
     if (!event || !user) return;
-    let eventId = event.id;
-    if (token !== event.qr_token) {
-      const { data: resolved } = await supabase.rpc("find_active_event_by_program_token", { _token: token });
-      if (resolved) eventId = resolved as string;
-      else { toast.error("QR tidak valid atau program belum dimulai"); return; }
-    }
-    const { error } = await supabase.from("attendance").insert({ event_id: eventId, user_id: user.id });
+    const { error } = await supabase.rpc("record_attendance", { _event_id: event.id, _token: token });
     if (error) {
-      if (error.code === "23505") toast.info("Kamu sudah absen sebelumnya");
+      if (error.code === "23505" || /duplicate/i.test(error.message)) toast.info("Kamu sudah absen sebelumnya");
       else toast.error(error.message);
       return;
     }
