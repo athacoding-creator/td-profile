@@ -13,6 +13,16 @@ type Profile = {
   address: string | null;
   is_complete: boolean;
   points: number;
+  avatar_url: string | null;
+  province_code: string | null;
+  province_name: string | null;
+  regency_code: string | null;
+  regency_name: string | null;
+  district_code: string | null;
+  district_name: string | null;
+  occupation: string | null;
+  instansi: string | null;
+  hobi: string | null;
 };
 
 type AuthCtx = {
