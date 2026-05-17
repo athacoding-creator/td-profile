@@ -281,47 +281,77 @@ export type Database = {
       profiles: {
         Row: {
           address: string | null
+          avatar_url: string | null
           birth_date: string | null
           bonus_awarded: boolean
           city: string | null
           created_at: string
+          district_code: string | null
+          district_name: string | null
           email: string | null
           full_name: string | null
           gender: Database["public"]["Enums"]["gender"] | null
+          hobi: string | null
           id: string
+          instansi: string | null
           is_complete: boolean
+          occupation: string | null
           phone: string
           points: number
+          province_code: string | null
+          province_name: string | null
+          regency_code: string | null
+          regency_name: string | null
           updated_at: string
         }
         Insert: {
           address?: string | null
+          avatar_url?: string | null
           birth_date?: string | null
           bonus_awarded?: boolean
           city?: string | null
           created_at?: string
+          district_code?: string | null
+          district_name?: string | null
           email?: string | null
           full_name?: string | null
           gender?: Database["public"]["Enums"]["gender"] | null
+          hobi?: string | null
           id: string
+          instansi?: string | null
           is_complete?: boolean
+          occupation?: string | null
           phone: string
           points?: number
+          province_code?: string | null
+          province_name?: string | null
+          regency_code?: string | null
+          regency_name?: string | null
           updated_at?: string
         }
         Update: {
           address?: string | null
+          avatar_url?: string | null
           birth_date?: string | null
           bonus_awarded?: boolean
           city?: string | null
           created_at?: string
+          district_code?: string | null
+          district_name?: string | null
           email?: string | null
           full_name?: string | null
           gender?: Database["public"]["Enums"]["gender"] | null
+          hobi?: string | null
           id?: string
+          instansi?: string | null
           is_complete?: boolean
+          occupation?: string | null
           phone?: string
           points?: number
+          province_code?: string | null
+          province_name?: string | null
+          regency_code?: string | null
+          regency_name?: string | null
           updated_at?: string
         }
         Relationships: []
