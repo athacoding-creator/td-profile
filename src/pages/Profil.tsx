@@ -190,8 +190,10 @@ export default function Profil() {
         {view === "menu" ? (
           <>
             <div className="flex items-center gap-4">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted text-2xl font-bold text-foreground">
-                {initial}
+              <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-muted text-2xl font-bold text-foreground">
+                {profile?.avatar_url ? (
+                  <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
+                ) : initial}
               </div>
               <div className="min-w-0">
                 <p className="truncate font-display text-xl font-bold text-foreground">
