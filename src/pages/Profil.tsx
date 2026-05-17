@@ -322,6 +322,27 @@ export default function Profil() {
             </button>
             <h1 className="font-display text-2xl font-bold">Ubah data akun</h1>
             <div className="mt-6 space-y-4">
+              {/* Foto Profil */}
+              <div className="flex flex-col items-center gap-3 pb-2">
+                <div className="relative">
+                  <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-muted text-3xl font-bold">
+                    {form.avatar_url ? (
+                      <img src={form.avatar_url} alt="Avatar" className="h-full w-full object-cover" />
+                    ) : (
+                      (form.full_name?.charAt(0) || "?").toUpperCase()
+                    )}
+                  </div>
+                  <label className="absolute bottom-0 right-0 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-primary text-primary-foreground shadow">
+                    <Camera className="h-4 w-4" />
+                    <input
+                      type="file" accept="image/*" className="hidden"
+                      onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) uploadAvatar(f); }}
+                    />
+                  </label>
+                </div>
+                {uploadingAvatar && <p className="text-xs text-muted-foreground">Mengunggah…</p>}
+              </div>
+
               <div className="space-y-1.5">
                 <Label>Nama lengkap</Label>
                 <Input value={form.full_name ?? ""} onChange={(e) => setForm({ ...form, full_name: e.target.value })} maxLength={100} />
@@ -349,19 +370,90 @@ export default function Profil() {
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label>Kota</Label>
-                <Input value={form.city ?? ""} onChange={(e) => setForm({ ...form, city: e.target.value })} maxLength={100} />
-              </div>
-              <div className="space-y-1.5">
                 <Label>Tanggal lahir</Label>
                 <Input type="date" value={form.birth_date ?? ""} onChange={(e) => setForm({ ...form, birth_date: e.target.value })} />
               </div>
+
+              {/* Domisili */}
               <div className="space-y-1.5">
-                <Label>Alamat</Label>
+                <Label>Provinsi</Label>
+                <Select
+                  value={form.province_code ?? ""}
+                  onValueChange={(v) => {
+                    const p = provinces.find((x) => x.id === v);
+                    setForm({ ...form, province_code: v, province_name: p?.name ?? null,
+                      regency_code: null, regency_name: null, district_code: null, district_name: null });
+                  }}
+                >
+                  <SelectTrigger><SelectValue placeholder="Pilih provinsi" /></SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    {provinces.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Kabupaten / Kota</Label>
+                <Select
+                  value={form.regency_code ?? ""}
+                  onValueChange={(v) => {
+                    const r = regencies.find((x) => x.id === v);
+                    setForm({ ...form, regency_code: v, regency_name: r?.name ?? null,
+                      district_code: null, district_name: null });
+                  }}
+                  disabled={!form.province_code}
+                >
+                  <SelectTrigger><SelectValue placeholder={form.province_code ? "Pilih kabupaten/kota" : "Pilih provinsi dulu"} /></SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    {regencies.map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Kecamatan</Label>
+                <Select
+                  value={form.district_code ?? ""}
+                  onValueChange={(v) => {
+                    const d = districts.find((x) => x.id === v);
+                    setForm({ ...form, district_code: v, district_name: d?.name ?? null });
+                  }}
+                  disabled={!form.regency_code}
+                >
+                  <SelectTrigger><SelectValue placeholder={form.regency_code ? "Pilih kecamatan" : "Pilih kabupaten/kota dulu"} /></SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    {districts.map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Alamat lengkap</Label>
                 <Input value={form.address ?? ""} onChange={(e) => setForm({ ...form, address: e.target.value })} maxLength={250} />
               </div>
+
+              {/* Pekerjaan & Instansi */}
+              <div className="space-y-1.5">
+                <Label>Pekerjaan</Label>
+                <Select value={form.occupation ?? ""} onValueChange={(v) => setForm({ ...form, occupation: v })}>
+                  <SelectTrigger><SelectValue placeholder="Pilih pekerjaan" /></SelectTrigger>
+                  <SelectContent>
+                    {OCCUPATIONS.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Instansi / Tempat kerja / Sekolah</Label>
+                <Input value={form.instansi ?? ""} onChange={(e) => setForm({ ...form, instansi: e.target.value })} maxLength={150} placeholder="Contoh: UGM, PT ABC" />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Hobi</Label>
+                <Textarea value={form.hobi ?? ""} onChange={(e) => setForm({ ...form, hobi: e.target.value })} maxLength={250} rows={2} placeholder="Contoh: membaca, futsal, traveling" />
+              </div>
+
               <Button onClick={save} disabled={loading} className="w-full bg-primary text-primary-foreground">
                 {loading ? "Menyimpan…" : "Simpan"}
+              </Button>
+              <Button onClick={() => setView("menu")} variant="outline" className="w-full">
+                Batal
               </Button>
             </div>
           </>
