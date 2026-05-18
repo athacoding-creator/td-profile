@@ -1,4 +1,8 @@
 project_id = "xzkoxpgsdzbmqxbiyuqh"
 
+[auth.email]
+enable_confirmations = false
+double_confirm_changes = false
+
 [functions.reset-password-wa]
 verify_jwt = false
