@@ -91,7 +91,7 @@ Deno.serve(async (req) => {
     const message =
       `Halo ${profile.full_name || "Sahabat"},\n\n` +
       `Password baru akun Teras Dakwah Anda: *${newPassword}*\n\n` +
-      `Silakan masuk lalu segera ubah password dari menu Profil > Ubah password.`;
+      `fitur reset password ini masih dalam tahap percobaan, jika Anda mengalami kendala silakan hubungi admin.`;
 
     const delivery = await sendWhatsApp(phone, message);
 
