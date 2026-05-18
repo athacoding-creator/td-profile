@@ -112,7 +112,6 @@ export default function Profil() {
   const save = async () => {
     if (!user) return;
     setLoading(true);
-    const wasComplete = profile?.is_complete;
     const { error } = await supabase
       .from("profiles")
       .update({
@@ -135,9 +134,18 @@ export default function Profil() {
       .eq("id", user.id);
     setLoading(false);
     if (error) return toast.error(error.message);
+    const wasComplete = profile?.is_complete;
     await refreshProfile();
-    if (!wasComplete) toast.success("Profil lengkap! Bonus poin diberikan 🎉");
-    else toast.success("Tersimpan");
+    const { data: fresh } = await supabase
+      .from("profiles")
+      .select("is_complete")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (!wasComplete && fresh?.is_complete) {
+      toast.success("Profil lengkap! Bonus poin diberikan 🎉");
+    } else {
+      toast.success("Tersimpan");
+    }
     setView("menu");
   };
 
