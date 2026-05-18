@@ -9,8 +9,8 @@ const items = [
 ];
 
 export const BottomNav = () => (
-  <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border/60 bg-card/95 backdrop-blur-md">
-    <div className="container grid grid-cols-4">
+  <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 z-40 w-full max-w-[480px] border-t border-border/60 bg-card/95 backdrop-blur-md">
+    <div className="grid grid-cols-4">
       {items.map(({ to, icon: Icon, label }) => (
         <NavLink
           key={to}
