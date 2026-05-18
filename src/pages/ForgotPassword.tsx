@@ -45,7 +45,7 @@ export default function ForgotPassword() {
         {done ? (
           <div className="mt-8 space-y-4">
             <div className="rounded-lg border border-border bg-muted/40 p-4 text-sm text-foreground">
-              Jika nomor terdaftar, password baru sudah dikirim ke WhatsApp Anda. Silakan cek pesan, lalu masuk dan ubah password dari menu Profil.
+              fitur reset password ini masih dalam tahap percobaan, jika Anda mengalami kendala silakan hubungi admin.
             </div>
             <Link to="/auth" className="block text-center text-sm text-muted-foreground hover:underline">
               ← Kembali ke Masuk
