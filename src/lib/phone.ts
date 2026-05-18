@@ -15,12 +15,12 @@ export function isValidPhone(phone: string): boolean {
 }
 
 export function phoneToEmail(phone: string): string {
-  return `${phone}@wa.tdprofile.local`;
+  return `${phone}@wa.tdprofile.app`;
 }
 
 export function emailToPhone(email: string | null | undefined): string {
   if (!email) return "";
-  const m = email.match(/^(\d+)@wa\.tdprofile\.local$/);
+  const m = email.match(/^(\d+)@wa\.tdprofile\.(app|local)$/);
   return m ? m[1] : "";
 }
 
