@@ -8,7 +8,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { toast } from "sonner";
 import QRCode from "qrcode";
 import * as XLSX from "xlsx";
-import { Download, QrCode as QrIcon, Trash2, Pencil, Lock } from "lucide-react";
+import { Download, QrCode as QrIcon, Trash2, Pencil, Lock, Upload } from "lucide-react";
+import { Html5Qrcode } from "html5-qrcode";
 import { useAdmin } from "./AdminLayout";
 import { Section } from "./components";
 import { ImagePicker } from "@/components/admin/ImagePicker";
@@ -115,12 +116,33 @@ function EventList({ events, programs, onChanged }: { events: any[]; programs: a
   const [editing, setEditing] = useState<any | null>(null);
 
   const showQR = async (ev: any) => {
-    const eventUrl = await QRCode.toDataURL(ev.qr_token, { width: 400, margin: 2 });
+    const { data: evToken, error: e1 } = await supabase.rpc("admin_get_event_qr", { _id: ev.id });
+    if (e1 || !evToken) { toast.error("Gagal mengambil QR event"); return; }
+    const eventUrl = await QRCode.toDataURL(evToken, { width: 400, margin: 2 });
     let programUrl: string | undefined;
-    if (ev.programs?.qr_token) {
-      programUrl = await QRCode.toDataURL(ev.programs.qr_token, { width: 400, margin: 2 });
+    if (ev.program_id) {
+      const { data: progToken } = await supabase.rpc("admin_get_program_qr", { _id: ev.program_id });
+      if (progToken) programUrl = await QRCode.toDataURL(progToken, { width: 400, margin: 2 });
     }
     setQr({ id: ev.id, eventUrl, programUrl, programName: ev.programs?.name });
+  };
+
+  const uploadOldQR = async (ev: any, file: File) => {
+    const scanner = new Html5Qrcode("legacy-qr-decoder", { verbose: false } as any);
+    try {
+      const decoded = await scanner.scanFile(file, false);
+      const token = decoded.trim();
+      if (!token) throw new Error("QR kosong");
+      const { error } = await supabase.from("events").update({ qr_token: token }).eq("id", ev.id);
+      if (error) throw error;
+      toast.success("QR lama berhasil dipasang ke event ini");
+      onChanged();
+      if (qr?.id === ev.id) showQR(ev);
+    } catch (e: any) {
+      toast.error("Gagal membaca QR: " + (e?.message || e));
+    } finally {
+      try { await scanner.clear(); } catch {}
+    }
   };
 
   const exportXLSX = async (ev: any) => {
@@ -241,6 +263,21 @@ function EventList({ events, programs, onChanged }: { events: any[]; programs: a
                   <Button size="sm" variant="outline" disabled={expired} onClick={() => (qr?.id === ev.id ? setQr(null) : showQR(ev))}>
                     <QrIcon className="h-4 w-4 mr-1" /> QR
                   </Button>
+                  <label className="inline-flex">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) uploadOldQR(ev, f);
+                        e.currentTarget.value = "";
+                      }}
+                    />
+                    <span className="inline-flex h-9 cursor-pointer items-center rounded-md border border-input bg-background px-3 text-sm font-medium hover:bg-accent hover:text-accent-foreground" title="Upload QR lama untuk dipakai ulang">
+                      <Upload className="h-4 w-4" />
+                    </span>
+                  </label>
                   <Button size="sm" variant="outline" onClick={() => exportXLSX(ev)}><Download className="h-4 w-4" /></Button>
                   <Button size="sm" variant="outline" onClick={() => remove(ev.id)}><Trash2 className="h-4 w-4" /></Button>
                 </div>
@@ -269,6 +306,8 @@ function EventList({ events, programs, onChanged }: { events: any[]; programs: a
           );
         })}
       </div>
+      {/* Hidden container required by Html5Qrcode for scanFile */}
+      <div id="legacy-qr-decoder" className="hidden" />
 
       <EditEventDialog ev={editing} programs={programs} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); onChanged(); }} />
     </Section>
