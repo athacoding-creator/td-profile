@@ -9,25 +9,29 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Section } from "./components";
-import { MessageCircle, Search, User as UserIcon } from "lucide-react";
+import { MessageCircle, Search, User as UserIcon, ShieldCheck, ShieldOff } from "lucide-react";
 import { formatPhoneDisplay } from "@/lib/phone";
+import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 
 type Profile = any;
 
 export default function UsersPage() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [adminIds, setAdminIds] = useState<Set<string>>(new Set());
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const { user: me } = useAuth();
 
   const load = async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from("profiles")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(1000);
+    const [{ data }, { data: roles }] = await Promise.all([
+      supabase.from("profiles").select("*").order("created_at", { ascending: false }).limit(1000),
+      supabase.from("user_roles").select("user_id, role").eq("role", "admin"),
+    ]);
     setProfiles(data ?? []);
+    setAdminIds(new Set((roles ?? []).map((r: any) => r.user_id)));
     setLoading(false);
   };
 
@@ -36,9 +40,28 @@ export default function UsersPage() {
     const ch = supabase
       .channel("admin-users")
       .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, load)
+      .on("postgres_changes", { event: "*", schema: "public", table: "user_roles" }, load)
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, []);
+
+  const toggleAdmin = async (uid: string, makeAdmin: boolean) => {
+    if (uid === me?.id && !makeAdmin) {
+      toast.error("Tidak bisa mencabut admin dari akun sendiri");
+      return;
+    }
+    if (makeAdmin) {
+      const { error } = await supabase.from("user_roles").insert({ user_id: uid, role: "admin" });
+      if (error && !/duplicate/i.test(error.message)) return toast.error(error.message);
+      toast.success("Sekarang menjadi admin");
+    } else {
+      if (!confirm("Cabut akses admin dari user ini?")) return;
+      const { error } = await supabase.from("user_roles").delete().eq("user_id", uid).eq("role", "admin");
+      if (error) return toast.error(error.message);
+      toast.success("Admin dicabut");
+    }
+    load();
+  };
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -79,11 +102,12 @@ export default function UsersPage() {
                 <th>Kota</th>
                 <th>Poin</th>
                 <th>Status</th>
+                <th>Role</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
-              {loading && <tr><td colSpan={7} className="py-4 text-center text-muted-foreground">Memuat…</td></tr>}
+              {loading && <tr><td colSpan={8} className="py-4 text-center text-muted-foreground">Memuat…</td></tr>}
               {!loading && filtered.map((p) => (
                 <tr key={p.id} className="border-t border-border/60">
                   <td className="py-2">{p.full_name || "—"}</td>
@@ -105,12 +129,23 @@ export default function UsersPage() {
                     </span>
                   </td>
                   <td>
+                    {adminIds.has(p.id) ? (
+                      <Button size="sm" variant="outline" onClick={() => toggleAdmin(p.id, false)} className="h-7 gap-1 text-xs">
+                        <ShieldCheck className="h-3.5 w-3.5 text-accent" /> Admin
+                      </Button>
+                    ) : (
+                      <Button size="sm" variant="outline" onClick={() => toggleAdmin(p.id, true)} className="h-7 gap-1 text-xs">
+                        <ShieldOff className="h-3.5 w-3.5 text-muted-foreground" /> User
+                      </Button>
+                    )}
+                  </td>
+                  <td>
                     <Button size="sm" variant="outline" onClick={() => setSelected(p)}>Detail</Button>
                   </td>
                 </tr>
               ))}
               {!loading && filtered.length === 0 && (
-                <tr><td colSpan={7} className="py-4 text-center text-muted-foreground">Tidak ada akun</td></tr>
+                <tr><td colSpan={8} className="py-4 text-center text-muted-foreground">Tidak ada akun</td></tr>
               )}
             </tbody>
           </table>
