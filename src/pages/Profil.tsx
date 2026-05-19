@@ -27,6 +27,7 @@ import {
   QrCode,
   KeyRound,
   Camera,
+  Shield,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { formatPhoneDisplay } from "@/lib/phone";
@@ -49,7 +50,7 @@ type Wilayah = { id: string; name: string };
 type View = "menu" | "edit" | "qr" | "password";
 
 export default function Profil() {
-  const { user, profile, refreshProfile, signOut } = useAuth();
+  const { user, profile, refreshProfile, signOut, isAdmin } = useAuth();
   const [view, setView] = useState<View>("menu");
   const [form, setForm] = useState<any>({});
   const [loading, setLoading] = useState(false);
@@ -189,6 +190,7 @@ export default function Profil() {
     { icon: Ticket, label: "Event saya", to: "/riwayat" },
     { icon: HeartHandshake, label: "Donasi", href: "https://sedekah.terasdakwah.com" },
     { icon: Award, label: "Poin", to: "/poin" },
+    ...(isAdmin ? [{ icon: Shield, label: "Admin", to: "/admin" }] : []),
   ];
 
   return (
