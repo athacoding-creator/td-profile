@@ -16,7 +16,9 @@ export default function ScanQR() {
   const scannerRef = useRef<Html5Qrcode | null>(null);
 
   useEffect(() => {
-    supabase.from("events").select("*").eq("id", id).maybeSingle().then(({ data }) => setEvent(data));
+    supabase.from("events")
+      .select("id,title,venue,starts_at,ends_at,status,points_reward,program_id")
+      .eq("id", id).maybeSingle().then(({ data }) => setEvent(data));
   }, [id]);
 
   const validate = async (token: string) => {
@@ -28,7 +30,7 @@ export default function ScanQR() {
       return;
     }
     await refreshProfile();
-    toast.success("Absensi tercatat!");
+    toast.success("Pendaftaran berhasil 🎉");
     navigate("/poin");
   };
 

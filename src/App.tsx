@@ -23,7 +23,6 @@ const AdminEvents = lazy(() => import("./pages/admin/Events"));
 const AdminPrograms = lazy(() => import("./pages/admin/Programs"));
 const AdminRegistrations = lazy(() => import("./pages/admin/Registrations"));
 const AdminRedemptions = lazy(() => import("./pages/admin/Redemptions"));
-const AdminLogins = lazy(() => import("./pages/admin/Logins"));
 const AdminUsers = lazy(() => import("./pages/admin/Users"));
 
 const AdminMerchandise = lazy(() => import("./pages/admin/Merchandise"));
@@ -84,7 +83,6 @@ const App = () => (
                   <Route path="penukaran" element={<AdminRedemptions />} />
                   <Route path="merchandise" element={<AdminMerchandise />} />
                   <Route path="hero" element={<AdminHero />} />
-                  <Route path="login" element={<AdminLogins />} />
                   <Route path="pengaturan" element={<AdminSettings />} />
                 </Route>
                 <Route path="*" element={<NotFound />} />

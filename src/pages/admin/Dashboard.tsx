@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useAdmin } from "./AdminLayout";
 import {
-  CalendarDays, Sparkles, Users, Gift, ShoppingBag, Image as ImageIcon, LogIn, Settings as SettingsIcon, Hand, UserCircle,
+  CalendarDays, Sparkles, Users, Gift, ShoppingBag, Image as ImageIcon, Settings as SettingsIcon, Hand, UserCircle,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import ActivityStatsCard from "./ActivityStatsCard";
@@ -20,8 +20,6 @@ const groups = [
     items: [
       { to: "/admin/pendaftar", icon: Users, title: "Pendaftar", desc: "Tracking jamaah per event" },
       { to: "/admin/akun", icon: UserCircle, title: "Akun", desc: "Lihat data lengkap tiap akun jamaah" },
-      { to: "/admin/login", icon: LogIn, title: "Login", desc: "Riwayat login pengguna" },
-      
     ],
   },
   {

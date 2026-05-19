@@ -9,7 +9,6 @@ export type AdminData = {
   settings: Settings;
   setSettings: (s: Settings) => void;
   redemptions: any[];
-  logins: any[];
   registrations: any[];
   attendance: any[];
   onlineCount: number;
@@ -22,7 +21,6 @@ export function useAdminData(): AdminData {
   const [programs, setPrograms] = useState<any[]>([]);
   const [settings, setSettings] = useState<Settings>({ profile_complete_bonus: 50, default_attendance_points: 10 });
   const [redemptions, setRedemptions] = useState<any[]>([]);
-  const [logins, setLogins] = useState<any[]>([]);
   const [registrations, setRegistrations] = useState<any[]>([]);
   const [attendance, setAttendance] = useState<any[]>([]);
   const [onlineCount, setOnlineCount] = useState(0);
@@ -30,13 +28,15 @@ export function useAdminData(): AdminData {
   const loadEvents = async () => {
     const { data, error } = await supabase
       .from("events")
-      .select("*, programs(id, name, code)")
+      .select("id,title,description,venue,city,starts_at,ends_at,status,gender,event_type,poster_url,group_link,points_reward,program_id,created_by,created_at,updated_at, programs(id, name, code)")
       .order("starts_at", { ascending: false });
     if (error) console.error("loadEvents", error);
     setEvents(data ?? []);
   };
   const loadPrograms = async () => {
-    const { data } = await supabase.from("programs").select("*").order("name");
+    const { data } = await supabase.from("programs")
+      .select("id,name,code,description,gender_restriction,created_at,updated_at")
+      .order("name");
     setPrograms(data ?? []);
   };
   const loadSettings = async () => {
@@ -50,16 +50,9 @@ export function useAdminData(): AdminData {
   const loadRedemptions = async () => {
     const { data } = await supabase
       .from("redemptions")
-      .select("id, status, cost_points, created_at, user_id, reward_id, rewards(name), profiles:user_id(full_name, email)")
+      .select("id, status, cost_points, created_at, user_id, reward_id, rewards(name), profiles:user_id(full_name, email, phone)")
       .order("created_at", { ascending: false }).limit(100);
     setRedemptions(data ?? []);
-  };
-  const loadLogins = async () => {
-    const { data } = await supabase
-      .from("login_events")
-      .select("id, created_at, user_agent, user_id, profiles:user_id(full_name, email)")
-      .order("created_at", { ascending: false }).limit(100);
-    setLogins(data ?? []);
   };
   const loadRegistrations = async () => {
     const { data } = await supabase
@@ -77,7 +70,7 @@ export function useAdminData(): AdminData {
   };
 
   const reloadAll = async () => {
-    await Promise.all([loadEvents(), loadPrograms(), loadSettings(), loadRedemptions(), loadLogins(), loadRegistrations(), loadAttendance()]);
+    await Promise.all([loadEvents(), loadPrograms(), loadSettings(), loadRedemptions(), loadRegistrations(), loadAttendance()]);
   };
 
   useEffect(() => {
@@ -88,7 +81,6 @@ export function useAdminData(): AdminData {
       .on("postgres_changes", { event: "*", schema: "public", table: "events" }, loadEvents)
       .on("postgres_changes", { event: "*", schema: "public", table: "programs" }, loadPrograms)
       .on("postgres_changes", { event: "*", schema: "public", table: "redemptions" }, loadRedemptions)
-      .on("postgres_changes", { event: "*", schema: "public", table: "login_events" }, loadLogins)
       .on("postgres_changes", { event: "*", schema: "public", table: "registrations" }, loadRegistrations)
       .on("postgres_changes", { event: "*", schema: "public", table: "attendance" }, loadAttendance)
       .subscribe((status) => {
@@ -112,5 +104,5 @@ export function useAdminData(): AdminData {
     };
   }, []);
 
-  return { events, programs, settings, setSettings, redemptions, logins, registrations, attendance, onlineCount, reloadEvents: loadEvents, reloadPrograms: loadPrograms };
+  return { events, programs, settings, setSettings, redemptions, registrations, attendance, onlineCount, reloadEvents: loadEvents, reloadPrograms: loadPrograms };
 }
