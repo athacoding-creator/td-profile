@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useAdmin } from "./AdminLayout";
 import {
-  CalendarDays, Sparkles, Users, Gift, ShoppingBag, Image as ImageIcon, LogIn, Settings as SettingsIcon, Hand, UserCircle,
+  CalendarDays, Sparkles, Users, Gift, ShoppingBag, Image as ImageIcon, Settings as SettingsIcon, Hand, UserCircle,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import ActivityStatsCard from "./ActivityStatsCard";
@@ -20,8 +20,6 @@ const groups = [
     items: [
       { to: "/admin/pendaftar", icon: Users, title: "Pendaftar", desc: "Tracking jamaah per event" },
       { to: "/admin/akun", icon: UserCircle, title: "Akun", desc: "Lihat data lengkap tiap akun jamaah" },
-      { to: "/admin/login", icon: LogIn, title: "Login", desc: "Riwayat login pengguna" },
-      
     ],
   },
   {
@@ -53,7 +51,7 @@ export default function Dashboard() {
       </div>
 
       {/* Unified stats card */}
-      <ActivityStatsCard attendance={data.attendance} redemptions={data.redemptions} registrations={data.registrations} logins={data.logins} />
+      <ActivityStatsCard attendance={data.attendance} redemptions={data.redemptions} registrations={data.registrations} logins={[]} />
 
       {/* Grouped menu */}
       <div className="space-y-6">

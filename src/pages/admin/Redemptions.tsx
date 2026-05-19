@@ -1,8 +1,10 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { MessageCircle } from "lucide-react";
 import { useAdmin } from "./AdminLayout";
 import { Section } from "./components";
+import { formatPhoneDisplay } from "@/lib/phone";
 
 export default function RedemptionsPage() {
   const { redemptions } = useAdmin();
@@ -35,7 +37,19 @@ function RedemptionRow({ r }: { r: any }) {
         <p className="text-xs text-muted-foreground">
           {r.cost_points} pts · {new Date(r.created_at).toLocaleString("id-ID")}
         </p>
-        <p className="text-[11px] text-muted-foreground">{r.profiles?.full_name || r.user_id.slice(0, 8)}</p>
+        {r.profiles?.phone ? (
+          <a
+            href={`https://wa.me/${r.profiles.phone}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-0.5 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+          >
+            <MessageCircle className="h-3.5 w-3.5" />
+            {formatPhoneDisplay(r.profiles.phone)}
+          </a>
+        ) : (
+          <p className="text-[11px] text-muted-foreground">{r.user_id.slice(0, 8)}</p>
+        )}
       </div>
       <div className="flex items-center gap-2">
         <span className={`rounded-full px-2 py-0.5 text-xs ${r.status === "approved" ? "bg-accent/15 text-accent" : r.status === "rejected" ? "bg-destructive/15 text-destructive" : "bg-muted"}`}>

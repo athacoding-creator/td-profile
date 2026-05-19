@@ -21,7 +21,9 @@ export default function EventDetail() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.from("events").select("*").eq("id", id).maybeSingle();
+      const { data } = await supabase.from("events")
+        .select("id,title,description,venue,city,starts_at,ends_at,status,gender,event_type,poster_url,group_link,points_reward,program_id,created_at")
+        .eq("id", id).maybeSingle();
       setEvent(data);
       if (user && data) {
         const { data: r } = await supabase
