@@ -65,7 +65,7 @@ export default function EventDetail() {
       <Header />
       <main className="container max-w-3xl py-8">
         <button
-          onClick={() => navigate("/events")}
+          onClick={() => navigate("/")}
           className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition"
         >
           <ChevronLeft className="h-4 w-4" /> Kembali ke Event
