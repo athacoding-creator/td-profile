@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
+import { ChevronLeft } from "lucide-react";
 
 export default function ScanQR() {
   const { id } = useParams();
@@ -61,6 +62,12 @@ export default function ScanQR() {
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container max-w-md py-8">
+        <button
+          onClick={() => navigate(-1)}
+          className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition"
+        >
+          <ChevronLeft className="h-4 w-4" /> Kembali
+        </button>
         <h1 className="font-display text-2xl font-bold">Scan QR Absensi</h1>
         <p className="mt-2 text-sm text-muted-foreground">{event?.title}</p>
         <div id="qr-reader" className="mt-6 overflow-hidden rounded-2xl bg-card" />

@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
-import { MapPin, Calendar, Users, Lock, Link2 } from "lucide-react";
+import { MapPin, Calendar, Users, Lock, Link2, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
@@ -64,6 +64,12 @@ export default function EventDetail() {
     <div className="min-h-screen bg-background pb-32">
       <Header />
       <main className="container max-w-3xl py-8">
+        <button
+          onClick={() => navigate("/events")}
+          className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition"
+        >
+          <ChevronLeft className="h-4 w-4" /> Kembali ke Event
+        </button>
         {event.poster_url && (
           <div className="overflow-hidden rounded-2xl" style={{ boxShadow: "var(--shadow-card)" }}>
             <img src={event.poster_url} alt={event.title} className="w-full" />

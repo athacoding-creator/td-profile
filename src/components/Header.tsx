@@ -3,10 +3,10 @@ import { Link } from "react-router-dom";
 export const Header = () => {
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-card/80 backdrop-blur-md">
-      <div className="container flex items-center justify-center py-3">
+      <div className="container flex items-center justify-center py-2">
         <Link to="/" className="flex items-center gap-2 font-display">
           <img
-            src="https://res.cloudinary.com/dph1qdufr/image/upload/v1779156743/Desain_tanpa_judul_2_v1zqvv.png"
+            src="https://res.cloudinary.com/dph1qdufr/image/upload/v1779157059/Tanpa_judul_3600_x_615_piksel_myivco.png"
             alt="TD Logo"
             className="h-10 w-auto"
           />
