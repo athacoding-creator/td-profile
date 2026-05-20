@@ -168,22 +168,6 @@ function EventList({ events, programs, onChanged }: { events: any[]; programs: a
                   <Button size="sm" variant="outline" disabled={expired} onClick={() => (qr?.id === ev.id ? setQr(null) : showQR(ev))}>
                     <QrIcon className="h-4 w-4 mr-1" /> QR
                   </Button>
-                  <label className="inline-flex">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => {
-                        const f = e.target.files?.[0];
-                        if (f) uploadOldQR(ev, f);
-                        e.currentTarget.value = "";
-                      }}
-                    />
-                    <span className="inline-flex h-9 cursor-pointer items-center rounded-md border border-input bg-background px-3 text-sm font-medium hover:bg-accent hover:text-accent-foreground" title="Upload QR lama untuk dipakai ulang">
-                      <Upload className="h-4 w-4" />
-                    </span>
-                  </label>
-                  <Button size="sm" variant="outline" onClick={() => exportXLSX(ev)}><Download className="h-4 w-4" /></Button>
                   <Button size="sm" variant="outline" onClick={() => remove(ev.id)}><Trash2 className="h-4 w-4" /></Button>
                 </div>
               </div>
@@ -211,9 +195,6 @@ function EventList({ events, programs, onChanged }: { events: any[]; programs: a
           );
         })}
       </div>
-      {/* Hidden container required by Html5Qrcode for scanFile */}
-      <div id="legacy-qr-decoder" className="hidden" />
-
       <EditEventDialog ev={editing} programs={programs} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); onChanged(); }} />
     </Section>
   );
