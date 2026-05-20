@@ -7,9 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import QRCode from "qrcode";
-import * as XLSX from "xlsx";
-import { Download, QrCode as QrIcon, Trash2, Pencil, Lock, Upload } from "lucide-react";
-import { Html5Qrcode } from "html5-qrcode";
+import { QrCode as QrIcon, Trash2, Pencil, Lock } from "lucide-react";
 import { useAdmin } from "./AdminLayout";
 import { Section } from "./components";
 import { ImagePicker } from "@/components/admin/ImagePicker";
@@ -70,6 +68,7 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
       starts_at: localInputToISO(form.starts_at)!, ends_at: localInputToISO(form.ends_at), group_link: form.group_link,
       points_reward: Number(form.points_reward ?? defaultPoints),
       program_id: form.program_id || null, status: "active",
+      success_message: form.success_message || null,
     });
     if (error) return toast.error(error.message);
     toast.success("Event dibuat");
@@ -105,6 +104,10 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
           </select>
         </div>
         <div className="space-y-1.5"><Label>Poin Reward</Label><Input type="number" value={form.points_reward ?? defaultPoints} onChange={(e) => setForm({ ...form, points_reward: e.target.value })} /></div>
+        <div className="space-y-1.5 md:col-span-2">
+          <Label>Pesan Sukses (ditampilkan setelah user scan QR)</Label>
+          <Textarea rows={3} placeholder="Selamat, kamu telah berhasil mendaftar! Sampai jumpa di acara 🎉" value={form.success_message ?? ""} onChange={(e) => setForm({ ...form, success_message: e.target.value })} />
+        </div>
         <div className="md:col-span-2"><Button type="submit" className="w-full bg-primary text-primary-foreground">Buat Event</Button></div>
       </form>
     </Section>
