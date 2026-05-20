@@ -13,6 +13,7 @@ const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
 const EventDetail = lazy(() => import("./pages/EventDetail"));
 const ScanQR = lazy(() => import("./pages/ScanQR"));
+const ScanSuccess = lazy(() => import("./pages/ScanSuccess"));
 const Poin = lazy(() => import("./pages/Poin"));
 const Riwayat = lazy(() => import("./pages/Riwayat"));
 const Events = lazy(() => import("./pages/Events"));
@@ -69,6 +70,7 @@ const App = () => (
                 <Route path="/onboarding" element={<RequireAuth><Onboarding /></RequireAuth>} />
                 <Route path="/event/:id" element={<EventDetail />} />
                 <Route path="/event/:id/scan" element={<RequireAuth><ScanQR /></RequireAuth>} />
+                <Route path="/event/:id/sukses" element={<RequireAuth><ScanSuccess /></RequireAuth>} />
                 <Route path="/poin" element={<RequireAuth><Poin /></RequireAuth>} />
                 <Route path="/riwayat" element={<RequireAuth><Riwayat /></RequireAuth>} />
                 <Route path="/event" element={<Events />} />
