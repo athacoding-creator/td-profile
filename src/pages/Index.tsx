@@ -78,11 +78,6 @@ export default function Index() {
       </section>
 
       <footer className="container mt-12 flex flex-col items-center gap-3 border-t border-border/60 pt-4 pb-1">
-        <img
-          src="https://res.cloudinary.com/dfjvcvbsn/image/upload/v1768960205/TD_Logo_Resmi_qae5bg.png"
-          alt="Teras Dakwah"
-          className="h-15 w-auto"
-        />
         <p className="text-xs text-muted-foreground">© 2014 Teras Dakwah</p>
       </footer>
 
