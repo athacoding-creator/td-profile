@@ -58,7 +58,11 @@ export default function EventDetail() {
   const genderMismatch =
     user && profile?.gender && event.gender !== "ALL" && event.gender !== profile.gender;
   const endTime = event.ends_at ? new Date(event.ends_at) : new Date(new Date(event.starts_at).getTime() + 6 * 3600 * 1000);
+  const startTime = new Date(event.starts_at);
+  const scanStartTime = new Date(startTime.getTime() - 60 * 60 * 1000);
   const expired = Date.now() > endTime.getTime() || event.status === "archived";
+  const scanAvailable = Date.now() >= scanStartTime.getTime() && Date.now() <= endTime.getTime();
+  const scanNotYetAvailable = Date.now() < scanStartTime.getTime();
 
   return (
     <div className="min-h-screen bg-background pb-32">
@@ -109,9 +113,15 @@ export default function EventDetail() {
               <div className="rounded-xl bg-accent/10 p-4 text-center font-semibold text-accent">
                 ✓ Kamu sudah terdaftar
               </div>
-              <Link to={`/event/${event.id}/scan`}>
-                <Button className="w-full bg-primary text-primary-foreground">Scan QR Absensi</Button>
-              </Link>
+              {scanNotYetAvailable ? (
+                <div className="rounded-xl bg-amber-50 p-4 text-center text-sm text-amber-800 border border-amber-200">
+                  Scan QR tersedia mulai jam {scanStartTime.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
+                </div>
+              ) : (
+                <Link to={`/event/${event.id}/scan`}>
+                  <Button className="w-full bg-primary text-primary-foreground">Scan QR Absensi</Button>
+                </Link>
+              )}
               {event.group_link && (
                 <a href={event.group_link} target="_blank" rel="noreferrer">
                   <Button variant="outline" className="w-full">

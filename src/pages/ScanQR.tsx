@@ -14,13 +14,34 @@ export default function ScanQR() {
   const navigate = useNavigate();
   const [event, setEvent] = useState<any>(null);
   const [scanning, setScanning] = useState(false);
+  const [now, setNow] = useState(new Date());
   const scannerRef = useRef<Html5Qrcode | null>(null);
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     supabase.from("events")
       .select("id,title,venue,starts_at,ends_at,status,points_reward,program_id")
       .eq("id", id).maybeSingle().then(({ data }) => setEvent(data));
   }, [id]);
+
+  const getScanStatus = () => {
+    if (!event) return null;
+    const startTime = new Date(event.starts_at);
+    const endTime = event.ends_at ? new Date(event.ends_at) : new Date(startTime.getTime() + 6 * 60 * 60 * 1000);
+    const scanStartTime = new Date(startTime.getTime() - 60 * 60 * 1000);
+
+    if (now < scanStartTime) {
+      return { allowed: false, message: `Scan tersedia mulai jam ${scanStartTime.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}` };
+    }
+    if (now > endTime) {
+      return { allowed: false, message: "Event sudah selesai" };
+    }
+    return { allowed: true };
+  };
 
   const validate = async (token: string) => {
     if (!event || !user) return;
@@ -57,6 +78,8 @@ export default function ScanQR() {
 
   useEffect(() => () => { scannerRef.current?.stop().catch(() => {}); }, []);
 
+  const scanStatus = getScanStatus();
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -69,16 +92,23 @@ export default function ScanQR() {
         </button>
         <h1 className="font-display text-2xl font-bold">Scan QR Absensi</h1>
         <p className="mt-2 text-sm text-muted-foreground">{event?.title}</p>
+        {scanStatus && !scanStatus.allowed && (
+          <div className="mt-4 rounded-lg bg-amber-50 p-4 text-center text-sm text-amber-800 border border-amber-200">
+            {scanStatus.message}
+          </div>
+        )}
         <div id="qr-reader" className="mt-6 overflow-hidden rounded-2xl bg-card" />
         {!scanning && (
-          <Button onClick={start} className="mt-6 w-full bg-primary text-primary-foreground">
+          <Button onClick={start} disabled={scanStatus && !scanStatus.allowed} className="mt-6 w-full bg-primary text-primary-foreground">
             Mulai Scan
           </Button>
         )}
-        <div className="mt-6 text-xs text-muted-foreground">
-          Atau masukkan kode manual:
-          <ManualInput onSubmit={validate} />
-        </div>
+        {scanStatus?.allowed && (
+          <div className="mt-6 text-xs text-muted-foreground">
+            Atau masukkan kode manual:
+            <ManualInput onSubmit={validate} />
+          </div>
+        )}
       </main>
     </div>
   );

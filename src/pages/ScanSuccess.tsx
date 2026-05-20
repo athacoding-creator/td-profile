@@ -24,7 +24,17 @@ export default function ScanSuccess() {
     })();
   }, [id]);
 
-  if (loading) return <div className="container py-20 text-center text-muted-foreground">Memuat…</div>;
+  if (loading) return (
+    <div className="min-h-screen bg-background">
+      <Header />
+      <main className="container max-w-md py-20 text-center">
+        <div className="space-y-4">
+          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-muted border-t-accent" />
+          <p className="text-muted-foreground">Memproses…</p>
+        </div>
+      </main>
+    </div>
+  );
 
   const message = event?.success_message?.trim() || DEFAULT_MSG;
 
