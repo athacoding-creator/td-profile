@@ -218,6 +218,7 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
       points_reward: ev.points_reward ?? 10,
       program_id: ev.program_id ?? "",
       status: ev.status ?? "active",
+      success_message: ev.success_message ?? "",
     });
   }, [ev]);
 
@@ -231,6 +232,7 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
       points_reward: Number(form.points_reward),
       program_id: form.program_id || null,
       status: form.status,
+      success_message: form.success_message || null,
     }).eq("id", ev.id);
     if (error) return toast.error(error.message);
     toast.success("Event diperbarui");
@@ -274,6 +276,10 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
               <option value="finished">finished</option>
               <option value="archived">archived</option>
             </select>
+          </div>
+          <div className="space-y-1.5 md:col-span-2">
+            <Label>Pesan Sukses (ditampilkan setelah user scan QR)</Label>
+            <Textarea rows={3} placeholder="Selamat, kamu telah berhasil mendaftar! Sampai jumpa di acara 🎉" value={form.success_message ?? ""} onChange={(e) => setForm({ ...form, success_message: e.target.value })} />
           </div>
         </div>
         <DialogFooter>
