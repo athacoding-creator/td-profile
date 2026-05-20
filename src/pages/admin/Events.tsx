@@ -7,9 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import QRCode from "qrcode";
-import * as XLSX from "xlsx";
-import { Download, QrCode as QrIcon, Trash2, Pencil, Lock, Upload } from "lucide-react";
-import { Html5Qrcode } from "html5-qrcode";
+import { QrCode as QrIcon, Trash2, Pencil, Lock } from "lucide-react";
 import { useAdmin } from "./AdminLayout";
 import { Section } from "./components";
 import { ImagePicker } from "@/components/admin/ImagePicker";
@@ -70,6 +68,7 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
       starts_at: localInputToISO(form.starts_at)!, ends_at: localInputToISO(form.ends_at), group_link: form.group_link,
       points_reward: Number(form.points_reward ?? defaultPoints),
       program_id: form.program_id || null, status: "active",
+      success_message: form.success_message || null,
     });
     if (error) return toast.error(error.message);
     toast.success("Event dibuat");
@@ -105,6 +104,10 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
           </select>
         </div>
         <div className="space-y-1.5"><Label>Poin Reward</Label><Input type="number" value={form.points_reward ?? defaultPoints} onChange={(e) => setForm({ ...form, points_reward: e.target.value })} /></div>
+        <div className="space-y-1.5 md:col-span-2">
+          <Label>Pesan Sukses (ditampilkan setelah user scan QR)</Label>
+          <Textarea rows={3} placeholder="Selamat, kamu telah berhasil mendaftar! Sampai jumpa di acara 🎉" value={form.success_message ?? ""} onChange={(e) => setForm({ ...form, success_message: e.target.value })} />
+        </div>
         <div className="md:col-span-2"><Button type="submit" className="w-full bg-primary text-primary-foreground">Buat Event</Button></div>
       </form>
     </Section>
@@ -125,104 +128,6 @@ function EventList({ events, programs, onChanged }: { events: any[]; programs: a
       if (progToken) programUrl = await QRCode.toDataURL(progToken, { width: 400, margin: 2 });
     }
     setQr({ id: ev.id, eventUrl, programUrl, programName: ev.programs?.name });
-  };
-
-  const uploadOldQR = async (ev: any, file: File) => {
-    const scanner = new Html5Qrcode("legacy-qr-decoder", { verbose: false } as any);
-    try {
-      const decoded = await scanner.scanFile(file, false);
-      const token = decoded.trim();
-      if (!token) throw new Error("QR kosong");
-      const { error } = await supabase.from("events").update({ qr_token: token }).eq("id", ev.id);
-      if (error) throw error;
-      toast.success("QR lama berhasil dipasang ke event ini");
-      onChanged();
-      if (qr?.id === ev.id) showQR(ev);
-    } catch (e: any) {
-      toast.error("Gagal membaca QR: " + (e?.message || e));
-    } finally {
-      try { await scanner.clear(); } catch {}
-    }
-  };
-
-  const exportXLSX = async (ev: any) => {
-    const { data } = await supabase.from("registrations")
-      .select("created_at, user_id, profiles(full_name, phone, gender, city, email)").eq("event_id", ev.id)
-      .order("created_at", { ascending: true });
-    const { data: att } = await supabase.from("attendance")
-      .select("scanned_at, user_id, points_awarded").eq("event_id", ev.id);
-    const attendedMap = new Map((att ?? []).map((a: any) => [a.user_id, a]));
-
-    // Sheet 1 — Info Event
-    const wb = XLSX.utils.book_new();
-    const totalReg = (data ?? []).length;
-    const totalHadir = attendedMap.size;
-    const infoRows = [
-      { Field: "Judul Event", Value: ev.title },
-      { Field: "Tipe", Value: ev.event_type ?? "-" },
-      { Field: "Program", Value: ev.programs?.name ?? "-" },
-      { Field: "Venue", Value: ev.venue ?? "-" },
-      { Field: "Kota", Value: ev.city ?? "-" },
-      { Field: "Mulai", Value: new Date(ev.starts_at).toLocaleString("id-ID") },
-      { Field: "Selesai", Value: ev.ends_at ? new Date(ev.ends_at).toLocaleString("id-ID") : "-" },
-      { Field: "Total Pendaftar", Value: totalReg },
-      { Field: "Total Hadir", Value: totalHadir },
-      { Field: "Total Tidak Hadir", Value: Math.max(0, totalReg - totalHadir) },
-    ];
-    const wsInfo = XLSX.utils.json_to_sheet(infoRows);
-    wsInfo["!cols"] = [{ wch: 20 }, { wch: 50 }];
-    XLSX.utils.book_append_sheet(wb, wsInfo, "Info Event");
-
-    // Sheet 2 — Peserta per akun (satu baris per akun, urut tanggal daftar asc)
-    const fmtTanggal = (d: string | Date) => {
-      const x = new Date(d);
-      const dd = String(x.getDate()).padStart(2, "0");
-      const mm = String(x.getMonth() + 1).padStart(2, "0");
-      const yy = String(x.getFullYear()).slice(-2);
-      const hh = String(x.getHours()).padStart(2, "0");
-      const mi = String(x.getMinutes()).padStart(2, "0");
-      return `${dd}/${mm}/${yy}, ${hh}.${mi}`;
-    };
-    const rows = (data ?? []).map((r: any, i: number) => {
-      const att = attendedMap.get(r.user_id);
-      const scannedAt = att?.scanned_at;
-      return {
-        No: i + 1,
-        Tanggal: fmtTanggal(r.created_at),
-        Nama: r.profiles?.full_name ?? "-",
-        WhatsApp: r.profiles?.phone ?? "-",
-        Event: ev.title ?? "-",
-        "Status Hadir": scannedAt ? "Hadir" : "Tidak Hadir",
-        Poin: att?.points_awarded ?? 0,
-        Pesan: "",
-      };
-    });
-    rows.push({
-      No: "" as any,
-      Tanggal: "",
-      Nama: "TOTAL",
-      WhatsApp: "",
-      Event: "",
-      "Status Hadir": `${totalHadir} / ${totalReg}`,
-      Poin: rows.reduce((s: number, r: any) => s + (r.Poin || 0), 0) as any,
-      Pesan: "",
-    });
-    const ws = XLSX.utils.json_to_sheet(rows);
-    ws["!cols"] = [
-      { wch: 5 },   // No
-      { wch: 18 },  // Tanggal
-      { wch: 28 },  // Nama
-      { wch: 18 },  // WhatsApp
-      { wch: 36 },  // Event
-      { wch: 14 },  // Status Hadir
-      { wch: 10 },  // Poin
-      { wch: 30 },  // Pesan
-    ];
-    ws["!freeze"] = { xSplit: 0, ySplit: 1 } as any;
-    XLSX.utils.book_append_sheet(wb, ws, "Peserta");
-
-    const safe = (ev.title || "event").replace(/[^a-z0-9]+/gi, "-").toLowerCase().slice(0, 40);
-    XLSX.writeFile(wb, `peserta-${safe}-${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
 
   const remove = async (id: string) => {
@@ -263,22 +168,6 @@ function EventList({ events, programs, onChanged }: { events: any[]; programs: a
                   <Button size="sm" variant="outline" disabled={expired} onClick={() => (qr?.id === ev.id ? setQr(null) : showQR(ev))}>
                     <QrIcon className="h-4 w-4 mr-1" /> QR
                   </Button>
-                  <label className="inline-flex">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => {
-                        const f = e.target.files?.[0];
-                        if (f) uploadOldQR(ev, f);
-                        e.currentTarget.value = "";
-                      }}
-                    />
-                    <span className="inline-flex h-9 cursor-pointer items-center rounded-md border border-input bg-background px-3 text-sm font-medium hover:bg-accent hover:text-accent-foreground" title="Upload QR lama untuk dipakai ulang">
-                      <Upload className="h-4 w-4" />
-                    </span>
-                  </label>
-                  <Button size="sm" variant="outline" onClick={() => exportXLSX(ev)}><Download className="h-4 w-4" /></Button>
                   <Button size="sm" variant="outline" onClick={() => remove(ev.id)}><Trash2 className="h-4 w-4" /></Button>
                 </div>
               </div>
@@ -306,9 +195,6 @@ function EventList({ events, programs, onChanged }: { events: any[]; programs: a
           );
         })}
       </div>
-      {/* Hidden container required by Html5Qrcode for scanFile */}
-      <div id="legacy-qr-decoder" className="hidden" />
-
       <EditEventDialog ev={editing} programs={programs} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); onChanged(); }} />
     </Section>
   );
@@ -332,6 +218,7 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
       points_reward: ev.points_reward ?? 10,
       program_id: ev.program_id ?? "",
       status: ev.status ?? "active",
+      success_message: ev.success_message ?? "",
     });
   }, [ev]);
 
@@ -345,6 +232,7 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
       points_reward: Number(form.points_reward),
       program_id: form.program_id || null,
       status: form.status,
+      success_message: form.success_message || null,
     }).eq("id", ev.id);
     if (error) return toast.error(error.message);
     toast.success("Event diperbarui");
@@ -388,6 +276,10 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
               <option value="finished">finished</option>
               <option value="archived">archived</option>
             </select>
+          </div>
+          <div className="space-y-1.5 md:col-span-2">
+            <Label>Pesan Sukses (ditampilkan setelah user scan QR)</Label>
+            <Textarea rows={3} placeholder="Selamat, kamu telah berhasil mendaftar! Sampai jumpa di acara 🎉" value={form.success_message ?? ""} onChange={(e) => setForm({ ...form, success_message: e.target.value })} />
           </div>
         </div>
         <DialogFooter>

@@ -24,15 +24,14 @@ export default function ScanQR() {
 
   const validate = async (token: string) => {
     if (!event || !user) return;
-    const { error } = await supabase.rpc("record_attendance", { _event_id: event.id, _token: token });
+    const { data: evid, error } = await supabase.rpc("record_attendance", { _event_id: event.id, _token: token });
     if (error) {
       if (error.code === "23505" || /duplicate/i.test(error.message)) toast.info("Kamu sudah absen sebelumnya");
       else toast.error(error.message);
       return;
     }
     await refreshProfile();
-    toast.success("Pendaftaran berhasil 🎉");
-    navigate("/poin");
+    navigate(`/event/${evid ?? event.id}/sukses`);
   };
 
   const start = async () => {
