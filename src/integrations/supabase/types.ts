@@ -88,6 +88,7 @@ export type Database = {
           qr_token: string
           starts_at: string
           status: Database["public"]["Enums"]["event_status"]
+          success_message: string | null
           title: string
           updated_at: string
           venue: string
@@ -108,6 +109,7 @@ export type Database = {
           qr_token?: string
           starts_at: string
           status?: Database["public"]["Enums"]["event_status"]
+          success_message?: string | null
           title: string
           updated_at?: string
           venue: string
@@ -128,6 +130,7 @@ export type Database = {
           qr_token?: string
           starts_at?: string
           status?: Database["public"]["Enums"]["event_status"]
+          success_message?: string | null
           title?: string
           updated_at?: string
           venue?: string
