@@ -28,7 +28,8 @@ export function useAdminData(): AdminData {
   const loadEvents = async () => {
     const { data, error } = await supabase
       .from("events")
-      .select("id,title,description,venue,city,starts_at,ends_at,status,gender,event_type,poster_url,group_link,points_reward,program_id,created_by,created_at,updated_at, programs(id, name, code)")
+      .select("id,title,description,venue,city,starts_at,ends_at,status,gender,event_type,poster_url,group_link,points_reward,program_id,created_by,created_at,updated_at,success_message,is_pinned,is_recurring,recurring_days,recurring_start_time,recurring_end_time,recurring_until, programs(id, name, code)")
+      .order("is_pinned", { ascending: false })
       .order("starts_at", { ascending: false });
     if (error) console.error("loadEvents", error);
     setEvents(data ?? []);
