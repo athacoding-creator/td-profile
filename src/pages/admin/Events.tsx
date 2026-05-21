@@ -272,12 +272,21 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
       program_id: ev.program_id ?? "",
       status: ev.status ?? "active",
       success_message: ev.success_message ?? "",
+      is_pinned: !!ev.is_pinned,
+      is_recurring: !!ev.is_recurring,
+      recurring_days: ev.recurring_days ?? [],
+      recurring_start_time: (ev.recurring_start_time ?? "").slice(0, 5),
+      recurring_end_time: (ev.recurring_end_time ?? "").slice(0, 5),
+      recurring_until: ev.recurring_until ?? "",
     });
   }, [ev]);
 
   if (!ev) return null;
 
   const save = async () => {
+    if (form.is_recurring && (!form.recurring_days?.length || !form.recurring_start_time || !form.recurring_end_time)) {
+      return toast.error("Pilih hari & jam mulai/selesai untuk event berkelanjutan");
+    }
     const { error } = await supabase.from("events").update({
       title: form.title, description: form.description, venue: form.venue, city: form.city,
       poster_url: form.poster_url, event_type: form.event_type, gender: form.gender,
@@ -286,6 +295,12 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
       program_id: form.program_id || null,
       status: form.status,
       success_message: form.success_message || null,
+      is_pinned: !!form.is_pinned,
+      is_recurring: !!form.is_recurring,
+      recurring_days: form.is_recurring ? (form.recurring_days ?? []) : [],
+      recurring_start_time: form.is_recurring ? form.recurring_start_time : null,
+      recurring_end_time: form.is_recurring ? form.recurring_end_time : null,
+      recurring_until: form.is_recurring ? (form.recurring_until || null) : null,
     }).eq("id", ev.id);
     if (error) return toast.error(error.message);
     toast.success("Event diperbarui");
@@ -334,6 +349,7 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
             <Label>Pesan Sukses (ditampilkan setelah user scan QR)</Label>
             <Textarea rows={3} placeholder="Selamat, kamu telah berhasil mendaftar! Sampai jumpa di acara 🎉" value={form.success_message ?? ""} onChange={(e) => setForm({ ...form, success_message: e.target.value })} />
           </div>
+          <RecurringPinFields form={form} setForm={setForm} />
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Batal</Button>
