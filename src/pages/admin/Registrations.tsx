@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAdmin } from "./AdminLayout";
 import { Section } from "./components";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, Download } from "lucide-react";
+import * as XLSX from "xlsx";
 
 export default function RegistrationsPage() {
   const { events, registrations } = useAdmin();
@@ -10,6 +11,28 @@ export default function RegistrationsPage() {
   const filtered = eventFilter ? registrations.filter((r) => r.event_id === eventFilter) : registrations;
   const counts: Record<string, number> = {};
   registrations.forEach((r) => { counts[r.event_id] = (counts[r.event_id] || 0) + 1; });
+
+  const exportXLSX = () => {
+    const ev = eventFilter ? events.find((e) => e.id === eventFilter) : null;
+    const rows = filtered.map((r, i) => ({
+      No: i + 1,
+      "Tanggal Daftar": new Date(r.created_at).toLocaleString("id-ID"),
+      Nama: r.profiles?.full_name ?? "-",
+      WhatsApp: r.profiles?.phone ?? "-",
+      Gender: r.profiles?.gender === "L" ? "Laki-laki" : r.profiles?.gender === "P" ? "Perempuan" : (r.profiles?.gender ?? "-"),
+      Kota: r.profiles?.city ?? "-",
+      Email: r.profiles?.email ?? "-",
+      Event: r.events?.title ?? "-",
+      Program: r.events?.programs?.name ?? "-",
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws["!cols"] = [{ wch: 5 }, { wch: 22 }, { wch: 28 }, { wch: 16 }, { wch: 12 }, { wch: 18 }, { wch: 30 }, { wch: 36 }, { wch: 22 }];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Pendaftar");
+    const slug = (ev?.title || "semua-event").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+    const stamp = new Date().toISOString().slice(0, 10);
+    XLSX.writeFile(wb, `pendaftar-${slug}-${stamp}.xlsx`);
+  };
 
   return (
     <>
@@ -30,9 +53,14 @@ export default function RegistrationsPage() {
       </Section>
 
       <Section title={eventFilter ? "Pendaftar event terpilih" : "Semua pendaftar terbaru"}>
-        {eventFilter && (
-          <Button size="sm" variant="outline" className="mb-3" onClick={() => setEventFilter("")}>Tampilkan semua</Button>
-        )}
+        <div className="mb-3 flex flex-wrap gap-2">
+          {eventFilter && (
+            <Button size="sm" variant="outline" onClick={() => setEventFilter("")}>Tampilkan semua</Button>
+          )}
+          <Button size="sm" onClick={exportXLSX} disabled={filtered.length === 0}>
+            <Download className="mr-1 h-4 w-4" /> Download Excel ({filtered.length} data)
+          </Button>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="text-left text-xs text-muted-foreground">
