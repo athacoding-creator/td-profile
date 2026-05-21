@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
+import { isEventExpired, isRecurring } from "@/lib/eventSchedule";
 
 type Ev = {
   id: string;
@@ -15,10 +16,13 @@ type Ev = {
   starts_at: string;
   ends_at: string | null;
   status: string;
+  is_pinned?: boolean;
+  is_recurring?: boolean;
+  recurring_days?: number[] | null;
+  recurring_start_time?: string | null;
+  recurring_end_time?: string | null;
+  recurring_until?: string | null;
 };
-
-const endTimeOf = (e: Ev) =>
-  e.ends_at ? new Date(e.ends_at).getTime() : new Date(e.starts_at).getTime() + 6 * 3600 * 1000;
 
 export default function Events() {
   const { profile } = useAuth();
@@ -27,18 +31,21 @@ export default function Events() {
   useEffect(() => {
     supabase
       .from("events")
-      .select("id,title,venue,poster_url,gender,starts_at,ends_at,status")
+      .select("id,title,venue,poster_url,gender,starts_at,ends_at,status,is_pinned,is_recurring,recurring_days,recurring_start_time,recurring_end_time,recurring_until")
       .in("status", ["active", "finished"])
+      .order("is_pinned", { ascending: false })
       .order("starts_at", { ascending: false })
       .limit(200)
       .then(({ data }) => setEvents((data ?? []) as Ev[]));
   }, []);
 
-  const now = Date.now();
   const upcoming = events
-    .filter((e) => e.status === "active" && endTimeOf(e) >= now)
-    .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
-  const finished = events.filter((e) => e.status === "finished" || endTimeOf(e) < now);
+    .filter((e) => e.status === "active" && !isEventExpired(e))
+    .sort((a, b) => {
+      if (!!b.is_pinned !== !!a.is_pinned) return b.is_pinned ? 1 : -1;
+      return new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime();
+    });
+  const finished = events.filter((e) => !isRecurring(e) && (e.status === "finished" || isEventExpired(e)));
 
   const Card = ({ e, isFinished }: { e: Ev; isFinished: boolean }) => {
     const locked = profile?.gender && e.gender !== "ALL" && e.gender !== profile.gender;
