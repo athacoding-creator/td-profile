@@ -82,10 +82,16 @@ export type Database = {
           gender: Database["public"]["Enums"]["event_gender"]
           group_link: string | null
           id: string
+          is_pinned: boolean
+          is_recurring: boolean
           points_reward: number
           poster_url: string | null
           program_id: string | null
           qr_token: string
+          recurring_days: number[]
+          recurring_end_time: string | null
+          recurring_start_time: string | null
+          recurring_until: string | null
           starts_at: string
           status: Database["public"]["Enums"]["event_status"]
           success_message: string | null
@@ -103,10 +109,16 @@ export type Database = {
           gender?: Database["public"]["Enums"]["event_gender"]
           group_link?: string | null
           id?: string
+          is_pinned?: boolean
+          is_recurring?: boolean
           points_reward?: number
           poster_url?: string | null
           program_id?: string | null
           qr_token?: string
+          recurring_days?: number[]
+          recurring_end_time?: string | null
+          recurring_start_time?: string | null
+          recurring_until?: string | null
           starts_at: string
           status?: Database["public"]["Enums"]["event_status"]
           success_message?: string | null
@@ -124,10 +136,16 @@ export type Database = {
           gender?: Database["public"]["Enums"]["event_gender"]
           group_link?: string | null
           id?: string
+          is_pinned?: boolean
+          is_recurring?: boolean
           points_reward?: number
           poster_url?: string | null
           program_id?: string | null
           qr_token?: string
+          recurring_days?: number[]
+          recurring_end_time?: string | null
+          recurring_start_time?: string | null
+          recurring_until?: string | null
           starts_at?: string
           status?: Database["public"]["Enums"]["event_status"]
           success_message?: string | null

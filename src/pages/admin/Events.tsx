@@ -7,10 +7,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import QRCode from "qrcode";
-import { QrCode as QrIcon, Trash2, Pencil, Lock } from "lucide-react";
+import { QrCode as QrIcon, Trash2, Pencil, Lock, Pin, Repeat } from "lucide-react";
 import { useAdmin } from "./AdminLayout";
 import { Section } from "./components";
 import { ImagePicker } from "@/components/admin/ImagePicker";
+import { isEventExpired, describeRecurring, DAY_NAMES } from "@/lib/eventSchedule";
 
 // datetime-local value -> ISO string with local timezone offset preserved
 const localInputToISO = (v?: string | null) => {
@@ -19,10 +20,7 @@ const localInputToISO = (v?: string | null) => {
   return isNaN(d.getTime()) ? null : d.toISOString();
 };
 
-const isExpired = (ev: any) => {
-  const end = ev.ends_at ? new Date(ev.ends_at) : new Date(new Date(ev.starts_at).getTime() + 6 * 3600 * 1000);
-  return Date.now() > end.getTime();
-};
+const isExpired = (ev: any) => isEventExpired(ev);
 
 const toLocalInput = (iso?: string | null) => {
   if (!iso) return "";
@@ -36,7 +34,7 @@ export default function EventsPage() {
 
   // Auto-mark expired events as 'finished' so the lock is reflected globally
   useEffect(() => {
-    const expiredActive = events.filter((e) => e.status === "active" && isExpired(e));
+    const expiredActive = events.filter((e) => e.status === "active" && !e.is_recurring && isExpired(e));
     if (expiredActive.length === 0) return;
     (async () => {
       await supabase.from("events").update({ status: "finished" }).in("id", expiredActive.map((e) => e.id));
@@ -57,11 +55,14 @@ export default function EventsPage() {
 }
 
 function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; defaultPoints: number; onCreated: () => void }) {
-  const [form, setForm] = useState<any>({ gender: "ALL", points_reward: defaultPoints, program_id: "" });
+  const [form, setForm] = useState<any>({ gender: "ALL", points_reward: defaultPoints, program_id: "", is_pinned: false, is_recurring: false, recurring_days: [] });
   useEffect(() => { setForm((f: any) => ({ ...f, points_reward: f.points_reward ?? defaultPoints })); }, [defaultPoints]);
 
   const create = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (form.is_recurring && (!form.recurring_days?.length || !form.recurring_start_time || !form.recurring_end_time)) {
+      return toast.error("Pilih hari & jam mulai/selesai untuk event berkelanjutan");
+    }
     const { error } = await supabase.from("events").insert({
       title: form.title, description: form.description, venue: form.venue, city: form.city,
       poster_url: form.poster_url, event_type: form.event_type, gender: form.gender,
@@ -69,10 +70,16 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
       points_reward: Number(form.points_reward ?? defaultPoints),
       program_id: form.program_id || null, status: "active",
       success_message: form.success_message || null,
+      is_pinned: !!form.is_pinned,
+      is_recurring: !!form.is_recurring,
+      recurring_days: form.is_recurring ? (form.recurring_days ?? []) : [],
+      recurring_start_time: form.is_recurring ? form.recurring_start_time : null,
+      recurring_end_time: form.is_recurring ? form.recurring_end_time : null,
+      recurring_until: form.is_recurring ? (form.recurring_until || null) : null,
     });
     if (error) return toast.error(error.message);
     toast.success("Event dibuat");
-    setForm({ gender: "ALL", points_reward: defaultPoints, program_id: "" });
+    setForm({ gender: "ALL", points_reward: defaultPoints, program_id: "", is_pinned: false, is_recurring: false, recurring_days: [] });
     onCreated();
   };
 
@@ -108,9 +115,51 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
           <Label>Pesan Sukses (ditampilkan setelah user scan QR)</Label>
           <Textarea rows={3} placeholder="Selamat, kamu telah berhasil mendaftar! Sampai jumpa di acara 🎉" value={form.success_message ?? ""} onChange={(e) => setForm({ ...form, success_message: e.target.value })} />
         </div>
+        <RecurringPinFields form={form} setForm={setForm} />
         <div className="md:col-span-2"><Button type="submit" className="w-full bg-primary text-primary-foreground">Buat Event</Button></div>
       </form>
     </Section>
+  );
+}
+
+function RecurringPinFields({ form, setForm }: { form: any; setForm: (f: any) => void }) {
+  const toggleDay = (d: number) => {
+    const cur: number[] = form.recurring_days ?? [];
+    const next = cur.includes(d) ? cur.filter((x) => x !== d) : [...cur, d].sort();
+    setForm({ ...form, recurring_days: next });
+  };
+  return (
+    <div className="md:col-span-2 space-y-3 rounded-xl border border-border/60 bg-muted/30 p-3">
+      <label className="flex items-center gap-2 text-sm font-medium">
+        <input type="checkbox" checked={!!form.is_pinned} onChange={(e) => setForm({ ...form, is_pinned: e.target.checked })} />
+        <Pin className="h-4 w-4 text-primary" /> Sematkan event (tampil paling atas)
+      </label>
+      <label className="flex items-center gap-2 text-sm font-medium">
+        <input type="checkbox" checked={!!form.is_recurring} onChange={(e) => setForm({ ...form, is_recurring: e.target.checked })} />
+        <Repeat className="h-4 w-4 text-primary" /> Event berkelanjutan (mingguan, tidak expired)
+      </label>
+      {form.is_recurring && (
+        <div className="grid gap-3 md:grid-cols-2 pl-6">
+          <div className="md:col-span-2 space-y-1.5">
+            <Label>Hari pelaksanaan</Label>
+            <div className="flex flex-wrap gap-2">
+              {DAY_NAMES.map((n, i) => {
+                const active = (form.recurring_days ?? []).includes(i);
+                return (
+                  <button key={i} type="button" onClick={() => toggleDay(i)}
+                    className={`rounded-full px-3 py-1 text-xs font-medium border transition ${active ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border/60"}`}>
+                    {n}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div className="space-y-1.5"><Label>Jam mulai</Label><Input type="time" value={form.recurring_start_time ?? ""} onChange={(e) => setForm({ ...form, recurring_start_time: e.target.value })} /></div>
+          <div className="space-y-1.5"><Label>Jam selesai</Label><Input type="time" value={form.recurring_end_time ?? ""} onChange={(e) => setForm({ ...form, recurring_end_time: e.target.value })} /></div>
+          <div className="space-y-1.5 md:col-span-2"><Label>Berakhir pada (opsional)</Label><Input type="date" value={form.recurring_until ?? ""} onChange={(e) => setForm({ ...form, recurring_until: e.target.value })} /><p className="text-xs text-muted-foreground">Kosongkan untuk berjalan terus tanpa batas.</p></div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -152,10 +201,14 @@ function EventList({ events, programs, onChanged }: { events: any[]; programs: a
               <div className="flex items-start justify-between gap-3 flex-wrap">
                 <div className="min-w-0">
                   <h3 className="font-semibold flex items-center gap-2">
+                    {ev.is_pinned && <Pin className="h-3.5 w-3.5 text-primary" />}
                     {ev.title}
+                    {ev.is_recurring && <span className="inline-flex items-center gap-1 rounded bg-primary/15 px-2 py-0.5 text-[10px] font-semibold text-primary"><Repeat className="h-3 w-3" /> Berkelanjutan</span>}
                     {expired && <span className="inline-flex items-center gap-1 rounded bg-destructive/15 px-2 py-0.5 text-[10px] font-semibold text-destructive"><Lock className="h-3 w-3" /> EVENT EXPIRED</span>}
                   </h3>
-                  <p className="text-xs text-muted-foreground">{ev.venue} · {new Date(ev.starts_at).toLocaleString("id-ID")}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {ev.venue} · {ev.is_recurring ? describeRecurring(ev) : new Date(ev.starts_at).toLocaleString("id-ID")}
+                  </p>
                   <p className="mt-1 text-xs flex flex-wrap gap-1">
                     <span className="rounded bg-muted px-2 py-0.5">{ev.status}</span>
                     <span className="rounded bg-muted px-2 py-0.5">{ev.gender}</span>
@@ -219,12 +272,21 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
       program_id: ev.program_id ?? "",
       status: ev.status ?? "active",
       success_message: ev.success_message ?? "",
+      is_pinned: !!ev.is_pinned,
+      is_recurring: !!ev.is_recurring,
+      recurring_days: ev.recurring_days ?? [],
+      recurring_start_time: (ev.recurring_start_time ?? "").slice(0, 5),
+      recurring_end_time: (ev.recurring_end_time ?? "").slice(0, 5),
+      recurring_until: ev.recurring_until ?? "",
     });
   }, [ev]);
 
   if (!ev) return null;
 
   const save = async () => {
+    if (form.is_recurring && (!form.recurring_days?.length || !form.recurring_start_time || !form.recurring_end_time)) {
+      return toast.error("Pilih hari & jam mulai/selesai untuk event berkelanjutan");
+    }
     const { error } = await supabase.from("events").update({
       title: form.title, description: form.description, venue: form.venue, city: form.city,
       poster_url: form.poster_url, event_type: form.event_type, gender: form.gender,
@@ -233,6 +295,12 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
       program_id: form.program_id || null,
       status: form.status,
       success_message: form.success_message || null,
+      is_pinned: !!form.is_pinned,
+      is_recurring: !!form.is_recurring,
+      recurring_days: form.is_recurring ? (form.recurring_days ?? []) : [],
+      recurring_start_time: form.is_recurring ? form.recurring_start_time : null,
+      recurring_end_time: form.is_recurring ? form.recurring_end_time : null,
+      recurring_until: form.is_recurring ? (form.recurring_until || null) : null,
     }).eq("id", ev.id);
     if (error) return toast.error(error.message);
     toast.success("Event diperbarui");
@@ -281,6 +349,7 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
             <Label>Pesan Sukses (ditampilkan setelah user scan QR)</Label>
             <Textarea rows={3} placeholder="Selamat, kamu telah berhasil mendaftar! Sampai jumpa di acara 🎉" value={form.success_message ?? ""} onChange={(e) => setForm({ ...form, success_message: e.target.value })} />
           </div>
+          <RecurringPinFields form={form} setForm={setForm} />
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Batal</Button>

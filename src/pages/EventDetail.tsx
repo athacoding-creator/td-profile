@@ -9,6 +9,7 @@ import { MapPin, Calendar, Users, Lock, Link2, ChevronLeft } from "lucide-react"
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
+import { computeScanWindow, isRecurring, describeRecurring } from "@/lib/eventSchedule";
 
 export default function EventDetail() {
   const { id } = useParams();
@@ -22,7 +23,7 @@ export default function EventDetail() {
   useEffect(() => {
     (async () => {
       const { data } = await supabase.from("events")
-        .select("id,title,description,venue,city,starts_at,ends_at,status,gender,event_type,poster_url,group_link,points_reward,program_id,created_at")
+        .select("id,title,description,venue,city,starts_at,ends_at,status,gender,event_type,poster_url,group_link,points_reward,program_id,created_at,is_pinned,is_recurring,recurring_days,recurring_start_time,recurring_end_time,recurring_until")
         .eq("id", id).maybeSingle();
       setEvent(data);
       if (user && data) {
@@ -57,12 +58,11 @@ export default function EventDetail() {
 
   const genderMismatch =
     user && profile?.gender && event.gender !== "ALL" && event.gender !== profile.gender;
-  const endTime = event.ends_at ? new Date(event.ends_at) : new Date(new Date(event.starts_at).getTime() + 6 * 3600 * 1000);
-  const startTime = new Date(event.starts_at);
-  const scanStartTime = new Date(startTime.getTime() - 60 * 60 * 1000);
-  const expired = Date.now() > endTime.getTime() || event.status === "archived";
-  const scanAvailable = Date.now() >= scanStartTime.getTime() && Date.now() <= endTime.getTime();
-  const scanNotYetAvailable = Date.now() < scanStartTime.getTime();
+  const sw = computeScanWindow(event);
+  const expired = sw.expired;
+  const scanAvailable = sw.scanAvailable;
+  const scanNotYetAvailable = sw.scanNotYetAvailable;
+  const scanStartTime = sw.scanStartTime;
 
   return (
     <div className="min-h-screen bg-background pb-32">
@@ -83,7 +83,9 @@ export default function EventDetail() {
         <div className="mt-4 space-y-2 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-accent" />
-            {format(new Date(event.starts_at), "EEEE, d MMM yyyy • HH:mm", { locale: idLocale })}
+            {isRecurring(event)
+              ? describeRecurring(event)
+              : format(new Date(event.starts_at), "EEEE, d MMM yyyy • HH:mm", { locale: idLocale })}
           </div>
           <div className="flex items-center gap-2">
             <MapPin className="h-4 w-4 text-accent" />
@@ -115,12 +117,16 @@ export default function EventDetail() {
               </div>
               {scanNotYetAvailable ? (
                 <div className="rounded-xl bg-amber-50 p-4 text-center text-sm text-amber-800 border border-amber-200">
-                  Scan QR tersedia mulai jam {scanStartTime.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
+                  {sw.message ?? `Scan QR tersedia mulai jam ${scanStartTime.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}`}
                 </div>
-              ) : (
+              ) : scanAvailable ? (
                 <Link to={`/event/${event.id}/scan`}>
                   <Button className="w-full bg-primary text-primary-foreground">Scan QR Absensi</Button>
                 </Link>
+              ) : (
+                <div className="rounded-xl bg-muted p-4 text-center text-sm text-muted-foreground">
+                  {sw.message ?? "Scan QR sedang tidak tersedia"}
+                </div>
               )}
               {event.group_link && (
                 <a href={event.group_link} target="_blank" rel="noreferrer">
