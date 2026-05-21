@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ChevronLeft, Download, FileSpreadsheet, Check } from "lucide-react";
+import { ChevronLeft, Download, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -179,7 +179,7 @@ export default function ExportPendaftarPage() {
         <div className="rounded-xl border border-border/60 p-4"><p className="text-[11px] uppercase tracking-wider text-muted-foreground">Periode</p><p className="mt-1 text-sm font-semibold">{from} – {to}</p></div>
       </div>
 
-      <Section title={<span className="inline-flex items-center gap-2"><FileSpreadsheet className="h-4 w-4" /> Preview Data {loading && <span className="text-xs text-muted-foreground">(memuat…)</span>}</span> as any}>
+      <Section title={loading ? "Preview Data (memuat…)" : "Preview Data"}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="text-left text-xs text-muted-foreground">
