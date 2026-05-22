@@ -7,6 +7,14 @@ function setCols(ws: XLSX.WorkSheet, widths: number[]) {
   ws["!cols"] = widths.map((w) => ({ wch: w }));
 }
 
+/** Slugify a string for use in filenames */
+function slugify(str: string) {
+  return str
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_|_$/g, "");
+}
+
 export function exportStatsXLSX(opts: {
   attendance: any[];
   redemptions: any[];
@@ -15,20 +23,32 @@ export function exportStatsXLSX(opts: {
   weekly: { label: string; male: number; female: number; reward: number }[];
   daily: { label: string; male: number; female: number; reward: number }[];
   totals: { male: number; female: number; reward: number };
+  eventTitle?: string; // optional: name of selected event for filename & context
 }) {
-  const { attendance, redemptions, registrations, logins, weekly, daily, totals } = opts;
+  const { attendance, redemptions, registrations, logins, weekly, daily, totals, eventTitle } = opts;
   const wb = XLSX.utils.book_new();
+  const isFiltered = !!eventTitle;
 
   /* ── 1. Ringkasan ──────────────────────────────────────────────── */
-  const summary: Row[] = [
+  const summaryRows: Row[] = [];
+  if (isFiltered) {
+    summaryRows.push({ Metrik: "Event", Total: eventTitle });
+  }
+  summaryRows.push(
     { Metrik: "Jamaah Hadir (Laki-laki)", Total: totals.male },
     { Metrik: "Jamaah Hadir (Perempuan)", Total: totals.female },
     { Metrik: "Total Jamaah Hadir", Total: totals.male + totals.female },
-    { Metrik: "Reward Ditukar (approved)", Total: totals.reward },
-    { Metrik: "Total Pendaftar", Total: registrations.length },
-    { Metrik: "Total Login Tercatat", Total: logins.length },
-  ];
-  const wsSummary = XLSX.utils.json_to_sheet(summary);
+  );
+  if (!isFiltered) {
+    summaryRows.push(
+      { Metrik: "Reward Ditukar (approved)", Total: totals.reward },
+      { Metrik: "Total Pendaftar", Total: registrations.length },
+      { Metrik: "Total Login Tercatat", Total: logins.length },
+    );
+  } else {
+    summaryRows.push({ Metrik: "Total Pendaftar Event Ini", Total: registrations.length });
+  }
+  const wsSummary = XLSX.utils.json_to_sheet(summaryRows);
   setCols(wsSummary, [36, 12]);
   XLSX.utils.book_append_sheet(wb, wsSummary, "Ringkasan");
 
@@ -39,10 +59,10 @@ export function exportStatsXLSX(opts: {
       "Laki-laki": r.male,
       Perempuan: r.female,
       "Total Hadir": r.male + r.female,
-      "Reward Ditukar": r.reward,
+      ...(!isFiltered ? { "Reward Ditukar": r.reward } : {}),
     })),
   );
-  setCols(wsWeekly, [16, 12, 12, 14, 16]);
+  setCols(wsWeekly, isFiltered ? [16, 12, 12, 14] : [16, 12, 12, 14, 16]);
   XLSX.utils.book_append_sheet(wb, wsWeekly, "Per Minggu");
 
   /* ── 3. Statistik Per Hari ─────────────────────────────────────── */
@@ -52,10 +72,10 @@ export function exportStatsXLSX(opts: {
       "Laki-laki": r.male,
       Perempuan: r.female,
       "Total Hadir": r.male + r.female,
-      "Reward Ditukar": r.reward,
+      ...(!isFiltered ? { "Reward Ditukar": r.reward } : {}),
     })),
   );
-  setCols(wsDaily, [12, 12, 12, 14, 16]);
+  setCols(wsDaily, isFiltered ? [12, 12, 12, 14] : [12, 12, 12, 14, 16]);
   XLSX.utils.book_append_sheet(wb, wsDaily, "Per Hari");
 
   /* ── 4. Detail Hadir Per Akun ──────────────────────────────────── */
@@ -81,42 +101,45 @@ export function exportStatsXLSX(opts: {
       Email: r.profiles?.email ?? "-",
       Gender: r.profiles?.gender === "L" ? "Laki-laki" : r.profiles?.gender === "P" ? "Perempuan" : (r.profiles?.gender ?? "-"),
       Kota: r.profiles?.city ?? "-",
-      Event: r.events?.title ?? "-",
+      Event: r.events?.title ?? (eventTitle ?? "-"),
       Program: r.events?.programs?.name ?? "-",
     })),
   );
   setCols(wsRegistrations, [5, 22, 28, 30, 12, 18, 36, 22]);
   XLSX.utils.book_append_sheet(wb, wsRegistrations, "Detail Pendaftar");
 
-  /* ── 6. Detail Penukaran Per Akun ──────────────────────────────── */
-  const wsRedemptions = XLSX.utils.json_to_sheet(
-    redemptions.map((r, i) => ({
-      No: i + 1,
-      Tanggal: new Date(r.created_at).toLocaleString("id-ID"),
-      Nama: r.profiles?.full_name ?? "-",
-      Email: r.profiles?.email ?? "-",
-      Reward: r.rewards?.name ?? "-",
-      "Poin Digunakan": r.cost_points ?? 0,
-      Status: r.status ?? "-",
-    })),
-  );
-  setCols(wsRedemptions, [5, 22, 28, 30, 28, 16, 14]);
-  XLSX.utils.book_append_sheet(wb, wsRedemptions, "Detail Penukaran");
+  /* ── 6. Detail Penukaran (only when not filtered by event) ─────── */
+  if (!isFiltered) {
+    const wsRedemptions = XLSX.utils.json_to_sheet(
+      redemptions.map((r, i) => ({
+        No: i + 1,
+        Tanggal: new Date(r.created_at).toLocaleString("id-ID"),
+        Nama: r.profiles?.full_name ?? "-",
+        Email: r.profiles?.email ?? "-",
+        Reward: r.rewards?.name ?? "-",
+        "Poin Digunakan": r.cost_points ?? 0,
+        Status: r.status ?? "-",
+      })),
+    );
+    setCols(wsRedemptions, [5, 22, 28, 30, 28, 16, 14]);
+    XLSX.utils.book_append_sheet(wb, wsRedemptions, "Detail Penukaran");
 
-  /* ── 7. Riwayat Login Per Akun ─────────────────────────────────── */
-  const wsLogins = XLSX.utils.json_to_sheet(
-    logins.map((l, i) => ({
-      No: i + 1,
-      "Waktu Login": new Date(l.created_at).toLocaleString("id-ID"),
-      Nama: l.profiles?.full_name ?? "-",
-      Email: l.profiles?.email ?? "-",
-      "User Agent": l.user_agent ?? "-",
-    })),
-  );
-  setCols(wsLogins, [5, 22, 28, 30, 60]);
-  XLSX.utils.book_append_sheet(wb, wsLogins, "Riwayat Login");
+    /* ── 7. Riwayat Login Per Akun ─────────────────────────────────── */
+    const wsLogins = XLSX.utils.json_to_sheet(
+      logins.map((l, i) => ({
+        No: i + 1,
+        "Waktu Login": new Date(l.created_at).toLocaleString("id-ID"),
+        Nama: l.profiles?.full_name ?? "-",
+        Email: l.profiles?.email ?? "-",
+        "User Agent": l.user_agent ?? "-",
+      })),
+    );
+    setCols(wsLogins, [5, 22, 28, 30, 60]);
+    XLSX.utils.book_append_sheet(wb, wsLogins, "Riwayat Login");
+  }
 
   /* ── Simpan file ───────────────────────────────────────────────── */
   const stamp = new Date().toISOString().slice(0, 10);
-  XLSX.writeFile(wb, `statistik-admin-${stamp}.xlsx`);
+  const fileSlug = isFiltered ? slugify(eventTitle!) : "semua-event";
+  XLSX.writeFile(wb, `statistik-${fileSlug}-${stamp}.xlsx`);
 }
