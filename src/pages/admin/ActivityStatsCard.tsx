@@ -330,28 +330,17 @@ export default function ActivityStatsCard({
       {/* ── Chart area ────────────────────────────────────────────────── */}
       <div className="mt-4 h-56 sm:h-64 md:h-72 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          {/* ── SEMUA EVENT: Bar ranking ──────────────────────────────── */}
+          {/* ── SEMUA EVENT: Bar weekly (batang berdiri, Laki-laki + Perempuan + Reward) ── */}
           {!isEventSelected && kind === "bar" ? (
-            <BarChart data={rankingBarData} layout="vertical" margin={{ top: 4, right: 8, left: 4, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
-              <XAxis type="number" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} allowDecimals={false} />
-              <YAxis
-                type="category"
-                dataKey="label"
-                width={110}
-                tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }}
-              />
-              <Tooltip
-                contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 12, fontSize: 12 }}
-                formatter={(value: any, name: string) => [value, name === "male" ? "Laki-laki" : "Perempuan"]}
-                labelFormatter={(label) => {
-                  const ev = rankingBarData.find((e) => e.label === label);
-                  return ev?.fullTitle ?? label;
-                }}
-              />
-              <Legend wrapperStyle={{ fontSize: 11 }} formatter={(v) => v === "male" ? "Laki-laki" : "Perempuan"} />
-              <Bar dataKey="male" name="male" fill={COLORS.male} radius={[0, 4, 4, 0]} stackId="a" />
-              <Bar dataKey="female" name="female" fill={COLORS.female} radius={[0, 4, 4, 0]} stackId="a" />
+            <BarChart data={weekly} margin={{ top: 8, right: 0, left: -25, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis dataKey="label" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+              <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} allowDecimals={false} />
+              <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 12, fontSize: 12 }} />
+              <Legend wrapperStyle={{ fontSize: 11 }} />
+              <Bar dataKey="male" name="Laki-laki" fill={COLORS.male} radius={[6, 6, 0, 0]} />
+              <Bar dataKey="female" name="Perempuan" fill={COLORS.female} radius={[6, 6, 0, 0]} />
+              <Bar dataKey="reward" name="Reward" fill={COLORS.reward} radius={[6, 6, 0, 0]} />
             </BarChart>
           ) : !isEventSelected && kind === "donut" ? (
             /* ── SEMUA EVENT: Donut ranking ─────────────────────────── */
