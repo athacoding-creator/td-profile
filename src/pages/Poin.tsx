@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { getReasonLabel } from "@/utils/pointReasons";
+import { AlertCircle } from "lucide-react";
 
 export default function Poin() {
   const { user, profile, refreshProfile } = useAuth();
@@ -76,6 +77,42 @@ export default function Poin() {
         >
           <p className="text-sm opacity-80">Poin kamu</p>
           <p className="mt-2 font-display text-5xl font-black">{profile?.points ?? 0}</p>
+        </div>
+
+        {/* Syarat Penukaran Card */}
+        <div className="mt-6 rounded-2xl border border-accent/30 bg-accent/5 p-4 sm:p-5">
+          <div className="flex gap-3 sm:gap-4">
+            <div className="shrink-0">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/20">
+                <AlertCircle className="h-5 w-5 text-accent" />
+              </div>
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-foreground text-sm sm:text-base">Syarat Penukaran</h3>
+              <ul className="mt-2 space-y-1.5 text-xs sm:text-sm text-foreground/80">
+                <li className="flex items-start gap-2">
+                  <span className="shrink-0 mt-1 h-1.5 w-1.5 rounded-full bg-accent" />
+                  <span>Mengambil di Teras Dakwah Setelah Kajian Berlangsung</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="shrink-0 mt-1 h-1.5 w-1.5 rounded-full bg-accent" />
+                  <span>Bersedia untuk didokumentasikan</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="shrink-0 mt-1 h-1.5 w-1.5 rounded-full bg-accent" />
+                  <span>Menunjukkan Akun</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="shrink-0 mt-1 h-1.5 w-1.5 rounded-full bg-accent" />
+                  <span>Story Instagram dan tag Teras Dakwah</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="shrink-0 mt-1 h-1.5 w-1.5 rounded-full bg-accent" />
+                  <span>Sebulan hanya bisa menukar 1 jenis item</span>
+                </li>
+              </ul>
+            </div>
+          </div>
         </div>
 
         {onCooldown && (
