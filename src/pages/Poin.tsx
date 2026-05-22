@@ -164,12 +164,6 @@ export default function Poin() {
             >
               Mengerti
             </Button>
-            <Button
-              className="flex-1"
-              onClick={() => setShowTermsDialog(false)}
-            >
-              Lanjut
-            </Button>
           </div>
         </DialogContent>
       </Dialog>

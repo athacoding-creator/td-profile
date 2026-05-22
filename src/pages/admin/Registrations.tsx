@@ -73,7 +73,7 @@ export default function RegistrationsPage() {
               <button onClick={() => setShowPastEvents(!showPastEvents)}
                 className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition">
                 <ChevronDown className={`h-4 w-4 transition ${showPastEvents ? "rotate-180" : ""}`} />
-                Total Event Yang Selesai({pastEvents.length})
+                Total Event Yang Selesai ({pastEvents.length})
               </button>
 
               {showPastEvents && (
