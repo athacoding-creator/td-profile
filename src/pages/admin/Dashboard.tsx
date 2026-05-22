@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import ActivityStatsCard from "./ActivityStatsCard";
+import ProgramStatsCard from "./ProgramStatsCard";
 
 const groups = [
   {
@@ -49,6 +50,9 @@ export default function Dashboard() {
         </div>
         <div className="pointer-events-none absolute -right-10 -top-10 h-48 w-48 rounded-full bg-primary-foreground/10 blur-2xl" />
       </div>
+
+      {/* Program stats card - showing which program is busiest this week */}
+      <ProgramStatsCard attendance={data.attendance} events={data.events} programs={data.programs} />
 
       {/* Unified stats card */}
       <ActivityStatsCard attendance={data.attendance} redemptions={data.redemptions} registrations={data.registrations} logins={[]} events={data.events} />
