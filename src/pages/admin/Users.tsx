@@ -88,11 +88,12 @@ export default function UsersPage() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Cari nama, WA, kota…"
-              className="pl-9"
+              className="pl-9 text-sm"
             />
           </div>
         </div>
-        <div className="overflow-x-auto">
+        {/* Desktop table view */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="text-left text-xs text-muted-foreground">
               <tr>
@@ -150,29 +151,65 @@ export default function UsersPage() {
             </tbody>
           </table>
         </div>
+        {/* Mobile card view */}
+        <div className="md:hidden space-y-2">
+          {loading && <div className="py-4 text-center text-sm text-muted-foreground">Memuat…</div>}
+          {!loading && filtered.map((p) => (
+            <div key={p.id} className="rounded-lg border border-border/60 bg-muted/30 p-3 space-y-2.5">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex gap-2.5 flex-1 min-w-0">
+                  <div className="flex h-10 w-10 items-center justify-center shrink-0 overflow-hidden rounded-full bg-muted text-sm font-bold">
+                    {p.avatar_url ? (
+                      <img src={p.avatar_url} alt="" className="h-full w-full object-cover" />
+                    ) : (p.full_name?.charAt(0) || "?").toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm truncate">{p.full_name || "—"}</p>
+                    <p className="text-xs text-muted-foreground truncate">{p.phone ? formatPhoneDisplay(p.phone) : "—"}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                {adminIds.has(p.id) ? (
+                  <div className="flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full bg-accent/15 text-accent">
+                    <ShieldCheck className="h-3 w-3" /> Admin
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full bg-muted text-muted-foreground">
+                    <ShieldOff className="h-3 w-3" /> User
+                  </div>
+                )}
+              </div>
+              <Button size="sm" variant="outline" onClick={() => setSelected(p)} className="w-full h-8 text-[11px]">Detail</Button>
+            </div>
+          ))}
+          {!loading && filtered.length === 0 && (
+            <div className="py-4 text-center text-sm text-muted-foreground">Tidak ada akun</div>
+          )}
+        </div>
       </Section>
 
       <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <UserIcon className="h-5 w-5" /> Detail Akun
+            <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <UserIcon className="h-4 w-4 sm:h-5 sm:w-5" /> Detail Akun
             </DialogTitle>
           </DialogHeader>
           {selected && (
             <div className="space-y-3 text-sm">
               <div className="flex items-center gap-3">
-                <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-muted text-xl font-bold">
+                <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center overflow-hidden rounded-full bg-muted text-lg sm:text-xl font-bold shrink-0">
                   {selected.avatar_url ? (
                     <img src={selected.avatar_url} alt="" className="h-full w-full object-cover" />
                   ) : (selected.full_name?.charAt(0) || "?").toUpperCase()}
                 </div>
-                <div>
-                  <p className="font-semibold">{selected.full_name || "—"}</p>
-                  <p className="text-xs text-muted-foreground">{selected.email || ""}</p>
+                <div className="min-w-0">
+                  <p className="font-semibold text-sm sm:text-base truncate">{selected.full_name || "—"}</p>
+                  <p className="text-xs text-muted-foreground truncate">{selected.email || ""}</p>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-xs sm:text-sm">
                 {[
                   ["WhatsApp", selected.phone ? formatPhoneDisplay(selected.phone) : "—"],
                   ["Gender", selected.gender || "—"],

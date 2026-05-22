@@ -1,16 +1,26 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useAdmin } from "./AdminLayout";
 import { Section } from "./components";
-import { MessageCircle, Download } from "lucide-react";
+import { MessageCircle, Download, ChevronDown } from "lucide-react";
 import * as XLSX from "xlsx";
 
 export default function RegistrationsPage() {
   const { events, registrations } = useAdmin();
   const [eventFilter, setEventFilter] = useState<string>("");
+  const [showPastEvents, setShowPastEvents] = useState(false);
+  const [searchPast, setSearchPast] = useState("");
+
   const filtered = eventFilter ? registrations.filter((r) => r.event_id === eventFilter) : registrations;
   const counts: Record<string, number> = {};
   registrations.forEach((r) => { counts[r.event_id] = (counts[r.event_id] || 0) + 1; });
+
+  const activeEvents = events.filter((e) => e.status === "active");
+  const pastEvents = events.filter((e) => e.status !== "active");
+  const filteredPastEvents = pastEvents.filter((e) =>
+    e.title.toLowerCase().includes(searchPast.toLowerCase())
+  );
 
   const exportXLSX = () => {
     const ev = eventFilter ? events.find((e) => e.id === eventFilter) : null;
@@ -41,27 +51,66 @@ export default function RegistrationsPage() {
         <p className="text-sm text-muted-foreground">Tracking jamaah per event</p>
       </div>
       <Section title="Jamaah per Event">
-        <div className="grid gap-2 md:grid-cols-2">
-          {events.filter((e) => e.status === "active").map((e) => (
-            <button key={e.id} onClick={() => setEventFilter(e.id)}
-              className={`rounded-xl border p-3 text-left transition ${eventFilter === e.id ? "border-primary bg-primary/5" : "border-border/60"}`}>
-              <p className="font-medium text-sm">{e.title}</p>
-              <p className="text-xs text-muted-foreground">{e.programs?.name || "—"} · {counts[e.id] || 0} pendaftar</p>
-            </button>
-          ))}
+        <div className="space-y-3">
+
+          {activeEvents.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-muted-foreground">Event Aktif</p>
+              <div className="grid gap-2 sm:gap-2.5 grid-cols-1 sm:grid-cols-2">
+                {activeEvents.map((e) => (
+                  <button key={e.id} onClick={() => setEventFilter(e.id)}
+                    className={`rounded-xl border p-3 text-left transition ${eventFilter === e.id ? "border-primary bg-primary/5" : "border-border/60"}`}>
+                    <p className="font-medium text-sm">{e.title}</p>
+                    <p className="text-xs text-muted-foreground">{e.programs?.name || "—"} · {counts[e.id] || 0} pendaftar</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {pastEvents.length > 0 && (
+            <div className="space-y-2 rounded-lg border border-border/40 bg-muted/30 p-3">
+              <button onClick={() => setShowPastEvents(!showPastEvents)}
+                className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition">
+                <ChevronDown className={`h-4 w-4 transition ${showPastEvents ? "rotate-180" : ""}`} />
+                Total Event ({pastEvents.length})
+              </button>
+
+              {showPastEvents && (
+                <div className="space-y-3 pt-2">
+                  <Input
+                    placeholder="Cari event..."
+                    value={searchPast}
+                    onChange={(e) => setSearchPast(e.target.value)}
+                    className="h-8 text-sm"
+                  />
+                  <div className="grid gap-2 sm:gap-2.5 grid-cols-1 sm:grid-cols-2 max-h-64 overflow-y-auto">
+                    {filteredPastEvents.map((e) => (
+                      <button key={e.id} onClick={() => { setEventFilter(e.id); setShowPastEvents(false); }}
+                        className={`rounded-lg border p-3 text-left transition text-sm ${eventFilter === e.id ? "border-primary bg-primary/5" : "border-border/60 hover:border-border"}`}>
+                        <p className="font-medium">{e.title}</p>
+                        <p className="text-xs text-muted-foreground">{e.programs?.name || "—"} · {counts[e.id] || 0} pendaftar</p>
+                      </button>
+                    ))}
+                  </div>
+                  {filteredPastEvents.length === 0 && (
+                    <p className="text-xs text-muted-foreground text-center py-2">Event tidak ditemukan</p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </Section>
 
       <Section title={eventFilter ? "Pendaftar event terpilih" : "Semua pendaftar terbaru"}>
         <div className="mb-3 flex flex-wrap gap-2">
-          {eventFilter && (
-            <Button size="sm" variant="outline" onClick={() => setEventFilter("")}>Tampilkan semua</Button>
-          )}
           <Button size="sm" onClick={exportXLSX} disabled={filtered.length === 0}>
-            <Download className="mr-1 h-4 w-4" /> Download Excel ({filtered.length} data)
+            <Download className="mr-1 h-4 w-4" /> Download Excel ({filtered.length})
           </Button>
         </div>
-        <div className="overflow-x-auto">
+        {/* Desktop table view */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="text-left text-xs text-muted-foreground">
               <tr><th className="py-2">Tanggal</th><th>Nama</th><th>WhatsApp</th><th>Gender</th><th>Kota</th><th>Event</th></tr>
@@ -95,6 +144,30 @@ export default function RegistrationsPage() {
             </tbody>
           </table>
         </div>
+        {/* Mobile card view */}
+        <div className="md:hidden space-y-2">
+          {filtered.map((r) => {
+            const phone = r.profiles?.phone || "";
+            return (
+              <div key={r.id} className="rounded-lg border border-border/60 bg-muted/30 p-3 space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm truncate">{r.profiles?.full_name || "—"}</p>
+                    <p className="text-xs text-muted-foreground truncate">{phone || "—"}</p>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  {r.events?.title && <p className="text-xs text-muted-foreground">Event: {r.events.title}</p>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        {filtered.length === 0 && (
+          <div className="text-center py-8">
+            <p className="text-sm text-muted-foreground">Tidak ada pendaftar</p>
+          </div>
+        )}
       </Section>
     </>
   );

@@ -85,38 +85,38 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
 
   return (
     <Section title="Buat Event">
-      <form onSubmit={create} className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-1.5"><Label>Judul</Label><Input required value={form.title ?? ""} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
+      <form onSubmit={create} className="grid gap-2 sm:gap-3 md:gap-4 md:grid-cols-2">
+        <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Judul</Label><Input required value={form.title ?? ""} onChange={(e) => setForm({ ...form, title: e.target.value })} className="text-sm h-9 sm:h-10" /></div>
         <div className="space-y-1.5">
-          <Label>Program</Label>
-          <select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.program_id} onChange={(e) => setForm({ ...form, program_id: e.target.value })}>
+          <Label className="text-xs sm:text-sm">Program</Label>
+          <select className="h-9 sm:h-10 w-full rounded-md border border-input bg-background px-3 text-xs sm:text-sm" value={form.program_id} onChange={(e) => setForm({ ...form, program_id: e.target.value })}>
             <option value="">— tanpa program —</option>
             {programs.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
         </div>
-        <div className="space-y-1.5"><Label>Tipe</Label><Input value={form.event_type ?? ""} onChange={(e) => setForm({ ...form, event_type: e.target.value })} placeholder="kajian / talkshow" /></div>
-        <div className="space-y-1.5"><Label>Venue</Label><Input required value={form.venue ?? ""} onChange={(e) => setForm({ ...form, venue: e.target.value })} /></div>
-        <div className="space-y-1.5 md:col-span-2"><Label>Deskripsi</Label><Textarea rows={3} value={form.description ?? ""} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
-        <div className="space-y-1.5"><Label>Kota</Label><Input value={form.city ?? ""} onChange={(e) => setForm({ ...form, city: e.target.value })} /></div>
-        <div className="space-y-1.5 md:col-span-2"><Label>Poster Event</Label><ImagePicker bucket="events" value={form.poster_url ?? ""} onChange={(url) => setForm({ ...form, poster_url: url })} /></div>
-        <div className="space-y-1.5"><Label>Link Grup (WA/TG)</Label><Input value={form.group_link ?? ""} onChange={(e) => setForm({ ...form, group_link: e.target.value })} /></div>
-        <div className="space-y-1.5"><Label>Mulai</Label><Input type="datetime-local" required value={form.starts_at ?? ""} onChange={(e) => setForm({ ...form, starts_at: e.target.value })} /></div>
-        <div className="space-y-1.5"><Label>Selesai</Label><Input type="datetime-local" value={form.ends_at ?? ""} onChange={(e) => setForm({ ...form, ends_at: e.target.value })} /></div>
+        <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Tipe</Label><Input value={form.event_type ?? ""} onChange={(e) => setForm({ ...form, event_type: e.target.value })} placeholder="kajian / talkshow" className="text-sm h-9 sm:h-10" /></div>
+        <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Venue</Label><Input required value={form.venue ?? ""} onChange={(e) => setForm({ ...form, venue: e.target.value })} className="text-sm h-9 sm:h-10" /></div>
+        <div className="space-y-1.5 md:col-span-2"><Label className="text-xs sm:text-sm">Deskripsi</Label><Textarea rows={3} value={form.description ?? ""} onChange={(e) => setForm({ ...form, description: e.target.value })} className="text-sm" /></div>
+        <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Kota</Label><Input value={form.city ?? ""} onChange={(e) => setForm({ ...form, city: e.target.value })} className="text-sm h-9 sm:h-10" /></div>
+        <div className="space-y-1.5 md:col-span-2"><Label className="text-xs sm:text-sm">Poster Event</Label><ImagePicker bucket="events" value={form.poster_url ?? ""} onChange={(url) => setForm({ ...form, poster_url: url })} /></div>
+        <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Link Grup (WA/TG)</Label><Input value={form.group_link ?? ""} onChange={(e) => setForm({ ...form, group_link: e.target.value })} className="text-sm h-9 sm:h-10" /></div>
+        <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Mulai</Label><Input type="datetime-local" required value={form.starts_at ?? ""} onChange={(e) => setForm({ ...form, starts_at: e.target.value })} className="text-sm h-9 sm:h-10" /></div>
+        <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Selesai</Label><Input type="datetime-local" value={form.ends_at ?? ""} onChange={(e) => setForm({ ...form, ends_at: e.target.value })} className="text-sm h-9 sm:h-10" /></div>
         <div className="space-y-1.5">
-          <Label>Gender Event</Label>
-          <select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.gender} onChange={(e) => setForm({ ...form, gender: e.target.value })}>
+          <Label className="text-xs sm:text-sm">Gender Event</Label>
+          <select className="h-9 sm:h-10 w-full rounded-md border border-input bg-background px-3 text-xs sm:text-sm" value={form.gender} onChange={(e) => setForm({ ...form, gender: e.target.value })}>
             <option value="ALL">Umum</option>
             <option value="L">Laki-laki</option>
             <option value="P">Perempuan</option>
           </select>
         </div>
-        <div className="space-y-1.5"><Label>Poin Reward</Label><Input type="number" value={form.points_reward ?? defaultPoints} onChange={(e) => setForm({ ...form, points_reward: e.target.value })} /></div>
+        <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Poin Reward</Label><Input type="number" value={form.points_reward ?? defaultPoints} onChange={(e) => setForm({ ...form, points_reward: e.target.value })} className="text-sm h-9 sm:h-10" /></div>
         <div className="space-y-1.5 md:col-span-2">
-          <Label>Pesan Sukses (ditampilkan setelah user scan QR)</Label>
-          <Textarea rows={3} placeholder="Selamat, kamu telah berhasil mendaftar! Sampai jumpa di acara 🎉" value={form.success_message ?? ""} onChange={(e) => setForm({ ...form, success_message: e.target.value })} />
+          <Label className="text-xs sm:text-sm">Pesan Sukses (ditampilkan setelah user scan QR)</Label>
+          <Textarea rows={3} placeholder="Selamat, kamu telah berhasil mendaftar! Sampai jumpa di acara 🎉" value={form.success_message ?? ""} onChange={(e) => setForm({ ...form, success_message: e.target.value })} className="text-sm" />
         </div>
         <RecurringPinFields form={form} setForm={setForm} />
-        <div className="md:col-span-2"><Button type="submit" className="w-full bg-primary text-primary-foreground">Buat Event</Button></div>
+        <div className="md:col-span-2"><Button type="submit" className="w-full bg-primary text-primary-foreground h-9 sm:h-10 text-sm">Buat Event</Button></div>
       </form>
     </Section>
   );
@@ -129,34 +129,34 @@ function RecurringPinFields({ form, setForm }: { form: any; setForm: (f: any) =>
     setForm({ ...form, recurring_days: next });
   };
   return (
-    <div className="md:col-span-2 space-y-3 rounded-xl border border-border/60 bg-muted/30 p-3">
-      <label className="flex items-center gap-2 text-sm font-medium">
+    <div className="md:col-span-2 space-y-3 rounded-xl border border-border/60 bg-muted/30 p-3 text-sm">
+      <label className="flex items-center gap-2 text-xs sm:text-sm font-medium cursor-pointer">
         <input type="checkbox" checked={!!form.is_pinned} onChange={(e) => setForm({ ...form, is_pinned: e.target.checked })} />
         <Pin className="h-4 w-4 text-primary" /> Sematkan event (tampil paling atas)
       </label>
-      <label className="flex items-center gap-2 text-sm font-medium">
+      <label className="flex items-center gap-2 text-xs sm:text-sm font-medium cursor-pointer">
         <input type="checkbox" checked={!!form.is_recurring} onChange={(e) => setForm({ ...form, is_recurring: e.target.checked })} />
         <Repeat className="h-4 w-4 text-primary" /> Event berkelanjutan (mingguan, tidak expired)
       </label>
       {form.is_recurring && (
-        <div className="grid gap-3 md:grid-cols-2 pl-6">
+        <div className="grid gap-2 sm:gap-3 md:grid-cols-2 pl-6 pt-2">
           <div className="md:col-span-2 space-y-1.5">
-            <Label>Hari pelaksanaan</Label>
-            <div className="flex flex-wrap gap-2">
+            <Label className="text-xs sm:text-sm">Hari pelaksanaan</Label>
+            <div className="flex flex-wrap gap-1.5 sm:gap-2">
               {DAY_NAMES.map((n, i) => {
                 const active = (form.recurring_days ?? []).includes(i);
                 return (
                   <button key={i} type="button" onClick={() => toggleDay(i)}
-                    className={`rounded-full px-3 py-1 text-xs font-medium border transition ${active ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border/60"}`}>
+                    className={`rounded-full px-2.5 sm:px-3 py-0.5 sm:py-1 text-xs font-medium border transition ${active ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border/60"}`}>
                     {n}
                   </button>
                 );
               })}
             </div>
           </div>
-          <div className="space-y-1.5"><Label>Jam mulai</Label><Input type="time" value={form.recurring_start_time ?? ""} onChange={(e) => setForm({ ...form, recurring_start_time: e.target.value })} /></div>
-          <div className="space-y-1.5"><Label>Jam selesai</Label><Input type="time" value={form.recurring_end_time ?? ""} onChange={(e) => setForm({ ...form, recurring_end_time: e.target.value })} /></div>
-          <div className="space-y-1.5 md:col-span-2"><Label>Berakhir pada (opsional)</Label><Input type="date" value={form.recurring_until ?? ""} onChange={(e) => setForm({ ...form, recurring_until: e.target.value })} /><p className="text-xs text-muted-foreground">Kosongkan untuk berjalan terus tanpa batas.</p></div>
+          <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Jam mulai</Label><Input type="time" value={form.recurring_start_time ?? ""} onChange={(e) => setForm({ ...form, recurring_start_time: e.target.value })} className="text-sm h-9 sm:h-10" /></div>
+          <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Jam selesai</Label><Input type="time" value={form.recurring_end_time ?? ""} onChange={(e) => setForm({ ...form, recurring_end_time: e.target.value })} className="text-sm h-9 sm:h-10" /></div>
+          <div className="space-y-1.5 md:col-span-2"><Label className="text-xs sm:text-sm">Berakhir pada (opsional)</Label><Input type="date" value={form.recurring_until ?? ""} onChange={(e) => setForm({ ...form, recurring_until: e.target.value })} className="text-sm h-9 sm:h-10" /><p className="text-xs text-muted-foreground">Kosongkan untuk berjalan terus tanpa batas.</p></div>
         </div>
       )}
     </div>

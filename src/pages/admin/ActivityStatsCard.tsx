@@ -108,13 +108,13 @@ export default function ActivityStatsCard({
   ];
 
   return (
-    <div className="rounded-2xl bg-card p-5 md:p-6" style={{ boxShadow: "var(--shadow-card)" }}>
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="rounded-2xl bg-card p-4 sm:p-5 md:p-6" style={{ boxShadow: "var(--shadow-card)" }}>
+      <div className="flex flex-col gap-3 sm:flex-wrap sm:items-center sm:justify-between">
         <div>
-          <h2 className="font-display text-lg font-bold">Statistik Aktivitas</h2>
+          <h2 className="font-display text-base sm:text-lg font-bold">Statistik Aktivitas</h2>
           <p className="text-xs text-muted-foreground">Ringkasan jamaah hadir & reward yang ditukar</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
           <div className="inline-flex rounded-xl bg-muted p-1">
             {tabs.map((t) => {
               const Icon = t.icon;
@@ -123,11 +123,11 @@ export default function ActivityStatsCard({
                 <button
                   key={t.key}
                   onClick={() => setKind(t.key)}
-                  className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+                  className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-xs font-semibold transition ${
                     active ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  <Icon className="h-3.5 w-3.5" /> {t.label}
+                  <Icon className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> {t.label}
                 </button>
               );
             })}
@@ -136,47 +136,47 @@ export default function ActivityStatsCard({
             size="sm"
             variant="outline"
             onClick={() => exportStatsXLSX({ attendance, redemptions, registrations, logins, weekly, daily, totals })}
-            className="gap-1.5"
+            className="gap-1.5 text-[11px] sm:text-xs h-7 sm:h-8"
           >
-            <Download className="h-4 w-4" /> Excel
+            <Download className="h-3 w-3 sm:h-4 sm:w-4" /> Excel
           </Button>
         </div>
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-3">
+      <div className="mt-3 sm:mt-4 flex flex-wrap gap-2 sm:gap-3">
         <Legendy color={COLORS.male} label="Laki-laki" value={totals.male} />
         <Legendy color={COLORS.female} label="Perempuan" value={totals.female} />
         <Legendy color={COLORS.reward} label="Reward" value={totals.reward} />
       </div>
 
-      <div className="mt-4 h-72 w-full">
+      <div className="mt-4 h-56 sm:h-64 md:h-72 w-full">
         <ResponsiveContainer width="100%" height="100%">
           {kind === "bar" ? (
-            <BarChart data={weekly} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+            <BarChart data={weekly} margin={{ top: 8, right: 0, left: -25, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="label" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
-              <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} allowDecimals={false} />
-              <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 12 }} />
-              <Legend wrapperStyle={{ fontSize: 12 }} />
+              <XAxis dataKey="label" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+              <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} allowDecimals={false} />
+              <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 12, fontSize: 12 }} />
+              <Legend wrapperStyle={{ fontSize: 11 }} />
               <Bar dataKey="male" name="Laki-laki" fill={COLORS.male} radius={[6, 6, 0, 0]} />
               <Bar dataKey="female" name="Perempuan" fill={COLORS.female} radius={[6, 6, 0, 0]} />
               <Bar dataKey="reward" name="Reward" fill={COLORS.reward} radius={[6, 6, 0, 0]} />
             </BarChart>
           ) : kind === "donut" ? (
             <PieChart>
-              <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 12 }} />
-              <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Pie data={donutData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={70} outerRadius={110} paddingAngle={3}>
+              <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 12, fontSize: 12 }} />
+              <Legend wrapperStyle={{ fontSize: 11 }} />
+              <Pie data={donutData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={2}>
                 {donutData.map((d, i) => <Cell key={i} fill={d.fill} />)}
               </Pie>
             </PieChart>
           ) : (
-            <LineChart data={daily} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+            <LineChart data={daily} margin={{ top: 8, right: 0, left: -25, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="label" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
-              <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} allowDecimals={false} />
-              <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 12 }} />
-              <Legend wrapperStyle={{ fontSize: 12 }} />
+              <XAxis dataKey="label" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+              <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} allowDecimals={false} />
+              <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 12, fontSize: 12 }} />
+              <Legend wrapperStyle={{ fontSize: 11 }} />
               <Line type="monotone" dataKey="male" name="Laki-laki" stroke={COLORS.male} strokeWidth={2.5} dot={false} />
               <Line type="monotone" dataKey="female" name="Perempuan" stroke={COLORS.female} strokeWidth={2.5} dot={false} />
               <Line type="monotone" dataKey="reward" name="Reward" stroke={COLORS.reward} strokeWidth={2.5} dot={false} />
@@ -190,10 +190,10 @@ export default function ActivityStatsCard({
 
 function Legendy({ color, label, value }: { color: string; label: string; value: number }) {
   return (
-    <div className="flex items-center gap-2 rounded-xl bg-muted/50 px-3 py-1.5">
-      <span className="h-2.5 w-2.5 rounded-full" style={{ background: color }} />
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <span className="text-sm font-bold text-foreground">{value}</span>
+    <div className="flex items-center gap-1.5 sm:gap-2 rounded-xl bg-muted/50 px-2.5 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-xs">
+      <span className="h-2 w-2 sm:h-2.5 sm:w-2.5 rounded-full shrink-0" style={{ background: color }} />
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-bold text-foreground">{value}</span>
     </div>
   );
 }

@@ -134,35 +134,35 @@ export default function Merchandise() {
   return (
     <>
       <div>
-        <h1 className="font-display text-2xl font-bold">Merchandise</h1>
+        <h1 className="font-display text-xl sm:text-2xl font-bold">Merchandise</h1>
         <p className="text-xs text-muted-foreground">Atur reward yang bisa ditukar dengan poin (realtime)</p>
       </div>
 
       <Section title="Tambah merchandise baru">
         <div className="space-y-3">
           <div className="space-y-1.5">
-            <Label className="text-xs">Nama</Label>
-            <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Contoh: Kaos Lir-Ilir" />
+            <Label className="text-xs sm:text-sm">Nama</Label>
+            <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Contoh: Kaos Lir-Ilir" className="text-sm h-9 sm:h-10" />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs">Deskripsi</Label>
-            <Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Opsional" />
+            <Label className="text-xs sm:text-sm">Deskripsi</Label>
+            <Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Opsional" className="text-sm h-9 sm:h-10" />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs">Poin</Label>
-              <Input type="number" value={form.cost_points} onChange={(e) => setForm({ ...form, cost_points: e.target.value })} />
+              <Input type="number" value={form.cost_points} onChange={(e) => setForm({ ...form, cost_points: e.target.value })} className="text-sm h-9 sm:h-10" />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Stok</Label>
-              <Input type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} />
+              <Input type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} className="text-sm h-9 sm:h-10" />
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs">Gambar</Label>
+            <Label className="text-xs sm:text-sm">Gambar</Label>
             <ImagePicker value={form.image_url} onChange={(url) => setForm({ ...form, image_url: url })} />
           </div>
-          <Button onClick={create} className="w-full">
+          <Button onClick={create} className="w-full h-9 sm:h-10 text-sm">
             <Plus className="mr-2 h-4 w-4" /> Tambah
           </Button>
         </div>
@@ -170,7 +170,7 @@ export default function Merchandise() {
 
       <Section title={`Daftar merchandise (${rewards.length})`}>
         {rewards.length === 0 && <p className="text-sm text-muted-foreground">Belum ada merchandise.</p>}
-        <div className="space-y-3">
+        <div className="space-y-2 sm:space-y-3">
           {rewards.map((r) => (
             <RewardRow key={r.id} r={r} onUpdate={update} onDelete={remove} />
           ))}
@@ -187,24 +187,24 @@ function RewardRow({ r, onUpdate, onDelete }: { r: Reward; onUpdate: (r: Reward,
   return (
     <div className="rounded-xl border border-border/60 p-3 space-y-2">
       <div className="flex-1 space-y-1.5">
-        <Input value={edit.name} onChange={(e) => setEdit({ ...edit, name: e.target.value })} />
-        <Input value={edit.description ?? ""} onChange={(e) => setEdit({ ...edit, description: e.target.value })} placeholder="Deskripsi" />
+        <Input value={edit.name} onChange={(e) => setEdit({ ...edit, name: e.target.value })} className="text-sm h-9 sm:h-10" />
+        <Input value={edit.description ?? ""} onChange={(e) => setEdit({ ...edit, description: e.target.value })} placeholder="Deskripsi" className="text-sm h-9 sm:h-10" />
       </div>
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
         <div>
-          <Label className="text-[10px]">Poin</Label>
-          <Input type="number" value={edit.cost_points} onChange={(e) => setEdit({ ...edit, cost_points: Number(e.target.value) })} />
+          <Label className="text-[10px] sm:text-xs">Poin</Label>
+          <Input type="number" value={edit.cost_points} onChange={(e) => setEdit({ ...edit, cost_points: Number(e.target.value) })} className="text-xs sm:text-sm h-8 sm:h-9" />
         </div>
         <div>
-          <Label className="text-[10px]">Stok</Label>
-          <Input type="number" value={edit.stock} onChange={(e) => setEdit({ ...edit, stock: Number(e.target.value) })} />
+          <Label className="text-[10px] sm:text-xs">Stok</Label>
+          <Input type="number" value={edit.stock} onChange={(e) => setEdit({ ...edit, stock: Number(e.target.value) })} className="text-xs sm:text-sm h-8 sm:h-9" />
         </div>
         <div>
-          <Label className="text-[10px]">Aktif</Label>
+          <Label className="text-[10px] sm:text-xs">Aktif</Label>
           <select
             value={edit.is_active ? "1" : "0"}
             onChange={(e) => setEdit({ ...edit, is_active: e.target.value === "1" })}
-            className="h-10 w-full rounded-md border border-input bg-background px-2 text-sm"
+            className="h-8 sm:h-9 w-full rounded-md border border-input bg-background px-2 text-xs sm:text-sm"
           >
             <option value="1">Ya</option>
             <option value="0">Tidak</option>
@@ -212,14 +212,14 @@ function RewardRow({ r, onUpdate, onDelete }: { r: Reward; onUpdate: (r: Reward,
         </div>
       </div>
       <div>
-        <Label className="text-[10px]">Gambar</Label>
+        <Label className="text-[10px] sm:text-xs">Gambar</Label>
         <ImagePicker value={edit.image_url ?? ""} onChange={(url) => setEdit({ ...edit, image_url: url })} />
       </div>
-      <div className="flex gap-2">
-        <Button size="sm" disabled={!dirty} onClick={() => onUpdate(r, edit)} className="flex-1">
-          <Save className="mr-1 h-3.5 w-3.5" /> Simpan
+      <div className="flex gap-1.5 sm:gap-2">
+        <Button size="sm" disabled={!dirty} onClick={() => onUpdate(r, edit)} className="flex-1 h-8 sm:h-9 text-[11px] sm:text-xs">
+          <Save className="mr-1 h-3 w-3 sm:h-3.5 sm:w-3.5" /> Simpan
         </Button>
-        <Button size="sm" variant="destructive" onClick={() => onDelete(r.id)}>
+        <Button size="sm" variant="destructive" onClick={() => onDelete(r.id)} className="h-8 sm:h-9">
           <Trash2 className="h-3.5 w-3.5" />
         </Button>
       </div>
