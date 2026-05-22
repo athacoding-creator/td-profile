@@ -13,7 +13,7 @@ type ChartKind = "bar" | "donut" | "line";
 const COLORS = {
   male: "hsl(var(--chart-male))",
   female: "hsl(var(--chart-female))",
-  reward: "hsl(var(--chart-reward))",
+  total: "hsl(var(--chart-reward))",
 };
 
 // Get Monday-based week start
@@ -26,17 +26,17 @@ function weekStart(d: Date) {
 }
 const fmtDM = (d: Date) => `${d.getDate()}/${d.getMonth() + 1}`;
 
-function buildWeekly(attendance: any[], redemptions: any[]) {
+function buildWeekly(attendance: any[]) {
   const now = new Date();
   const thisWeek = weekStart(now);
-  const buckets: { key: string; label: string; male: number; female: number; reward: number }[] = [];
+  const buckets: { key: string; label: string; male: number; female: number; total: number }[] = [];
   for (let i = 11; i >= 0; i--) {
     const ws = new Date(thisWeek); ws.setDate(ws.getDate() - i * 7);
     const we = new Date(ws); we.setDate(we.getDate() + 6);
     buckets.push({
       key: `${ws.getFullYear()}-${ws.getMonth()}-${ws.getDate()}`,
       label: `${fmtDM(ws)}–${fmtDM(we)}`,
-      male: 0, female: 0, reward: 0,
+      male: 0, female: 0, total: 0,
     });
   }
   const idx = new Map(buckets.map((b, i) => [b.key, i]));
@@ -44,25 +44,22 @@ function buildWeekly(attendance: any[], redemptions: any[]) {
   for (const a of attendance) {
     const i = idx.get(k(new Date(a.scanned_at))); if (i === undefined) continue;
     const g = a.profiles?.gender;
-    if (g === "MALE" || g === "male" || g === "L") buckets[i].male++;
-    else if (g === "FEMALE" || g === "female" || g === "P") buckets[i].female++;
-  }
-  for (const r of redemptions) {
-    if (r.status !== "approved" && r.status !== "selesai" && r.status !== "completed") continue;
-    const i = idx.get(k(new Date(r.created_at))); if (i !== undefined) buckets[i].reward++;
+    if (g === "MALE" || g === "male" || g === "L") { buckets[i].male++; buckets[i].total++; }
+    else if (g === "FEMALE" || g === "female" || g === "P") { buckets[i].female++; buckets[i].total++; }
+    else buckets[i].total++;
   }
   return buckets;
 }
 
-function buildDaily(attendance: any[], redemptions: any[]) {
+function buildDaily(attendance: any[]) {
   const now = new Date();
-  const buckets: { key: string; label: string; male: number; female: number; reward: number }[] = [];
+  const buckets: { key: string; label: string; male: number; female: number; total: number }[] = [];
   for (let i = 29; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
     buckets.push({
       key: `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`,
       label: `${d.getDate()}/${d.getMonth() + 1}`,
-      male: 0, female: 0, reward: 0,
+      male: 0, female: 0, total: 0,
     });
   }
   const idx = new Map(buckets.map((b, i) => [b.key, i]));
@@ -71,45 +68,97 @@ function buildDaily(attendance: any[], redemptions: any[]) {
     const d = new Date(a.scanned_at);
     const i = idx.get(k(d)); if (i === undefined) continue;
     const g = a.profiles?.gender;
-    if (g === "MALE" || g === "male" || g === "L") buckets[i].male++;
-    else if (g === "FEMALE" || g === "female" || g === "P") buckets[i].female++;
-  }
-  for (const r of redemptions) {
-    if (r.status !== "approved" && r.status !== "selesai" && r.status !== "completed") continue;
-    const d = new Date(r.created_at);
-    const i = idx.get(k(d)); if (i !== undefined) buckets[i].reward++;
+    if (g === "MALE" || g === "male" || g === "L") { buckets[i].male++; buckets[i].total++; }
+    else if (g === "FEMALE" || g === "female" || g === "P") { buckets[i].female++; buckets[i].total++; }
+    else buckets[i].total++;
   }
   return buckets;
 }
 
-/** Build per-program registration ranking data */
-function buildProgramRanking(registrations: any[], programs: any[]) {
-  const counts: Record<string, { total: number }> = {};
+/** Build per-program attendance ranking data */
+function buildProgramRanking(attendance: any[], events: any[], programs: any[]) {
+  const counts: Record<string, { male: number; female: number; total: number }> = {};
+  
+  // Initialize counts for all programs
   for (const p of programs) {
-    counts[p.id] = { total: 0 };
+    counts[p.id] = { male: 0, female: 0, total: 0 };
   }
-  for (const reg of registrations) {
-    const event = reg.events;
+  
+  // Count attendance by program (through events)
+  for (const a of attendance) {
+    const event = events.find((e) => e.id === a.event_id);
     if (!event || !event.program_id) continue;
+    
     const pid = event.program_id;
-    if (!counts[pid]) counts[pid] = { total: 0 };
-    counts[pid].total++;
+    if (!counts[pid]) counts[pid] = { male: 0, female: 0, total: 0 };
+    
+    const g = a.profiles?.gender;
+    if (g === "MALE" || g === "male" || g === "L") { counts[pid].male++; counts[pid].total++; }
+    else if (g === "FEMALE" || g === "female" || g === "P") { counts[pid].female++; counts[pid].total++; }
+    else counts[pid].total++;
   }
+  
   return programs
     .map((p) => ({
       id: p.id,
       label: p.name?.length > 22 ? p.name.slice(0, 22) + "…" : (p.name ?? "—"),
-      fullTitle: p.name ?? "—",
+      fullName: p.name ?? "—",
       code: p.code ?? "—",
+      male: counts[p.id]?.male ?? 0,
+      female: counts[p.id]?.female ?? 0,
       total: counts[p.id]?.total ?? 0,
     }))
     .filter((p) => p.total > 0)
     .sort((a, b) => b.total - a.total);
 }
 
-export default function ActivityStatsCard({
-  attendance, redemptions, registrations, logins, events, programs = [],
-}: { attendance: any[]; redemptions: any[]; registrations: any[]; logins: any[]; events: any[]; programs?: any[] }) {
+/** Build weekly program ranking (top programs this week) */
+function buildWeeklyProgramRanking(attendance: any[], events: any[], programs: any[]) {
+  const now = new Date();
+  const thisWeek = weekStart(now);
+  const weekEnd = new Date(thisWeek); weekEnd.setDate(weekEnd.getDate() + 6);
+  
+  const counts: Record<string, { male: number; female: number; total: number }> = {};
+  
+  // Initialize counts for all programs
+  for (const p of programs) {
+    counts[p.id] = { male: 0, female: 0, total: 0 };
+  }
+  
+  // Count attendance by program for this week only
+  for (const a of attendance) {
+    const scannedDate = new Date(a.scanned_at);
+    if (scannedDate < thisWeek || scannedDate > weekEnd) continue;
+    
+    const event = events.find((e) => e.id === a.event_id);
+    if (!event || !event.program_id) continue;
+    
+    const pid = event.program_id;
+    if (!counts[pid]) counts[pid] = { male: 0, female: 0, total: 0 };
+    
+    const g = a.profiles?.gender;
+    if (g === "MALE" || g === "male" || g === "L") { counts[pid].male++; counts[pid].total++; }
+    else if (g === "FEMALE" || g === "female" || g === "P") { counts[pid].female++; counts[pid].total++; }
+    else counts[pid].total++;
+  }
+  
+  return programs
+    .map((p) => ({
+      id: p.id,
+      label: p.name?.length > 22 ? p.name.slice(0, 22) + "…" : (p.name ?? "—"),
+      fullName: p.name ?? "—",
+      code: p.code ?? "—",
+      male: counts[p.id]?.male ?? 0,
+      female: counts[p.id]?.female ?? 0,
+      total: counts[p.id]?.total ?? 0,
+    }))
+    .filter((p) => p.total > 0)
+    .sort((a, b) => b.total - a.total);
+}
+
+export default function ProgramStatsCard({
+  attendance, events, programs,
+}: { attendance: any[]; events: any[]; programs: any[] }) {
   const [kind, setKind] = useState<ChartKind>("bar");
 
   // ── Program filter state ──────────────────────────────────────────────
@@ -117,47 +166,32 @@ export default function ActivityStatsCard({
   const [showProgramPicker, setShowProgramPicker] = useState(false);
   const [searchProgram, setSearchProgram] = useState("");
 
-  // Get events for selected program
-  const eventsForProgram = useMemo(() => {
-    if (!selectedProgramId) return events;
-    return events.filter((e) => e.program_id === selectedProgramId);
-  }, [events, selectedProgramId]);
+  // Filter attendance by selected program
+  const filteredAttendance = useMemo(() => {
+    if (!selectedProgramId) return attendance;
+    return attendance.filter((a) => {
+      const event = events.find((e) => e.id === a.event_id);
+      return event?.program_id === selectedProgramId;
+    });
+  }, [attendance, selectedProgramId, events]);
 
-  // Filter attendance & redemptions by selected program
-  const filteredAttendance = useMemo(
-    () => selectedProgramId 
-      ? attendance.filter((a) => eventsForProgram.some((e) => e.id === a.event_id))
-      : attendance,
-    [attendance, selectedProgramId, eventsForProgram],
-  );
-  const filteredRedemptions = useMemo(
-    () => selectedProgramId ? [] : redemptions, // redemptions have no program_id
-    [redemptions, selectedProgramId],
-  );
-  const filteredRegistrations = useMemo(
-    () => selectedProgramId
-      ? registrations.filter((r) => eventsForProgram.some((e) => e.id === r.event_id))
-      : registrations,
-    [registrations, selectedProgramId, eventsForProgram],
-  );
-
-  const weekly = useMemo(() => buildWeekly(filteredAttendance, filteredRedemptions), [filteredAttendance, filteredRedemptions]);
-  const daily = useMemo(() => buildDaily(filteredAttendance, filteredRedemptions), [filteredAttendance, filteredRedemptions]);
-  const programRanking = useMemo(() => buildProgramRanking(registrations, programs), [registrations, programs]);
+  const weekly = useMemo(() => buildWeekly(filteredAttendance), [filteredAttendance]);
+  const daily = useMemo(() => buildDaily(filteredAttendance), [filteredAttendance]);
+  const programRanking = useMemo(() => buildProgramRanking(attendance, events, programs), [attendance, events, programs]);
+  const weeklyProgramRanking = useMemo(() => buildWeeklyProgramRanking(attendance, events, programs), [attendance, events, programs]);
 
   const totals = useMemo(() => {
-    const t = { male: 0, female: 0, reward: 0 };
-    for (const b of weekly) { t.male += b.male; t.female += b.female; t.reward += b.reward; }
+    const t = { male: 0, female: 0, total: 0 };
+    for (const b of weekly) { t.male += b.male; t.female += b.female; t.total += b.total; }
     return t;
   }, [weekly]);
 
   const donutData = [
     { name: "Laki-laki", value: totals.male, fill: COLORS.male },
     { name: "Perempuan", value: totals.female, fill: COLORS.female },
-    { name: "Reward", value: totals.reward, fill: COLORS.reward },
   ];
 
-  // Donut for program ranking mode: top programs by total registrations
+  // Donut for program ranking mode: top programs by total
   const programDonutData = useMemo(
     () => programRanking.slice(0, 8).map((p, i) => ({
       name: p.label,
@@ -185,17 +219,17 @@ export default function ActivityStatsCard({
   const isProgramSelected = !!selectedProgramId;
 
   // For "Semua Program" bar/donut: show program ranking
-  const rankingBarData = programRanking.slice(0, 15);
+  const rankingBarData = weeklyProgramRanking.slice(0, 15);
 
   return (
     <div className="rounded-2xl bg-card p-4 sm:p-5 md:p-6" style={{ boxShadow: "var(--shadow-card)" }}>
       <div className="flex flex-col gap-3 sm:flex-wrap sm:items-center sm:justify-between">
         <div>
-          <h2 className="font-display text-base sm:text-lg font-bold">Statistik Aktivitas</h2>
+          <h2 className="font-display text-base sm:text-lg font-bold">Statistik Program</h2>
           <p className="text-xs text-muted-foreground">
             {isProgramSelected
               ? `Program: ${selectedProgram?.name ?? "—"}`
-              : "Ringkasan jamaah hadir & reward yang ditukar"}
+              : "Program mana yang paling ramai minggu ini"}
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
@@ -221,9 +255,9 @@ export default function ActivityStatsCard({
             variant="outline"
             onClick={() => exportStatsXLSX({
               attendance: filteredAttendance,
-              redemptions: filteredRedemptions,
-              registrations: filteredRegistrations,
-              logins,
+              redemptions: [],
+              registrations: [],
+              logins: [],
               weekly,
               daily,
               totals,
@@ -282,7 +316,7 @@ export default function ActivityStatsCard({
                   }`}
                 >
                   <span className="font-medium">Semua Program</span>
-                  <span className="ml-1 text-muted-foreground">({registrations.length} daftar)</span>
+                  <span className="ml-1 text-muted-foreground">({attendance.length} hadir)</span>
                 </button>
 
                 {/* Filtered programs */}
@@ -290,8 +324,8 @@ export default function ActivityStatsCard({
                   <p className="text-center text-xs text-muted-foreground py-4">Program tidak ditemukan</p>
                 )}
                 {filteredPrograms.map((p) => {
-                  const count = registrations.filter((r) => {
-                    const event = events.find((e) => e.id === r.event_id);
+                  const count = attendance.filter((a) => {
+                    const event = events.find((e) => e.id === a.event_id);
                     return event?.program_id === p.id;
                   }).length;
                   return (
@@ -308,7 +342,7 @@ export default function ActivityStatsCard({
                         <span className="font-medium line-clamp-1">{p.name}</span>
                       </div>
                       <div className="text-muted-foreground mt-0.5">
-                        {p.code} · {count} daftar
+                        {p.code} · {count} hadir
                       </div>
                     </button>
                   );
@@ -325,12 +359,13 @@ export default function ActivityStatsCard({
           <>
             <Legendy color={COLORS.male} label="Laki-laki" value={totals.male} />
             <Legendy color={COLORS.female} label="Perempuan" value={totals.female} />
+            <Legendy color={COLORS.total} label="Total" value={totals.total} />
           </>
         ) : (
           <>
-            <Legendy color={COLORS.male} label="Laki-laki" value={totals.male} />
-            <Legendy color={COLORS.female} label="Perempuan" value={totals.female} />
-            <Legendy color={COLORS.reward} label="Reward" value={totals.reward} />
+            <Legendy color={COLORS.male} label="Laki-laki" value={programRanking.reduce((sum, p) => sum + p.male, 0)} />
+            <Legendy color={COLORS.female} label="Perempuan" value={programRanking.reduce((sum, p) => sum + p.female, 0)} />
+            <Legendy color={COLORS.total} label="Total" value={programRanking.reduce((sum, p) => sum + p.total, 0)} />
           </>
         )}
       </div>
@@ -338,17 +373,15 @@ export default function ActivityStatsCard({
       {/* ── Chart area ────────────────────────────────────────────────── */}
       <div className="mt-4 h-56 sm:h-64 md:h-72 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          {/* ── SEMUA PROGRAM: Bar weekly (batang berdiri, Laki-laki + Perempuan + Reward) ── */}
+          {/* ── SEMUA PROGRAM: Bar weekly (batang berdiri, Laki-laki + Perempuan) ── */}
           {!isProgramSelected && kind === "bar" ? (
-            <BarChart data={weekly} margin={{ top: 8, right: 0, left: -25, bottom: 0 }}>
+            <BarChart data={rankingBarData} margin={{ top: 8, right: 0, left: -25, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis dataKey="label" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
               <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} allowDecimals={false} />
               <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 12, fontSize: 12 }} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar dataKey="male" name="Laki-laki" fill={COLORS.male} radius={[6, 6, 0, 0]} />
-              <Bar dataKey="female" name="Perempuan" fill={COLORS.female} radius={[6, 6, 0, 0]} />
-              <Bar dataKey="reward" name="Reward" fill={COLORS.reward} radius={[6, 6, 0, 0]} />
+              <Bar dataKey="total" name="Total Hadir" fill={COLORS.total} radius={[6, 6, 0, 0]} />
             </BarChart>
           ) : !isProgramSelected && kind === "donut" ? (
             /* ── SEMUA PROGRAM: Donut ranking ─────────────────────────── */
@@ -369,7 +402,7 @@ export default function ActivityStatsCard({
               <Legend wrapperStyle={{ fontSize: 11 }} />
               <Line type="monotone" dataKey="male" name="Laki-laki" stroke={COLORS.male} strokeWidth={2.5} dot={false} />
               <Line type="monotone" dataKey="female" name="Perempuan" stroke={COLORS.female} strokeWidth={2.5} dot={false} />
-              <Line type="monotone" dataKey="reward" name="Reward" stroke={COLORS.reward} strokeWidth={2.5} dot={false} />
+              <Line type="monotone" dataKey="total" name="Total" stroke={COLORS.total} strokeWidth={2.5} dot={false} />
             </LineChart>
           ) : isProgramSelected && kind === "bar" ? (
             /* ── PROGRAM TERPILIH: Bar weekly ─────────────────────────── */
@@ -421,7 +454,7 @@ export default function ActivityStatsCard({
       {/* ── Program ranking note ────────────────────────────────────────── */}
       {!isProgramSelected && kind === "bar" && rankingBarData.length > 0 && (
         <p className="mt-2 text-center text-[10px] text-muted-foreground">
-          Menampilkan {rankingBarData.length} program teratas berdasarkan jumlah pendaftar
+          Menampilkan {rankingBarData.length} program teratas minggu ini berdasarkan jumlah kehadiran
         </p>
       )}
     </div>

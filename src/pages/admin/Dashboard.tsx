@@ -51,7 +51,7 @@ export default function Dashboard() {
       </div>
 
       {/* Unified stats card */}
-      <ActivityStatsCard attendance={data.attendance} redemptions={data.redemptions} registrations={data.registrations} logins={[]} />
+      <ActivityStatsCard attendance={data.attendance} redemptions={data.redemptions} registrations={data.registrations} logins={[]} events={data.events} programs={data.programs} />
 
       {/* Grouped menu */}
       <div className="space-y-4 sm:space-y-6">

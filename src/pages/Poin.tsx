@@ -4,9 +4,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { getReasonLabel } from "@/utils/pointReasons";
+import { AlertCircle } from "lucide-react";
 
 export default function Poin() {
   const { user, profile, refreshProfile } = useAuth();
@@ -14,6 +16,7 @@ export default function Poin() {
   const [rewards, setRewards] = useState<any[]>([]);
   const [txns, setTxns] = useState<any[]>([]);
   const [lastRedeem, setLastRedeem] = useState<string | null>(null);
+  const [showTermsDialog, setShowTermsDialog] = useState(true);
 
   const loadRedeems = async () => {
     if (!user) return;
@@ -116,6 +119,61 @@ export default function Poin() {
           {!txns.length && <p className="text-sm text-muted-foreground">Belum ada transaksi.</p>}
         </div>
       </main>
+
+      {/* Terms Dialog */}
+      <Dialog open={showTermsDialog} onOpenChange={setShowTermsDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader className="text-center">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-accent/20">
+              <AlertCircle className="h-6 w-6 text-accent" />
+            </div>
+            <DialogTitle className="text-xl font-bold">Syarat Penukaran</DialogTitle>
+            <DialogDescription className="mt-2 text-sm text-foreground/80">
+              Mohon baca dan pahami syarat penukaran reward berikut
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-2.5 py-4">
+            <div className="flex gap-2.5">
+              <span className="shrink-0 mt-1 h-2 w-2 rounded-full bg-accent" />
+              <span className="text-sm text-foreground/80">Mengambil di Teras Dakwah setelah kajian berlangsung</span>
+            </div>
+            <div className="flex gap-2.5">
+              <span className="shrink-0 mt-1 h-2 w-2 rounded-full bg-accent" />
+              <span className="text-sm text-foreground/80">Bersedia untuk didokumentasikan</span>
+            </div>
+            <div className="flex gap-2.5">
+              <span className="shrink-0 mt-1 h-2 w-2 rounded-full bg-accent" />
+              <span className="text-sm text-foreground/80">Menunjukkan akun</span>
+            </div>
+            <div className="flex gap-2.5">
+              <span className="shrink-0 mt-1 h-2 w-2 rounded-full bg-accent" />
+              <span className="text-sm text-foreground/80">Story Instagram dan tag Teras Dakwah</span>
+            </div>
+            <div className="flex gap-2.5">
+              <span className="shrink-0 mt-1 h-2 w-2 rounded-full bg-accent" />
+              <span className="text-sm text-foreground/80">Sebulan hanya bisa menukar 1 jenis item</span>
+            </div>
+          </div>
+
+          <div className="flex gap-2 pt-2">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => setShowTermsDialog(false)}
+            >
+              Mengerti
+            </Button>
+            <Button
+              className="flex-1"
+              onClick={() => setShowTermsDialog(false)}
+            >
+              Lanjut
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <BottomNav />
     </div>
   );
