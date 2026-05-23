@@ -1,77 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Plus, Trash2, Save, Upload, X } from "lucide-react";
+import { Plus, Trash2, Save } from "lucide-react";
 import { Section } from "./components";
-
-const MAX_SIZE = 5 * 1024 * 1024;
-
-async function uploadImage(file: File): Promise<string | null> {
-  if (file.size > MAX_SIZE) {
-    toast.error("Ukuran gambar maksimal 5MB");
-    return null;
-  }
-  if (!file.type.startsWith("image/")) {
-    toast.error("File harus berupa gambar");
-    return null;
-  }
-  const ext = file.name.split(".").pop() || "jpg";
-  const path = `${crypto.randomUUID()}.${ext}`;
-  const { error } = await supabase.storage.from("merchandise").upload(path, file, {
-    cacheControl: "3600",
-    upsert: false,
-  });
-  if (error) { toast.error(error.message); return null; }
-  const { data } = supabase.storage.from("merchandise").getPublicUrl(path);
-  return data.publicUrl;
-}
-
-function ImagePicker({ value, onChange }: { value: string; onChange: (url: string) => void }) {
-  const ref = useRef<HTMLInputElement>(null);
-  const [busy, setBusy] = useState(false);
-  const onFile = async (f: File) => {
-    setBusy(true);
-    const url = await uploadImage(f);
-    setBusy(false);
-    if (url) onChange(url);
-  };
-  return (
-    <div className="space-y-2">
-      <input
-        ref={ref} type="file" accept="image/*" className="hidden"
-        onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ""; }}
-      />
-      {value ? (
-        <div className="relative inline-block">
-          <img src={value} alt="" className="h-24 w-24 rounded-lg object-cover" />
-          <button
-            type="button"
-            onClick={() => onChange("")}
-            className="absolute -right-2 -top-2 rounded-full bg-destructive p-1 text-destructive-foreground"
-          >
-            <X className="h-3 w-3" />
-          </button>
-        </div>
-      ) : (
-        <Button type="button" variant="outline" size="sm" disabled={busy} onClick={() => ref.current?.click()}>
-          <Upload className="mr-2 h-4 w-4" /> {busy ? "Mengunggah…" : "Upload gambar"}
-        </Button>
-      )}
-      <div className="flex items-center gap-2">
-        <Input
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder="…atau tempel URL gambar (opsional)"
-          className="text-xs"
-        />
-      </div>
-      <p className="text-[10px] text-muted-foreground">Maks 5MB. Format: JPG, PNG, WEBP.</p>
-    </div>
-  );
-}
+import { ImagePicker } from "@/components/admin/ImagePicker";
 
 type Reward = {
   id: string;
@@ -160,7 +95,7 @@ export default function Merchandise() {
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs sm:text-sm">Gambar</Label>
-            <ImagePicker value={form.image_url} onChange={(url) => setForm({ ...form, image_url: url })} />
+            <ImagePicker bucket="merchandise" value={form.image_url} onChange={(url) => setForm({ ...form, image_url: url })} />
           </div>
           <Button onClick={create} className="w-full h-9 sm:h-10 text-sm">
             <Plus className="mr-2 h-4 w-4" /> Tambah
@@ -213,7 +148,7 @@ function RewardRow({ r, onUpdate, onDelete }: { r: Reward; onUpdate: (r: Reward,
       </div>
       <div>
         <Label className="text-[10px] sm:text-xs">Gambar</Label>
-        <ImagePicker value={edit.image_url ?? ""} onChange={(url) => setEdit({ ...edit, image_url: url })} />
+        <ImagePicker bucket="merchandise" value={edit.image_url ?? ""} onChange={(url) => setEdit({ ...edit, image_url: url })} />
       </div>
       <div className="flex gap-1.5 sm:gap-2">
         <Button size="sm" disabled={!dirty} onClick={() => onUpdate(r, edit)} className="flex-1 h-8 sm:h-9 text-[11px] sm:text-xs">
