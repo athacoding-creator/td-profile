@@ -26,7 +26,7 @@ function weekStart(d: Date) {
 }
 const fmtDM = (d: Date) => `${d.getDate()}/${d.getMonth() + 1}`;
 
-function buildWeekly(attendance: any[], redemptions: any[]) {
+function buildWeekly(attendance: any[] = [], redemptions: any[] = []) {
   const now = new Date();
   const thisWeek = weekStart(now);
   const buckets: { key: string; label: string; male: number; female: number; reward: number }[] = [];
@@ -41,20 +41,26 @@ function buildWeekly(attendance: any[], redemptions: any[]) {
   }
   const idx = new Map(buckets.map((b, i) => [b.key, i]));
   const k = (d: Date) => { const w = weekStart(d); return `${w.getFullYear()}-${w.getMonth()}-${w.getDate()}`; };
-  for (const a of attendance) {
-    const i = idx.get(k(new Date(a.scanned_at))); if (i === undefined) continue;
-    const g = a.profiles?.gender;
-    if (g === "MALE" || g === "male" || g === "L") buckets[i].male++;
-    else if (g === "FEMALE" || g === "female" || g === "P") buckets[i].female++;
+  if (Array.isArray(attendance)) {
+    for (const a of attendance) {
+      if (!a || !a.scanned_at) continue;
+      const i = idx.get(k(new Date(a.scanned_at))); if (i === undefined) continue;
+      const g = a.profiles?.gender;
+      if (g === "MALE" || g === "male" || g === "L") buckets[i].male++;
+      else if (g === "FEMALE" || g === "female" || g === "P") buckets[i].female++;
+    }
   }
-  for (const r of redemptions) {
-    if (r.status !== "approved" && r.status !== "selesai" && r.status !== "completed") continue;
-    const i = idx.get(k(new Date(r.created_at))); if (i !== undefined) buckets[i].reward++;
+  if (Array.isArray(redemptions)) {
+    for (const r of redemptions) {
+      if (!r || !r.created_at) continue;
+      if (r.status !== "approved" && r.status !== "selesai" && r.status !== "completed") continue;
+      const i = idx.get(k(new Date(r.created_at))); if (i !== undefined) buckets[i].reward++;
+    }
   }
   return buckets;
 }
 
-function buildDaily(attendance: any[], redemptions: any[]) {
+function buildDaily(attendance: any[] = [], redemptions: any[] = []) {
   const now = new Date();
   const buckets: { key: string; label: string; male: number; female: number; reward: number }[] = [];
   for (let i = 29; i >= 0; i--) {
@@ -67,36 +73,46 @@ function buildDaily(attendance: any[], redemptions: any[]) {
   }
   const idx = new Map(buckets.map((b, i) => [b.key, i]));
   const k = (d: Date) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-  for (const a of attendance) {
-    const d = new Date(a.scanned_at);
-    const i = idx.get(k(d)); if (i === undefined) continue;
-    const g = a.profiles?.gender;
-    if (g === "MALE" || g === "male" || g === "L") buckets[i].male++;
-    else if (g === "FEMALE" || g === "female" || g === "P") buckets[i].female++;
+  if (Array.isArray(attendance)) {
+    for (const a of attendance) {
+      if (!a || !a.scanned_at) continue;
+      const d = new Date(a.scanned_at);
+      const i = idx.get(k(d)); if (i === undefined) continue;
+      const g = a.profiles?.gender;
+      if (g === "MALE" || g === "male" || g === "L") buckets[i].male++;
+      else if (g === "FEMALE" || g === "female" || g === "P") buckets[i].female++;
+    }
   }
-  for (const r of redemptions) {
-    if (r.status !== "approved" && r.status !== "selesai" && r.status !== "completed") continue;
-    const d = new Date(r.created_at);
-    const i = idx.get(k(d)); if (i !== undefined) buckets[i].reward++;
+  if (Array.isArray(redemptions)) {
+    for (const r of redemptions) {
+      if (!r || !r.created_at) continue;
+      if (r.status !== "approved" && r.status !== "selesai" && r.status !== "completed") continue;
+      const d = new Date(r.created_at);
+      const i = idx.get(k(d)); if (i !== undefined) buckets[i].reward++;
+    }
   }
   return buckets;
 }
 
 /** Build per-program attendance ranking data (only counting who attended) */
-function buildProgramRanking(attendance: any[], events: any[], programs: any[]) {
+function buildProgramRanking(attendance: any[] = [], events: any[] = [], programs: any[] = []) {
+  if (!Array.isArray(attendance) || !Array.isArray(events) || !Array.isArray(programs)) return [];
+  
   const counts: Record<string, { total: number }> = {};
   for (const p of programs) {
-    counts[p.id] = { total: 0 };
+    if (p && p.id) counts[p.id] = { total: 0 };
   }
   // Count attendance by program (through events)
   for (const a of attendance) {
-    const event = events.find((e) => e.id === a.event_id);
+    if (!a || !a.event_id) continue;
+    const event = events.find((e) => e && e.id === a.event_id);
     if (!event || !event.program_id) continue;
     const pid = event.program_id;
     if (!counts[pid]) counts[pid] = { total: 0 };
     counts[pid].total++;
   }
   return programs
+    .filter(p => p && p.id)
     .map((p) => ({
       id: p.id,
       label: p.name?.length > 22 ? p.name.slice(0, 22) + "…" : (p.name ?? "—"),
@@ -126,19 +142,28 @@ export default function ActivityStatsCard({
 
   // Filter attendance & redemptions by selected program
   const filteredAttendance = useMemo(
-    () => selectedProgramId 
-      ? attendance.filter((a) => eventsForProgram.some((e) => e.id === a.event_id))
-      : attendance,
+    () => {
+      if (!Array.isArray(attendance)) return [];
+      return selectedProgramId 
+        ? attendance.filter((a) => a && eventsForProgram.some((e) => e && e.id === a.event_id))
+        : attendance;
+    },
     [attendance, selectedProgramId, eventsForProgram],
   );
   const filteredRedemptions = useMemo(
-    () => selectedProgramId ? [] : redemptions, // redemptions have no program_id
+    () => {
+      if (!Array.isArray(redemptions)) return [];
+      return selectedProgramId ? [] : redemptions;
+    },
     [redemptions, selectedProgramId],
   );
   const filteredRegistrations = useMemo(
-    () => selectedProgramId
-      ? registrations.filter((r) => eventsForProgram.some((e) => e.id === r.event_id))
-      : registrations,
+    () => {
+      if (!Array.isArray(registrations)) return [];
+      return selectedProgramId
+        ? registrations.filter((r) => r && eventsForProgram.some((e) => e && e.id === r.event_id))
+        : registrations;
+    },
     [registrations, selectedProgramId, eventsForProgram],
   );
 
@@ -175,11 +200,11 @@ export default function ActivityStatsCard({
   ];
 
   // ── Program picker helpers ────────────────────────────────────────────
-  const filteredPrograms = programs.filter((p) =>
-    p.name?.toLowerCase().includes(searchProgram.toLowerCase()) ||
-    p.code?.toLowerCase().includes(searchProgram.toLowerCase()),
-  );
-  const selectedProgram = selectedProgramId ? programs.find((p) => p.id === selectedProgramId) : null;
+  const filteredPrograms = Array.isArray(programs) ? programs.filter((p) =>
+    p && (p.name?.toLowerCase().includes(searchProgram.toLowerCase()) ||
+    p.code?.toLowerCase().includes(searchProgram.toLowerCase())),
+  ) : [];
+  const selectedProgram = (selectedProgramId && Array.isArray(programs)) ? programs.find((p) => p && p.id === selectedProgramId) : null;
 
   // ── Chart data: if program selected → show per-program breakdown (weekly/daily)
   //               if no program → show ranking (bar/donut) or all-time line
@@ -291,10 +316,12 @@ export default function ActivityStatsCard({
                   <p className="text-center text-xs text-muted-foreground py-4">Program tidak ditemukan</p>
                 )}
                 {filteredPrograms.map((p) => {
-                  const count = attendance.filter((a) => {
-                    const event = events.find((e) => e.id === a.event_id);
+                  if (!p) return null;
+                  const count = (Array.isArray(attendance) && Array.isArray(events)) ? attendance.filter((a) => {
+                    if (!a) return false;
+                    const event = events.find((e) => e && e.id === a.event_id);
                     return event?.program_id === p.id;
-                  }).length;
+                  }).length : 0;
                   return (
                     <button
                       key={p.id}
