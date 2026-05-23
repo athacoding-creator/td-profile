@@ -10,7 +10,7 @@ const navItems = [
   { to: "/admin/hero", label: "Hero", icon: ImageIcon },
   { to: "/admin/event", label: "Event", icon: CalendarDays },
   { to: "/admin/program", label: "Program", icon: Sparkles },
-  { to: "/admin/pendaftar", label: "Pendaftar", icon: Users },
+  { to: "/admin/pendaftar", label: "Kehadiran", icon: Users },
   { to: "/admin/akun", label: "Akun", icon: UserCircle },
   { to: "/admin/merchandise", label: "Merchandise", icon: ShoppingBag },
   { to: "/admin/penukaran", label: "Penukaran", icon: Gift },

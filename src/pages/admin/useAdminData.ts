@@ -65,7 +65,7 @@ export function useAdminData(): AdminData {
   const loadAttendance = async () => {
     const { data } = await supabase
       .from("attendance")
-      .select("id, scanned_at, event_id, user_id, profiles:user_id(full_name, gender)")
+      .select("id, scanned_at, event_id, user_id, points_awarded, profiles:user_id(full_name, gender, phone, city, email)")
       .order("scanned_at", { ascending: false }).limit(1000);
     setAttendance(data ?? []);
   };

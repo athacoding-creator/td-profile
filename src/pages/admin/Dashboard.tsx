@@ -18,7 +18,7 @@ const groups = [
   {
     title: "Peserta & Aktivitas",
     items: [
-      { to: "/admin/pendaftar", icon: Users, title: "Pendaftar", desc: "Tracking jamaah per event" },
+      { to: "/admin/pendaftar", icon: Users, title: "Kehadiran", desc: "Jamaah yang hadir (sudah scan QR) per event" },
       { to: "/admin/akun", icon: UserCircle, title: "Akun", desc: "Lihat data lengkap tiap akun jamaah" },
     ],
   },

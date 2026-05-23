@@ -7,61 +7,90 @@ import { MessageCircle, Download, ChevronDown } from "lucide-react";
 import * as XLSX from "xlsx";
 
 export default function RegistrationsPage() {
-  const { events, registrations } = useAdmin();
+  const { events, attendance } = useAdmin();
   const [eventFilter, setEventFilter] = useState<string>("");
   const [showPastEvents, setShowPastEvents] = useState(false);
   const [searchPast, setSearchPast] = useState("");
 
-  const filtered = eventFilter ? registrations.filter((r) => r.event_id === eventFilter) : registrations;
+  // Hanya tampilkan jamaah yang sudah scan QR (tercatat di attendance)
+  const filtered = eventFilter
+    ? attendance.filter((a) => a.event_id === eventFilter)
+    : attendance;
+
+  // Hitung jumlah hadir per event
   const counts: Record<string, number> = {};
-  registrations.forEach((r) => { counts[r.event_id] = (counts[r.event_id] || 0) + 1; });
+  attendance.forEach((a) => {
+    if (a.event_id) counts[a.event_id] = (counts[a.event_id] || 0) + 1;
+  });
 
   const activeEvents = events.filter((e) => e.status === "active");
   const pastEvents = events.filter((e) => e.status !== "active");
   const filteredPastEvents = pastEvents.filter((e) =>
-    e.title.toLowerCase().includes(searchPast.toLowerCase())
+    e.title?.toLowerCase().includes(searchPast.toLowerCase())
   );
 
   const exportXLSX = () => {
     const ev = eventFilter ? events.find((e) => e.id === eventFilter) : null;
-    const rows = filtered.map((r, i) => ({
+    const rows = filtered.map((a, i) => ({
       No: i + 1,
-      "Tanggal Daftar": new Date(r.created_at).toLocaleString("id-ID"),
-      Nama: r.profiles?.full_name ?? "-",
-      WhatsApp: r.profiles?.phone ?? "-",
-      Gender: r.profiles?.gender === "L" ? "Laki-laki" : r.profiles?.gender === "P" ? "Perempuan" : (r.profiles?.gender ?? "-"),
-      Kota: r.profiles?.city ?? "-",
-      Email: r.profiles?.email ?? "-",
-      Event: r.events?.title ?? "-",
-      Program: r.events?.programs?.name ?? "-",
+      "Waktu Hadir": new Date(a.scanned_at).toLocaleString("id-ID"),
+      Nama: a.profiles?.full_name ?? "-",
+      WhatsApp: a.profiles?.phone ?? "-",
+      Gender:
+        a.profiles?.gender === "L"
+          ? "Laki-laki"
+          : a.profiles?.gender === "P"
+          ? "Perempuan"
+          : (a.profiles?.gender ?? "-"),
+      Kota: a.profiles?.city ?? "-",
+      Email: a.profiles?.email ?? "-",
+      Event: ev?.title ?? (eventFilter ? "-" : "Semua Event"),
+      "Poin Diperoleh": a.points_awarded ?? 0,
     }));
     const ws = XLSX.utils.json_to_sheet(rows);
-    ws["!cols"] = [{ wch: 5 }, { wch: 22 }, { wch: 28 }, { wch: 16 }, { wch: 12 }, { wch: 18 }, { wch: 30 }, { wch: 36 }, { wch: 22 }];
+    ws["!cols"] = [
+      { wch: 5 }, { wch: 22 }, { wch: 28 }, { wch: 16 },
+      { wch: 12 }, { wch: 18 }, { wch: 30 }, { wch: 36 }, { wch: 14 },
+    ];
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Pendaftar");
-    const slug = (ev?.title || "semua-event").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+    XLSX.utils.book_append_sheet(wb, ws, "Kehadiran");
+    const slug = (ev?.title || "semua-event")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_|_$/g, "");
     const stamp = new Date().toISOString().slice(0, 10);
-    XLSX.writeFile(wb, `pendaftar-${slug}-${stamp}.xlsx`);
+    XLSX.writeFile(wb, `kehadiran-${slug}-${stamp}.xlsx`);
   };
 
   return (
     <>
       <div>
-        <h1 className="font-display text-3xl font-bold">Pendaftar</h1>
-        <p className="text-sm text-muted-foreground">Tracking jamaah per event</p>
+        <h1 className="font-display text-3xl font-bold">Kehadiran</h1>
+        <p className="text-sm text-muted-foreground">
+          Jamaah yang benar-benar hadir (sudah scan QR)
+        </p>
       </div>
+
       <Section title="Jamaah per Event">
         <div className="space-y-3">
-
           {activeEvents.length > 0 && (
             <div className="space-y-2">
               <p className="text-xs font-medium text-muted-foreground">Event Aktif</p>
               <div className="grid gap-2 sm:gap-2.5 grid-cols-1 sm:grid-cols-2">
                 {activeEvents.map((e) => (
-                  <button key={e.id} onClick={() => setEventFilter(e.id)}
-                    className={`rounded-xl border p-3 text-left transition ${eventFilter === e.id ? "border-primary bg-primary/5" : "border-border/60"}`}>
+                  <button
+                    key={e.id}
+                    onClick={() => setEventFilter(eventFilter === e.id ? "" : e.id)}
+                    className={`rounded-xl border p-3 text-left transition ${
+                      eventFilter === e.id
+                        ? "border-primary bg-primary/5"
+                        : "border-border/60 hover:border-border"
+                    }`}
+                  >
                     <p className="font-medium text-sm">{e.title}</p>
-                    <p className="text-xs text-muted-foreground">{e.programs?.name || "—"} · {counts[e.id] || 0} pendaftar</p>
+                    <p className="text-xs text-muted-foreground">
+                      {e.programs?.name || "—"} · {counts[e.id] || 0} hadir
+                    </p>
                   </button>
                 ))}
               </div>
@@ -70,10 +99,14 @@ export default function RegistrationsPage() {
 
           {pastEvents.length > 0 && (
             <div className="space-y-2 rounded-lg border border-border/40 bg-muted/30 p-3">
-              <button onClick={() => setShowPastEvents(!showPastEvents)}
-                className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition">
-                <ChevronDown className={`h-4 w-4 transition ${showPastEvents ? "rotate-180" : ""}`} />
-                Total Event Yang Selesai ({pastEvents.length})
+              <button
+                onClick={() => setShowPastEvents(!showPastEvents)}
+                className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition"
+              >
+                <ChevronDown
+                  className={`h-4 w-4 transition ${showPastEvents ? "rotate-180" : ""}`}
+                />
+                Event Selesai ({pastEvents.length})
               </button>
 
               {showPastEvents && (
@@ -86,15 +119,29 @@ export default function RegistrationsPage() {
                   />
                   <div className="grid gap-2 sm:gap-2.5 grid-cols-1 sm:grid-cols-2 max-h-64 overflow-y-auto">
                     {filteredPastEvents.map((e) => (
-                      <button key={e.id} onClick={() => { setEventFilter(e.id); setShowPastEvents(false); }}
-                        className={`rounded-lg border p-3 text-left transition text-sm ${eventFilter === e.id ? "border-primary bg-primary/5" : "border-border/60 hover:border-border"}`}>
+                      <button
+                        key={e.id}
+                        onClick={() => {
+                          setEventFilter(eventFilter === e.id ? "" : e.id);
+                          setShowPastEvents(false);
+                        }}
+                        className={`rounded-lg border p-3 text-left transition text-sm ${
+                          eventFilter === e.id
+                            ? "border-primary bg-primary/5"
+                            : "border-border/60 hover:border-border"
+                        }`}
+                      >
                         <p className="font-medium">{e.title}</p>
-                        <p className="text-xs text-muted-foreground">{e.programs?.name || "—"} · {counts[e.id] || 0} pendaftar</p>
+                        <p className="text-xs text-muted-foreground">
+                          {e.programs?.name || "—"} · {counts[e.id] || 0} hadir
+                        </p>
                       </button>
                     ))}
                   </div>
                   {filteredPastEvents.length === 0 && (
-                    <p className="text-xs text-muted-foreground text-center py-2">Event tidak ditemukan</p>
+                    <p className="text-xs text-muted-foreground text-center py-2">
+                      Event tidak ditemukan
+                    </p>
                   )}
                 </div>
               )}
@@ -103,26 +150,50 @@ export default function RegistrationsPage() {
         </div>
       </Section>
 
-      <Section title={eventFilter ? "Pendaftar event terpilih" : "Semua pendaftar terbaru"}>
-        <div className="mb-3 flex flex-wrap gap-2">
+      <Section
+        title={
+          eventFilter
+            ? `Jamaah hadir — ${events.find((e) => e.id === eventFilter)?.title ?? "event terpilih"}`
+            : "Semua jamaah hadir terbaru"
+        }
+      >
+        <div className="mb-3 flex flex-wrap items-center gap-2">
           <Button size="sm" onClick={exportXLSX} disabled={filtered.length === 0}>
             <Download className="mr-1 h-4 w-4" /> Download Excel ({filtered.length})
           </Button>
+          {eventFilter && (
+            <button
+              onClick={() => setEventFilter("")}
+              className="text-xs text-muted-foreground hover:text-foreground underline"
+            >
+              Tampilkan semua
+            </button>
+          )}
         </div>
-        {/* Desktop table view */}
+
+        {/* Desktop table */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="text-left text-xs text-muted-foreground">
-              <tr><th className="py-2">Tanggal</th><th>Nama</th><th>WhatsApp</th><th>Gender</th><th>Kota</th><th>Event</th></tr>
+              <tr>
+                <th className="py-2 pr-3">Waktu Hadir</th>
+                <th className="pr-3">Nama</th>
+                <th className="pr-3">WhatsApp</th>
+                <th className="pr-3">Gender</th>
+                <th className="pr-3">Kota</th>
+                <th>Poin</th>
+              </tr>
             </thead>
             <tbody>
-              {filtered.map((r) => {
-                const phone = r.profiles?.phone || "";
+              {filtered.map((a) => {
+                const phone = a.profiles?.phone || "";
                 return (
-                  <tr key={r.id} className="border-t border-border/60">
-                    <td className="py-2">{new Date(r.created_at).toLocaleString("id-ID")}</td>
-                    <td>{r.profiles?.full_name || "—"}</td>
-                    <td>
+                  <tr key={a.id} className="border-t border-border/60">
+                    <td className="py-2 pr-3 text-xs text-muted-foreground whitespace-nowrap">
+                      {new Date(a.scanned_at).toLocaleString("id-ID")}
+                    </td>
+                    <td className="pr-3">{a.profiles?.full_name || "—"}</td>
+                    <td className="pr-3">
                       {phone ? (
                         <a
                           href={`https://wa.me/${phone}`}
@@ -133,39 +204,71 @@ export default function RegistrationsPage() {
                           <MessageCircle className="h-3.5 w-3.5" />
                           {phone}
                         </a>
-                      ) : "—"}
+                      ) : (
+                        "—"
+                      )}
                     </td>
-                    <td>{r.profiles?.gender || "—"}</td>
-                    <td>{r.profiles?.city || "—"}</td>
-                    <td className="text-xs">{r.events?.title}</td>
+                    <td className="pr-3">
+                      {a.profiles?.gender === "L"
+                        ? "Laki-laki"
+                        : a.profiles?.gender === "P"
+                        ? "Perempuan"
+                        : (a.profiles?.gender || "—")}
+                    </td>
+                    <td className="pr-3">{a.profiles?.city || "—"}</td>
+                    <td className="text-xs font-medium">{a.points_awarded ?? 0}</td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
         </div>
+
         {/* Mobile card view */}
         <div className="md:hidden space-y-2">
-          {filtered.map((r) => {
-            const phone = r.profiles?.phone || "";
+          {filtered.map((a) => {
+            const phone = a.profiles?.phone || "";
             return (
-              <div key={r.id} className="rounded-lg border border-border/60 bg-muted/30 p-3 space-y-2">
+              <div
+                key={a.id}
+                className="rounded-lg border border-border/60 bg-muted/30 p-3 space-y-1.5"
+              >
                 <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">{r.profiles?.full_name || "—"}</p>
-                    <p className="text-xs text-muted-foreground truncate">{phone || "—"}</p>
-                  </div>
+                  <p className="font-medium text-sm truncate">
+                    {a.profiles?.full_name || "—"}
+                  </p>
+                  <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                    +{a.points_awarded ?? 0} poin
+                  </span>
                 </div>
-                <div className="space-y-1">
-                  {r.events?.title && <p className="text-xs text-muted-foreground">Event: {r.events.title}</p>}
-                </div>
+                {phone ? (
+                  <a
+                    href={`https://wa.me/${phone}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                  >
+                    <MessageCircle className="h-3 w-3" />
+                    {phone}
+                  </a>
+                ) : (
+                  <p className="text-xs text-muted-foreground">—</p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  {new Date(a.scanned_at).toLocaleString("id-ID")}
+                </p>
               </div>
             );
           })}
         </div>
+
         {filtered.length === 0 && (
           <div className="text-center py-8">
-            <p className="text-sm text-muted-foreground">Tidak ada pendaftar</p>
+            <p className="text-sm text-muted-foreground">
+              {eventFilter
+                ? "Belum ada jamaah yang hadir di event ini"
+                : "Belum ada data kehadiran"}
+            </p>
           </div>
         )}
       </Section>
