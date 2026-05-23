@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useAdmin } from "./AdminLayout";
 import {
-  CalendarDays, Sparkles, Users, Gift, ShoppingBag, Image as ImageIcon, Settings as SettingsIcon, Hand, UserCircle,
+  CalendarDays, Sparkles, Users, Gift, ShoppingBag, Image as ImageIcon, Settings as SettingsIcon, Hand, UserCircle, ClipboardCheck
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import ActivityStatsCard from "./ActivityStatsCard";
@@ -18,7 +18,8 @@ const groups = [
   {
     title: "Peserta & Aktivitas",
     items: [
-      { to: "/admin/pendaftar", icon: Users, title: "Kehadiran", desc: "Jamaah yang hadir (sudah scan QR) per event" },
+      { to: "/admin/pendaftar", icon: Users, title: "Pendaftar", desc: "Persiapan lokasi (jumlah daftar)" },
+      { to: "/admin/kehadiran", icon: ClipboardCheck, title: "Kehadiran", desc: "Data scan QR & Export Excel", tag: "Excel" },
       { to: "/admin/akun", icon: UserCircle, title: "Akun", desc: "Lihat data lengkap tiap akun jamaah" },
     ],
   },
