@@ -82,14 +82,15 @@ function buildDaily(attendance: any[], redemptions: any[]) {
   return buckets;
 }
 
-/** Build per-program registration ranking data */
-function buildProgramRanking(registrations: any[], programs: any[]) {
+/** Build per-program attendance ranking data (only counting who attended) */
+function buildProgramRanking(attendance: any[], events: any[], programs: any[]) {
   const counts: Record<string, { total: number }> = {};
   for (const p of programs) {
     counts[p.id] = { total: 0 };
   }
-  for (const reg of registrations) {
-    const event = reg.events;
+  // Count attendance by program (through events)
+  for (const a of attendance) {
+    const event = events.find((e) => e.id === a.event_id);
     if (!event || !event.program_id) continue;
     const pid = event.program_id;
     if (!counts[pid]) counts[pid] = { total: 0 };
@@ -143,7 +144,7 @@ export default function ActivityStatsCard({
 
   const weekly = useMemo(() => buildWeekly(filteredAttendance, filteredRedemptions), [filteredAttendance, filteredRedemptions]);
   const daily = useMemo(() => buildDaily(filteredAttendance, filteredRedemptions), [filteredAttendance, filteredRedemptions]);
-  const programRanking = useMemo(() => buildProgramRanking(registrations, programs), [registrations, programs]);
+  const programRanking = useMemo(() => buildProgramRanking(attendance, events, programs), [attendance, events, programs]);
 
   const totals = useMemo(() => {
     const t = { male: 0, female: 0, reward: 0 };
@@ -282,7 +283,7 @@ export default function ActivityStatsCard({
                   }`}
                 >
                   <span className="font-medium">Semua Program</span>
-                  <span className="ml-1 text-muted-foreground">({registrations.length} daftar)</span>
+                  <span className="ml-1 text-muted-foreground">({attendance.length} peserta hadir)</span>
                 </button>
 
                 {/* Filtered programs */}
@@ -290,8 +291,8 @@ export default function ActivityStatsCard({
                   <p className="text-center text-xs text-muted-foreground py-4">Program tidak ditemukan</p>
                 )}
                 {filteredPrograms.map((p) => {
-                  const count = registrations.filter((r) => {
-                    const event = events.find((e) => e.id === r.event_id);
+                  const count = attendance.filter((a) => {
+                    const event = events.find((e) => e.id === a.event_id);
                     return event?.program_id === p.id;
                   }).length;
                   return (
@@ -308,7 +309,7 @@ export default function ActivityStatsCard({
                         <span className="font-medium line-clamp-1">{p.name}</span>
                       </div>
                       <div className="text-muted-foreground mt-0.5">
-                        {p.code} · {count} daftar
+                        {p.code} · {count} hadir
                       </div>
                     </button>
                   );
@@ -421,7 +422,7 @@ export default function ActivityStatsCard({
       {/* ── Program ranking note ────────────────────────────────────────── */}
       {!isProgramSelected && kind === "bar" && rankingBarData.length > 0 && (
         <p className="mt-2 text-center text-[10px] text-muted-foreground">
-          Menampilkan {rankingBarData.length} program teratas berdasarkan jumlah pendaftar
+          Menampilkan {rankingBarData.length} program teratas berdasarkan jumlah peserta yang hadir
         </p>
       )}
     </div>
