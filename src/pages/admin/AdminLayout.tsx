@@ -1,7 +1,7 @@
 import { NavLink, Outlet, useOutletContext, useLocation } from "react-router-dom";
 import { Header } from "@/components/Header";
 import {
-  LayoutDashboard, CalendarDays, Sparkles, Gift, Users, Settings as SettingsIcon, ShoppingBag, Image as ImageIcon, UserCircle, Download, ClipboardCheck
+  LayoutDashboard, CalendarDays, Sparkles, Gift, Users, Settings as SettingsIcon, ShoppingBag, Image as ImageIcon, UserCircle, Download, ClipboardCheck, Heart
 } from "lucide-react";
 import { useAdminData, AdminData } from "./useAdminData";
 
@@ -13,6 +13,7 @@ const navItems = [
   { to: "/admin/pendaftar", label: "Pendaftar", icon: Users },
   { to: "/admin/kehadiran", label: "Kehadiran", icon: ClipboardCheck },
   { to: "/admin/akun", label: "Akun", icon: UserCircle },
+  { to: "/admin/donasi", label: "Donasi", icon: Heart },
   { to: "/admin/merchandise", label: "Merchandise", icon: ShoppingBag },
   { to: "/admin/penukaran", label: "Penukaran", icon: Gift },
   { to: "/admin/pengaturan", label: "Pengaturan", icon: SettingsIcon },

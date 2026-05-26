@@ -55,7 +55,7 @@ export default function EventsPage() {
 }
 
 function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; defaultPoints: number; onCreated: () => void }) {
-  const [form, setForm] = useState<any>({ gender: "ALL", points_reward: defaultPoints, program_id: "", is_pinned: false, is_recurring: false, recurring_days: [] });
+  const [form, setForm] = useState<any>({ gender: "ALL", points_reward: defaultPoints, program_id: "", is_pinned: false, is_recurring: false, recurring_days: [], registration_type: "free", price: 0, min_infaq: 5000, max_infaq: 50000 });
   useEffect(() => { setForm((f: any) => ({ ...f, points_reward: f.points_reward ?? defaultPoints })); }, [defaultPoints]);
 
   const create = async (e: React.FormEvent) => {
@@ -76,10 +76,14 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
       recurring_start_time: form.is_recurring ? form.recurring_start_time : null,
       recurring_end_time: form.is_recurring ? form.recurring_end_time : null,
       recurring_until: form.is_recurring ? (form.recurring_until || null) : null,
+      registration_type: form.registration_type || "free",
+      price: form.registration_type === "paid" ? Number(form.price ?? 0) : 0,
+      min_infaq: form.registration_type === "infaq" ? Number(form.min_infaq ?? 5000) : 0,
+      max_infaq: form.registration_type === "infaq" ? Number(form.max_infaq ?? 50000) : 0,
     });
     if (error) return toast.error(error.message);
     toast.success("Event dibuat");
-    setForm({ gender: "ALL", points_reward: defaultPoints, program_id: "", is_pinned: false, is_recurring: false, recurring_days: [] });
+    setForm({ gender: "ALL", points_reward: defaultPoints, program_id: "", is_pinned: false, is_recurring: false, recurring_days: [], registration_type: "free", price: 0, min_infaq: 5000, max_infaq: 50000 });
     onCreated();
   };
 
@@ -111,6 +115,23 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
           </select>
         </div>
         <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Poin Reward</Label><Input type="number" value={form.points_reward ?? defaultPoints} onChange={(e) => setForm({ ...form, points_reward: e.target.value })} className="text-sm h-9 sm:h-10" /></div>
+        <div className="space-y-1.5">
+          <Label className="text-xs sm:text-sm">Tipe Pendaftaran</Label>
+          <select className="h-9 sm:h-10 w-full rounded-md border border-input bg-background px-3 text-xs sm:text-sm" value={form.registration_type} onChange={(e) => setForm({ ...form, registration_type: e.target.value })}>
+            <option value="free">Gratis</option>
+            <option value="infaq">Berinfaq</option>
+            <option value="paid">Wajib Bayar</option>
+          </select>
+        </div>
+        {form.registration_type === "paid" && (
+          <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Harga (Rp)</Label><Input type="number" value={form.price ?? 0} onChange={(e) => setForm({ ...form, price: e.target.value })} className="text-sm h-9 sm:h-10" /></div>
+        )}
+        {form.registration_type === "infaq" && (
+          <>
+            <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Min Infaq (Rp)</Label><Input type="number" value={form.min_infaq ?? 5000} onChange={(e) => setForm({ ...form, min_infaq: e.target.value })} className="text-sm h-9 sm:h-10" /></div>
+            <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Max Infaq (Rp)</Label><Input type="number" value={form.max_infaq ?? 50000} onChange={(e) => setForm({ ...form, max_infaq: e.target.value })} className="text-sm h-9 sm:h-10" /></div>
+          </>
+        )}
         <div className="space-y-1.5 md:col-span-2">
           <Label className="text-xs sm:text-sm">Pesan Sukses (ditampilkan setelah user scan QR)</Label>
           <Textarea rows={3} placeholder="Selamat, kamu telah berhasil mendaftar! Sampai jumpa di acara 🎉" value={form.success_message ?? ""} onChange={(e) => setForm({ ...form, success_message: e.target.value })} className="text-sm" />

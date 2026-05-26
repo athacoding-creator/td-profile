@@ -29,6 +29,7 @@ const AdminUsers = lazy(() => import("./pages/admin/Users"));
 const AdminMerchandise = lazy(() => import("./pages/admin/Merchandise"));
 const AdminHero = lazy(() => import("./pages/admin/Hero"));
 const AdminSettings = lazy(() => import("./pages/admin/Settings"));
+const AdminDonations = lazy(() => import("./pages/admin/Donations"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -83,6 +84,7 @@ const App = () => (
                   <Route path="pendaftar" element={<AdminPendaftar />} />
                   <Route path="kehadiran" element={<AdminKehadiran />} />
                   <Route path="penukaran" element={<AdminRedemptions />} />
+                  <Route path="donasi" element={<AdminDonations />} />
                   <Route path="merchandise" element={<AdminMerchandise />} />
                   <Route path="hero" element={<AdminHero />} />
                   <Route path="pengaturan" element={<AdminSettings />} />
