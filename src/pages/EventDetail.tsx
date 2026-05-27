@@ -27,7 +27,7 @@ export default function EventDetail() {
   useEffect(() => {
     (async () => {
       const { data } = await supabase.from("events")
-        .select("id,title,description,venue,city,starts_at,ends_at,status,gender,event_type,poster_url,group_link,points_reward,program_id,created_at,is_pinned,is_recurring,recurring_days,recurring_start_time,recurring_end_time,recurring_until,registration_type,price,min_infaq,max_infaq")
+        .select("id,title,description,venue,city,starts_at,ends_at,status,gender,event_type,poster_url,group_link,points_reward,program_id,created_at,is_pinned,is_recurring,recurring_days,recurring_start_time,recurring_end_time,recurring_until,registration_type,price,min_infaq,max_infaq,speaker")
         .eq("id", id).maybeSingle();
       setEvent(data);
       
@@ -155,6 +155,9 @@ export default function EventDetail() {
           </div>
         )}
         <h1 className="mt-6 font-display text-3xl font-bold text-foreground">{event.title}</h1>
+        {event.speaker && (
+          <p className="text-accent font-medium mt-1">Bersama: {event.speaker}</p>
+        )}
         <div className="mt-4 space-y-2 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-accent" />

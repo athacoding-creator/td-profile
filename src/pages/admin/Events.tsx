@@ -70,6 +70,7 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
       points_reward: Number(form.points_reward ?? defaultPoints),
       program_id: form.program_id || null, status: "active",
       success_message: form.success_message || null,
+      speaker: form.speaker || null,
       is_pinned: !!form.is_pinned,
       is_recurring: !!form.is_recurring,
       recurring_days: form.is_recurring ? (form.recurring_days ?? []) : [],
@@ -91,6 +92,7 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
     <Section title="Buat Event">
       <form onSubmit={create} className="grid gap-2 sm:gap-3 md:gap-4 md:grid-cols-2">
         <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Judul</Label><Input required value={form.title ?? ""} onChange={(e) => setForm({ ...form, title: e.target.value })} className="text-sm h-9 sm:h-10" /></div>
+        <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Pengisi Acara (Speaker)</Label><Input value={form.speaker ?? ""} onChange={(e) => setForm({ ...form, speaker: e.target.value })} placeholder="Contoh: Ustadz Fatih Karim" className="text-sm h-9 sm:h-10" /></div>
         <div className="space-y-1.5">
           <Label className="text-xs sm:text-sm">Program</Label>
           <select className="h-9 sm:h-10 w-full rounded-md border border-input bg-background px-3 text-xs sm:text-sm" value={form.program_id} onChange={(e) => setForm({ ...form, program_id: e.target.value })}>
@@ -293,6 +295,7 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
       program_id: ev.program_id ?? "",
       status: ev.status ?? "active",
       success_message: ev.success_message ?? "",
+      speaker: ev.speaker ?? "",
       is_pinned: !!ev.is_pinned,
       is_recurring: !!ev.is_recurring,
       recurring_days: ev.recurring_days ?? [],
@@ -316,6 +319,7 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
       program_id: form.program_id || null,
       status: form.status,
       success_message: form.success_message || null,
+      speaker: form.speaker || null,
       is_pinned: !!form.is_pinned,
       is_recurring: !!form.is_recurring,
       recurring_days: form.is_recurring ? (form.recurring_days ?? []) : [],
@@ -334,6 +338,7 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
         <DialogHeader><DialogTitle>Edit Event</DialogTitle></DialogHeader>
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-1.5"><Label>Judul</Label><Input value={form.title ?? ""} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
+          <div className="space-y-1.5"><Label>Pengisi Acara</Label><Input value={form.speaker ?? ""} onChange={(e) => setForm({ ...form, speaker: e.target.value })} /></div>
           <div className="space-y-1.5">
             <Label>Program</Label>
             <select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.program_id ?? ""} onChange={(e) => setForm({ ...form, program_id: e.target.value })}>
