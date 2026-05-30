@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import QRCode from "qrcode";
-import { QrCode as QrIcon, Trash2, Pencil, Lock, Pin, Repeat } from "lucide-react";
+import { QrCode as QrIcon, Trash2, Pencil, Lock, Pin, Repeat, Camera } from "lucide-react";
 import { useAdmin } from "./AdminLayout";
 import { Section } from "./components";
 import { ImagePicker } from "@/components/admin/ImagePicker";
@@ -264,13 +265,18 @@ function EventList({ events, programs, onChanged }: { events: any[]; programs: a
                     {ev.programs && <span className="rounded bg-accent/15 px-2 py-0.5 text-accent">{ev.programs.name}</span>}
                   </p>
                 </div>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => setEditing(ev)}><Pencil className="h-4 w-4" /></Button>
-                  <Button size="sm" variant="outline" disabled={expired} onClick={() => (qr?.id === ev.id ? setQr(null) : showQR(ev))}>
-                    <QrIcon className="h-4 w-4 mr-1" /> QR
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => remove(ev.id)}><Trash2 className="h-4 w-4" /></Button>
-                </div>
+<div className="flex gap-2">
+	                  <Button size="sm" variant="outline" asChild disabled={expired}>
+	                    <Link to={`/admin/scan?eventId=${ev.id}`}>
+	                      <Camera className="h-4 w-4 mr-1" /> Scan
+	                    </Link>
+	                  </Button>
+	                  <Button size="sm" variant="outline" onClick={() => setEditing(ev)}><Pencil className="h-4 w-4" /></Button>
+	                  <Button size="sm" variant="outline" disabled={expired} onClick={() => (qr?.id === ev.id ? setQr(null) : showQR(ev))}>
+	                    <QrIcon className="h-4 w-4 mr-1" /> QR
+	                  </Button>
+	                  <Button size="sm" variant="outline" onClick={() => remove(ev.id)}><Trash2 className="h-4 w-4" /></Button>
+	                </div>
               </div>
               {qr?.id === ev.id && !expired && (
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">

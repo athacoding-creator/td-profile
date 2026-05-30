@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +12,8 @@ import { Section } from "./components";
 
 export default function ScanPage() {
   const { events } = useAdmin();
-  const [eventId, setEventId] = useState<string>("");
+  const [searchParams] = useSearchParams();
+  const [eventId, setEventId] = useState<string>(searchParams.get("eventId") || "");
   const [scanning, setScanning] = useState(false);
   const [manual, setManual] = useState("");
   const scannerRef = useRef<Html5Qrcode | null>(null);
