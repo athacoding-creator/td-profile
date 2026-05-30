@@ -8,7 +8,8 @@ export const RequireAuth = ({ children, adminOnly = false }: { children: ReactNo
   if (loading) return <div className="container py-20 text-center text-muted-foreground">Memuat…</div>;
   if (!user) return <Navigate to="/auth" state={{ from: location }} replace />;
   if (adminOnly && !isAdmin) return <Navigate to="/" replace />;
-  if (!adminOnly && profile && !profile.gender && location.pathname !== "/onboarding")
+  if (!adminOnly && profile && !profile.gender && location.pathname !== "/onboarding") {
     return <Navigate to="/onboarding" replace />;
+  }
   return <>{children}</>;
 };
