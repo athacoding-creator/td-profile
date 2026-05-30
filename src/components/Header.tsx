@@ -6,7 +6,7 @@ export const Header = () => {
       <div className="container flex items-center justify-center py-2">
         <Link to="/" className="flex items-center gap-2 font-display">
           <img
-            src="https://res.cloudinary.com/dph1qdufr/image/upload/v1779157059/Tanpa_judul_3600_x_615_piksel_myivco.png"
+            src="https://res.cloudinary.com/dph1qdufr/image/upload/v1779515925/Logo_Teras_Dakwah_sievtn.png"
             alt="TD Logo"
             className="h-10 w-auto"
           />
