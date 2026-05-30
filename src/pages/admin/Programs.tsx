@@ -33,7 +33,11 @@ export default function ProgramsPage() {
   };
   const showQR = async (p: any) => {
     const { data: token, error } = await supabase.rpc("admin_get_program_qr", { _id: p.id });
-    if (error || !token) { toast.error("Gagal mengambil QR program"); return; }
+    if (error || !token) { 
+      console.error("Error fetching program QR:", error);
+      toast.error(`Gagal mengambil QR program: ${error?.message || "Token tidak ditemukan"}`); 
+      return; 
+    }
     const url = await QRCode.toDataURL(token, { width: 400, margin: 2 });
     setQr({ id: p.id, url });
   };

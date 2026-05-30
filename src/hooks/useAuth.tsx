@@ -76,8 +76,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     supabase.auth.getSession().then(({ data: { session: s } }) => {
       setSession(s);
       setUser(s?.user ?? null);
-      if (s?.user) loadExtras(s.user.id).finally(() => setLoading(false));
-      else setLoading(false);
+      if (s?.user) {
+        loadExtras(s.user.id).finally(() => {
+          // Add a small delay to ensure states are propagated
+          setTimeout(() => setLoading(false), 100);
+        });
+      } else {
+        setLoading(false);
+      }
+    }).catch(err => {
+      console.error("Session error:", err);
+      setLoading(false);
     });
     return () => sub.subscription.unsubscribe();
   }, []);

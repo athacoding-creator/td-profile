@@ -192,11 +192,16 @@ function EventList({ events, programs, onChanged }: { events: any[]; programs: a
 
   const showQR = async (ev: any) => {
     const { data: evToken, error: e1 } = await supabase.rpc("admin_get_event_qr", { _id: ev.id });
-    if (e1 || !evToken) { toast.error("Gagal mengambil QR event"); return; }
+    if (e1 || !evToken) { 
+      console.error("Error fetching event QR:", e1);
+      toast.error(`Gagal mengambil QR event: ${e1?.message || "Token tidak ditemukan"}`); 
+      return; 
+    }
     const eventUrl = await QRCode.toDataURL(evToken, { width: 400, margin: 2 });
     let programUrl: string | undefined;
     if (ev.program_id) {
-      const { data: progToken } = await supabase.rpc("admin_get_program_qr", { _id: ev.program_id });
+      const { data: progToken, error: e2 } = await supabase.rpc("admin_get_program_qr", { _id: ev.program_id });
+      if (e2) console.error("Error fetching program QR:", e2);
       if (progToken) programUrl = await QRCode.toDataURL(progToken, { width: 400, margin: 2 });
     }
     setQr({ id: ev.id, eventUrl, programUrl, programName: ev.programs?.name });
