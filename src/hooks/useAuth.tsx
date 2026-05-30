@@ -45,12 +45,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   const loadExtras = async (uid: string) => {
-    const [{ data: prof }, { data: roles }] = await Promise.all([
+    const [{ data: prof }, { data: isAdminRole }] = await Promise.all([
       supabase.from("profiles").select("*").eq("id", uid).maybeSingle(),
-      supabase.from("user_roles").select("role").eq("user_id", uid),
+      supabase.rpc("has_role", { _user_id: uid, _role: "admin" }),
     ]);
     setProfile(prof as any);
-    setIsAdmin((roles ?? []).some((r: any) => r.role === "admin"));
+    setIsAdmin(!!isAdminRole);
   };
 
   useEffect(() => {

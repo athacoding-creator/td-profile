@@ -31,6 +31,8 @@ export default function UsersPage() {
       supabase.from("user_roles").select("user_id, role").eq("role", "admin"),
     ]);
     setProfiles(data ?? []);
+    // Note: while we use user_roles table for listing, 
+    // the source of truth for the current user's session is now the has_role RPC.
     setAdminIds(new Set((roles ?? []).map((r: any) => r.user_id)));
     setLoading(false);
   };

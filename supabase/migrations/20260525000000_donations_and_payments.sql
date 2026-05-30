@@ -31,7 +31,7 @@ CREATE POLICY "Public can view donation settings" ON public.donation_settings
   FOR SELECT USING (true);
 
 CREATE POLICY "Admins can manage donation settings" ON public.donation_settings
-  FOR ALL USING (public.has_role('admin', auth.uid()));
+  FOR ALL USING (public.has_role(auth.uid(), 'admin'));
 
 -- 5. Update record_attendance to respect payment status
 -- If it's a paid or infaq event, pendaftaran must be approved first? 
