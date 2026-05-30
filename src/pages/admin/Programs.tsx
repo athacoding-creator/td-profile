@@ -32,14 +32,27 @@ export default function ProgramsPage() {
     await supabase.from("programs").delete().eq("id", id);
   };
   const showQR = async (p: any) => {
-    const { data: token, error } = await supabase.rpc("admin_get_program_qr", { _id: p.id });
-    if (error || !token) { 
-      console.error("Error fetching program QR:", error);
-      toast.error(`Gagal mengambil QR program: ${error?.message || "Token tidak ditemukan"}`); 
-      return; 
+    try {
+      console.log(`[Admin QR] Fetching program QR for ${p.id}`);
+      const { data: token, error } = await supabase.rpc("admin_get_program_qr", { _id: p.id });
+      if (error) {
+        console.error("[Admin QR] Error fetching program QR:", error);
+        toast.error(`Gagal mengambil QR program: ${error?.message || "Unauthorized or token not found"}`);
+        return;
+      }
+      if (!token) {
+        console.error("[Admin QR] Program QR token is empty");
+        toast.error("QR program tidak ditemukan atau belum di-generate");
+        return;
+      }
+      console.log(`[Admin QR] Program token retrieved, generating QR image`);
+      const url = await QRCode.toDataURL(token, { width: 400, margin: 2 });
+      setQr({ id: p.id, url });
+      console.log(`[Admin QR] Program QR display ready`);
+    } catch (err: any) {
+      console.error("[Admin QR] Unexpected error:", err);
+      toast.error(`Error: ${err?.message || "Failed to generate QR"}`);
     }
-    const url = await QRCode.toDataURL(token, { width: 400, margin: 2 });
-    setQr({ id: p.id, url });
   };
 
   return (
