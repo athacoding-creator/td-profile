@@ -166,8 +166,7 @@ export default function Profil() {
     {
       icon: QrCode,
       label: "QR Kehadiran saya",
-      onClick: () =>
-        toast.info("Fitur masih dalam pembuatan. Tunggu pemberitahuan berikutnya ya!"),
+      onClick: () => setView("qr"),
     },
     { icon: Ticket, label: "Event saya", to: "/riwayat" },
     { icon: HeartHandshake, label: "Donasi", href: "https://sedekah.terasdakwah.com" },

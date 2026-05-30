@@ -30,6 +30,7 @@ const AdminMerchandise = lazy(() => import("./pages/admin/Merchandise"));
 const AdminHero = lazy(() => import("./pages/admin/Hero"));
 const AdminSettings = lazy(() => import("./pages/admin/Settings"));
 const AdminDonations = lazy(() => import("./pages/admin/Donations"));
+const AdminScan = lazy(() => import("./pages/admin/Scan"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -86,10 +87,11 @@ const App = () => (
 	                  <Route path="penukaran" element={<AdminRedemptions />} />
 	                  <Route path="akun" element={<AdminUsers />} />
 	                  <Route path="donasi" element={<AdminDonations />} />
-                  <Route path="merchandise" element={<AdminMerchandise />} />
-                  <Route path="hero" element={<AdminHero />} />
-                  <Route path="pengaturan" element={<AdminSettings />} />
-                </Route>
+<Route path="merchandise" element={<AdminMerchandise />} />
+	                  <Route path="hero" element={<AdminHero />} />
+	                  <Route path="scan" element={<AdminScan />} />
+	                  <Route path="pengaturan" element={<AdminSettings />} />
+	                </Route>
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
