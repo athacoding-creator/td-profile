@@ -1,8 +1,10 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Josefin+Sans:wght@300;400;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here.
 All colors MUST be HSL.
 */
 
@@ -110,6 +112,40 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-inter;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-josefin-sans;
+  }
+}
+
+@layer components {
+  .headline-xl {
+    @apply text-4xl font-josefin-sans font-bold leading-tight;
+  }
+
+  .headline-lg {
+    @apply text-3xl font-josefin-sans font-bold leading-tight;
+  }
+
+  .headline-md {
+    @apply text-2xl font-josefin-sans font-semibold leading-snug;
+  }
+
+  .headline-sm {
+    @apply text-xl font-josefin-sans font-semibold leading-snug;
+  }
+
+  .subline-lg {
+    @apply text-lg font-inter font-medium text-muted-foreground;
+  }
+
+  .subline-md {
+    @apply text-base font-inter font-medium text-muted-foreground;
+  }
+
+  .subline-sm {
+    @apply text-sm font-inter font-medium text-muted-foreground;
   }
 }
