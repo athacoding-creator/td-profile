@@ -71,6 +71,30 @@ export type Database = {
           },
         ]
       }
+      donation_settings: {
+        Row: {
+          created_at: string | null
+          id: string
+          key: string
+          updated_at: string | null
+          value: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          key: string
+          updated_at?: string | null
+          value?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          key?: string
+          updated_at?: string | null
+          value?: string | null
+        }
+        Relationships: []
+      }
       events: {
         Row: {
           city: string | null
@@ -84,14 +108,19 @@ export type Database = {
           id: string
           is_pinned: boolean
           is_recurring: boolean
+          max_infaq: number | null
+          min_infaq: number | null
           points_reward: number
           poster_url: string | null
+          price: number | null
           program_id: string | null
           qr_token: string
           recurring_days: number[]
           recurring_end_time: string | null
           recurring_start_time: string | null
           recurring_until: string | null
+          registration_type: string | null
+          speaker: string | null
           starts_at: string
           status: Database["public"]["Enums"]["event_status"]
           success_message: string | null
@@ -111,14 +140,19 @@ export type Database = {
           id?: string
           is_pinned?: boolean
           is_recurring?: boolean
+          max_infaq?: number | null
+          min_infaq?: number | null
           points_reward?: number
           poster_url?: string | null
+          price?: number | null
           program_id?: string | null
           qr_token?: string
           recurring_days?: number[]
           recurring_end_time?: string | null
           recurring_start_time?: string | null
           recurring_until?: string | null
+          registration_type?: string | null
+          speaker?: string | null
           starts_at: string
           status?: Database["public"]["Enums"]["event_status"]
           success_message?: string | null
@@ -138,14 +172,19 @@ export type Database = {
           id?: string
           is_pinned?: boolean
           is_recurring?: boolean
+          max_infaq?: number | null
+          min_infaq?: number | null
           points_reward?: number
           poster_url?: string | null
+          price?: number | null
           program_id?: string | null
           qr_token?: string
           recurring_days?: number[]
           recurring_end_time?: string | null
           recurring_start_time?: string | null
           recurring_until?: string | null
+          registration_type?: string | null
+          speaker?: string | null
           starts_at?: string
           status?: Database["public"]["Enums"]["event_status"]
           success_message?: string | null
@@ -261,6 +300,51 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_methods: {
+        Row: {
+          account_name: string | null
+          account_number: string | null
+          bank_name: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          order: number | null
+          qr_url: string | null
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          account_name?: string | null
+          account_number?: string | null
+          bank_name?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          order?: number | null
+          qr_url?: string | null
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          account_name?: string | null
+          account_number?: string | null
+          bank_name?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          order?: number | null
+          qr_url?: string | null
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       point_transactions: {
         Row: {
           amount: number
@@ -299,6 +383,7 @@ export type Database = {
       profiles: {
         Row: {
           address: string | null
+          app_role: Database["public"]["Enums"]["app_role"] | null
           avatar_url: string | null
           birth_date: string | null
           bonus_awarded: boolean
@@ -324,6 +409,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          app_role?: Database["public"]["Enums"]["app_role"] | null
           avatar_url?: string | null
           birth_date?: string | null
           bonus_awarded?: boolean
@@ -349,6 +435,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          app_role?: Database["public"]["Enums"]["app_role"] | null
           avatar_url?: string | null
           birth_date?: string | null
           bonus_awarded?: boolean
@@ -451,21 +538,33 @@ export type Database = {
       }
       registrations: {
         Row: {
+          amount_paid: number | null
           created_at: string
           event_id: string
           id: string
+          paid_at: string | null
+          payment_proof_url: string | null
+          payment_status: string | null
           user_id: string
         }
         Insert: {
+          amount_paid?: number | null
           created_at?: string
           event_id: string
           id?: string
+          paid_at?: string | null
+          payment_proof_url?: string | null
+          payment_status?: string | null
           user_id: string
         }
         Update: {
+          amount_paid?: number | null
           created_at?: string
           event_id?: string
           id?: string
+          paid_at?: string | null
+          payment_proof_url?: string | null
+          payment_status?: string | null
           user_id?: string
         }
         Relationships: [
@@ -547,17 +646,28 @@ export type Database = {
       admin_get_event_qr: { Args: { _id: string }; Returns: string }
       admin_get_program_qr: { Args: { _id: string }; Returns: string }
       archive_old_events: { Args: never; Returns: undefined }
+      check_is_admin: { Args: never; Returns: boolean }
       find_active_event_by_program_token: {
         Args: { _token: string }
         Returns: string
       }
-      has_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
+      has_role:
+        | {
+            Args: {
+              _role: Database["public"]["Enums"]["app_role"]
+              _user_id: string
+            }
+            Returns: boolean
+          }
+        | {
+            Args: {
+              _role: Database["public"]["Enums"]["app_role"]
+              _user_id: string
+            }
+            Returns: boolean
+          }
+        | { Args: { role_name: string; user_id: string }; Returns: boolean }
+      is_admin: { Args: never; Returns: boolean }
       record_attendance: {
         Args: { _event_id: string; _token: string }
         Returns: string
