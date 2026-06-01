@@ -43,22 +43,17 @@ export default function AdminLayout() {
           {!isDashboard && (
             <>
               {/* Mobile Menu Toggle */}
-              <div className="md:hidden flex items-center justify-between bg-card p-3 rounded-2xl border border-border/60 shadow-sm mb-2">
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="md:hidden w-full flex items-center justify-between bg-card p-3 rounded-2xl border border-border/60 shadow-sm mb-2 hover:bg-muted transition-colors"
+              >
                 <div className="flex items-center gap-2">
                   <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                    <Menu className="h-5 w-5" />
+                    {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
                   </div>
                   <span className="font-bold text-sm">Menu Admin</span>
                 </div>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                  className="h-9 px-3"
-                >
-                  {isMobileMenuOpen ? <X className="h-5 w-5" /> : "Buka Menu"}
-                </Button>
-              </div>
+              </button>
 
               {/* Sidebar / Mobile Menu */}
               <aside className={`
@@ -73,15 +68,16 @@ export default function AdminLayout() {
                     <NavLink
                       key={to}
                       to={to}
+                      onClick={() => setIsMobileMenuOpen(false)}
                       className={({ isActive }) =>
                         `flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all ${
-                          isActive 
-                            ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 scale-[1.02]" 
+                          isActive
+                            ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 scale-[1.02]"
                             : "text-foreground hover:bg-muted"
                         }`
                       }
                     >
-                      <Icon className={`h-5 w-5 ${location.pathname.startsWith(to) ? "" : "text-muted-foreground"}`} /> 
+                      <Icon className={`h-5 w-5 ${location.pathname.startsWith(to) ? "" : "text-muted-foreground"}`} />
                       <span>{label}</span>
                     </NavLink>
                   ))}
