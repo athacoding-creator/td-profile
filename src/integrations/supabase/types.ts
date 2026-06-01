@@ -110,6 +110,7 @@ export type Database = {
           is_recurring: boolean
           max_infaq: number | null
           min_infaq: number | null
+          payment_method_id: string | null
           points_reward: number
           poster_url: string | null
           price: number | null
@@ -142,6 +143,7 @@ export type Database = {
           is_recurring?: boolean
           max_infaq?: number | null
           min_infaq?: number | null
+          payment_method_id?: string | null
           points_reward?: number
           poster_url?: string | null
           price?: number | null
@@ -174,6 +176,7 @@ export type Database = {
           is_recurring?: boolean
           max_infaq?: number | null
           min_infaq?: number | null
+          payment_method_id?: string | null
           points_reward?: number
           poster_url?: string | null
           price?: number | null
@@ -198,6 +201,13 @@ export type Database = {
             columns: ["program_id"]
             isOneToOne: false
             referencedRelation: "programs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_payment_method_id_fkey"
+            columns: ["payment_method_id"]
+            isOneToOne: false
+            referencedRelation: "payment_methods"
             referencedColumns: ["id"]
           },
         ]
