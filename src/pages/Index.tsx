@@ -15,7 +15,7 @@ export default function Index() {
     supabase
       .from("events")
       .select("id,title,venue,poster_url,gender,starts_at,ends_at,status")
-      .in("status", ["active", "finished"])
+      .in("status", ["active", "finished", "archived"])
       .order("starts_at", { ascending: false })
       .limit(6)
       .then(({ data }) => setEvents(data ?? []));

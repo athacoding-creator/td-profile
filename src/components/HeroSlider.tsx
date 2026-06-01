@@ -29,7 +29,7 @@ export const HeroSlider = () => {
     supabase
       .from("events")
       .select("id,title,venue,poster_url,starts_at")
-      .eq("status", "active")
+      .in("status", ["active", "finished", "archived"])
       .gte("starts_at", now.toISOString())
       .lte("starts_at", weekAhead.toISOString())
       .order("starts_at", { ascending: true })
