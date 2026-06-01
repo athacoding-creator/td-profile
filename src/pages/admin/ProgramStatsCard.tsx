@@ -258,9 +258,9 @@ export default function ProgramStatsCard({
               redemptions: [],
               registrations: [],
               logins: [],
-              weekly,
-              daily,
-              totals,
+              weekly: weekly as any,
+              daily: daily as any,
+              totals: totals as any,
               eventTitle: selectedProgram?.name,
             })}
             className="gap-1.5 text-[11px] sm:text-xs h-7 sm:h-8"
