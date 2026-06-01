@@ -36,7 +36,12 @@ export default function Events() {
       .order("is_pinned", { ascending: false })
       .order("starts_at", { ascending: false })
       .limit(200)
-      .then(({ data }) => setEvents((data ?? []) as Ev[]));
+      .then(({ data, error }) => {
+        if (error) {
+          console.error("loadEvents error", error);
+        }
+        setEvents((data ?? []) as Ev[]);
+      });
   }, []);
 
   const upcoming = events

@@ -26,37 +26,67 @@ export default function EventDetail() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.from("events")
+      let eventData: any = null;
+      const { data, error } = await supabase.from("events")
         .select("id,title,description,venue,city,starts_at,ends_at,status,gender,event_type,poster_url,group_link,points_reward,program_id,created_at,is_pinned,is_recurring,recurring_days,recurring_start_time,recurring_end_time,recurring_until,registration_type,price,min_infaq,max_infaq,speaker,payment_method_id")
-        .eq("id", id).maybeSingle();
-      setEvent(data);
-      
-      // Load specific payment method for this event
-      if (data?.payment_method_id) {
-        const { data: pm } = await supabase.from("payment_methods").select("*").eq("id", data.payment_method_id).maybeSingle();
-        setPaymentMethod(pm);
+        .eq("id", id)
+        .maybeSingle();
+
+      if (error) {
+        console.error("loadEvent error", error);
+        const { data: fallbackData, error: fallbackError } = await supabase.from("events")
+          .select("*")
+          .eq("id", id)
+          .maybeSingle();
+        if (fallbackError) {
+          console.error("loadEvent fallback error", fallbackError);
+          setLoading(false);
+          return;
+        }
+        eventData = fallbackData;
       } else {
-        // Fallback to general QRIS from donation_settings if no specific method is selected
-        const { data: qrisData } = await supabase.from("donation_settings").select("value").eq("key", "qris_url").maybeSingle();
+        eventData = data;
+      }
+      setEvent(eventData);
+
+      if (eventData?.payment_method_id) {
+        const { data: pmData, error: pmError } = await supabase
+          .from("payment_methods")
+          .select("*")
+          .eq("id", eventData.payment_method_id)
+          .maybeSingle();
+        if (pmError) {
+          console.error("loadPaymentMethod error", pmError);
+        }
+        setPaymentMethod(pmData ?? null);
+      } else {
+        const { data: qrisData } = await supabase
+          .from("donation_settings")
+          .select("value")
+          .eq("key", "qris_url")
+          .maybeSingle();
         if (qrisData?.value) {
           setPaymentMethod({
             name: "QRIS Teras Dakwah",
             type: "qris",
             qr_url: qrisData.value,
-            description: "Scan QRIS untuk pembayaran event"
+            description: "Scan QRIS untuk pembayaran event",
           });
+        } else {
+          setPaymentMethod(null);
         }
       }
-      
-      if (user && data) {
+
+      if (user && eventData) {
         const { data: r } = await supabase
           .from("registrations")
           .select("*")
-          .eq("event_id", data.id)
+          .eq("event_id", eventData.id)
           .eq("user_id", user.id)
           .maybeSingle();
         setRegistration(r || null);
       }
+
       setLoading(false);
     })();
   }, [id, user]);

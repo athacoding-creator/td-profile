@@ -18,7 +18,12 @@ export default function Index() {
       .in("status", ["active", "finished", "archived"])
       .order("starts_at", { ascending: false })
       .limit(6)
-      .then(({ data }) => setEvents(data ?? []));
+      .then(({ data, error }) => {
+        if (error) {
+          console.error("loadIndexEvents error", error);
+        }
+        setEvents(data ?? []);
+      });
   }, []);
 
   return (
