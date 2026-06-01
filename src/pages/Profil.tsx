@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import QRCode from "qrcode";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Header } from "@/components/Header";
@@ -46,14 +45,13 @@ const OCCUPATIONS = [
 
 type Wilayah = { id: string; name: string };
 
-type View = "menu" | "edit" | "qr" | "password";
+type View = "menu" | "edit" | "password";
 
 export default function Profil() {
   const { user, profile, refreshProfile, signOut, isAdmin } = useAuth();
   const [view, setView] = useState<View>("menu");
   const [form, setForm] = useState<any>({});
   const [loading, setLoading] = useState(false);
-  const [qrUrl, setQrUrl] = useState<string>("");
   const [pw, setPw] = useState({ oldPw: "", newPw: "", confirmPw: "" });
   const [pwLoading, setPwLoading] = useState(false);
   const [provinces, setProvinces] = useState<Wilayah[]>([]);
@@ -86,12 +84,6 @@ export default function Profil() {
     fetch(`https://www.emsifa.com/api-wilayah-indonesia/api/districts/${form.regency_code}.json`)
       .then((r) => r.json()).then(setDistricts).catch(() => setDistricts([]));
   }, [form?.regency_code]);
-
-  useEffect(() => {
-    if (view === "qr" && user && !qrUrl) {
-      QRCode.toDataURL(user.id, { width: 320, margin: 2 }).then(setQrUrl);
-    }
-  }, [view, user, qrUrl]);
 
   const save = async () => {
     if (!user) return;
@@ -166,7 +158,9 @@ export default function Profil() {
     {
       icon: QrCode,
       label: "QR Kehadiran saya",
-      onClick: () => setView("qr"),
+      badge: "Segera hadir",
+      onClick: () =>
+        toast.info("Fitur QR Kehadiran masih dalam pengembangan."),
     },
     { icon: Ticket, label: "Event saya", to: "/riwayat" },
     { icon: HeartHandshake, label: "Donasi", href: "https://sedekah.terasdakwah.com" },
@@ -201,12 +195,17 @@ export default function Profil() {
             </h2>
 
             <ul className="mt-3 divide-y divide-border/70 border-y border-border/70">
-              {menu.map(({ icon: Icon, label, to, href, onClick }: any) => {
+              {menu.map(({ icon: Icon, label, to, href, onClick, badge }: any) => {
                 const inner = (
                   <>
                     <span className="flex items-center gap-3">
                       <Icon className="h-5 w-5 text-muted-foreground" />
                       <span className="text-foreground">{label}</span>
+                      {badge && (
+                        <span className="ml-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                          {badge}
+                        </span>
+                      )}
                     </span>
                     <ChevronRight className="h-5 w-5 text-muted-foreground" />
                   </>
@@ -256,24 +255,6 @@ export default function Profil() {
             <p className="mt-10 text-center text-xs text-muted-foreground">
               Copyright © 2014 Teras Dakwah, All rights reserved
             </p>
-          </>
-        ) : view === "qr" ? (
-          <>
-            <button
-              type="button"
-              onClick={() => setView("menu")}
-              className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-            >
-              <ChevronLeft className="h-4 w-4" /> Kembali
-            </button>
-            <h1 className="font-display text-2xl font-bold">QR Kehadiran Saya</h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Tunjukkan QR ini ke admin saat tiba di lokasi event untuk mendapatkan poin kehadiran.
-            </p>
-            <div className="mt-6 flex flex-col items-center gap-3 rounded-2xl bg-card p-6" style={{ boxShadow: "var(--shadow-card)" }}>
-              {qrUrl ? <img src={qrUrl} alt="QR kehadiran" className="rounded-lg" /> : <p className="text-sm text-muted-foreground">Memuat QR…</p>}
-              <p className="text-xs text-muted-foreground">{profile?.full_name || ""}</p>
-            </div>
           </>
         ) : view === "password" ? (
           <>

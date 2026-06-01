@@ -16,6 +16,17 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  const consumeRedirect = (fallback: string) => {
+    try {
+      const url = sessionStorage.getItem("postLoginRedirect");
+      if (url) {
+        sessionStorage.removeItem("postLoginRedirect");
+        return url;
+      }
+    } catch {}
+    return fallback;
+  };
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const normalized = normalizePhone(phone);
@@ -47,7 +58,7 @@ export default function Auth() {
           throw error;
         }
         toast.success("Akun dibuat!");
-        navigate("/onboarding");
+        navigate(consumeRedirect("/onboarding"));
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) {
@@ -56,7 +67,7 @@ export default function Auth() {
           }
           throw error;
         }
-        navigate("/");
+        navigate(consumeRedirect("/"));
       }
     } catch (err: any) {
       toast.error(err.message);

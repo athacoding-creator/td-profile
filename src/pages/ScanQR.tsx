@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
 import { ChevronLeft } from "lucide-react";
+import { parseScannedQr } from "@/lib/qrUrl";
 
 export default function ScanQR() {
   const { id } = useParams();
@@ -43,8 +44,10 @@ export default function ScanQR() {
     return { allowed: true };
   };
 
-  const validate = async (token: string) => {
+  const validate = async (raw: string) => {
     if (!event || !user) return;
+    const { token } = parseScannedQr(raw);
+    if (!token) return toast.error("QR tidak valid");
     const { data: evid, error } = await supabase.rpc("record_attendance", { _event_id: event.id, _token: token });
     if (error) {
       if (error.code === "23505" || /duplicate/i.test(error.message)) toast.info("Kamu sudah absen sebelumnya");
