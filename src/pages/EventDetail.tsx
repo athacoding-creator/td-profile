@@ -121,8 +121,7 @@ export default function EventDetail() {
         toast.success("Pendaftaran berhasil!");
       } else {
         toast.success("Pendaftaran berhasil! Silakan upload bukti pembayaran.");
-        setShowPaymentForm(true);
-        setPaymentForm({ amount: event.registration_type === "paid" ? event.price : event.min_infaq, proofFile: null });
+        navigate(`/event/${event.id}/bayar`);
       }
     } catch (error: any) {
       setSubmitting(false);
@@ -266,10 +265,10 @@ export default function EventDetail() {
                 {registration.payment_status === "rejected" && " (Pembayaran ditolak)"}
               </div>
               
-              {/* Show payment form if pending or rejected */}
-              {(registration.payment_status === "pending" || registration.payment_status === "rejected") && !showPaymentForm && (
+              {/* Show payment button if pending or rejected */}
+              {(registration.payment_status === "pending" || registration.payment_status === "rejected") && (
                 <Button
-                  onClick={() => setShowPaymentForm(true)}
+                  onClick={() => navigate(`/event/${event.id}/bayar`)}
                   className={`w-full text-white text-sm sm:text-base ${
                     registration.payment_status === "rejected" 
                       ? "bg-amber-600 hover:bg-amber-700" 
@@ -278,19 +277,6 @@ export default function EventDetail() {
                 >
                   {registration.payment_status === "rejected" ? "Kirim Ulang Bukti Pembayaran" : "Upload Bukti Pembayaran"}
                 </Button>
-              )}
-
-              {/* Show payment form */}
-              {showPaymentForm && (
-                <PaymentForm
-                  event={event}
-                  paymentMethod={paymentMethod}
-                  paymentForm={paymentForm}
-                  setPaymentForm={setPaymentForm}
-                  submitting={submitting}
-                  onSubmit={submitPayment}
-                  onCancel={() => setShowPaymentForm(false)}
-                />
               )}
 
               {/* Show scan QR button for free events or approved payments */}

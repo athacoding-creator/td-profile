@@ -18,12 +18,34 @@ export default function SettingsPage() {
     setLoading(false);
   }, []);
 
+  const [waSettings, setWaSettings] = useState({
+    wa_verification_template: "",
+    admin_wa_number: ""
+  });
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.from("donation_settings").select("key, value");
+      if (data) {
+        const s: any = { ...waSettings };
+        data.forEach(item => s[item.key] = item.value);
+        setWaSettings(s);
+      }
+    })();
+  }, []);
+
   const save = async () => {
-    const { error } = await supabase.from("app_settings").upsert([
+    const { error: err1 } = await supabase.from("app_settings").upsert([
       { key: "profile_complete_bonus", value: Number(settings.profile_complete_bonus) },
       { key: "default_attendance_points", value: Number(settings.default_attendance_points) },
     ], { onConflict: "key" });
-    if (error) return toast.error(error.message);
+    
+    const { error: err2 } = await supabase.from("donation_settings").upsert([
+      { key: "wa_verification_template", value: waSettings.wa_verification_template },
+      { key: "admin_wa_number", value: waSettings.admin_wa_number },
+    ], { onConflict: "key" });
+
+    if (err1 || err2) return toast.error(err1?.message || err2?.message);
     toast.success("Pengaturan tersimpan");
   };
 
@@ -51,6 +73,29 @@ export default function SettingsPage() {
         <Button onClick={save} className="mt-4 bg-primary text-primary-foreground">
           <Save className="mr-2 h-4 w-4" /> Simpan
         </Button>
+      </Section>
+
+      <Section title="Template Chat WA Verifikasi">
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <Label>Nomor WA Admin (dengan kode negara, misal: 628123...)</Label>
+            <Input 
+              value={waSettings.admin_wa_number}
+              onChange={(e) => setWaSettings({ ...waSettings, admin_wa_number: e.target.value })} 
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Template Pesan (Gunakan {"{{event_title}}"} untuk judul event)</Label>
+            <textarea 
+              className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              value={waSettings.wa_verification_template}
+              onChange={(e) => setWaSettings({ ...waSettings, wa_verification_template: e.target.value })}
+            />
+          </div>
+          <Button onClick={save} className="bg-primary text-primary-foreground">
+            <Save className="mr-2 h-4 w-4" /> Simpan Template
+          </Button>
+        </div>
       </Section>
 
       <Section title="QRIS Donasi & Pembayaran">

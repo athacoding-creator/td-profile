@@ -15,7 +15,7 @@ export default function Riwayat() {
     (async () => {
       const { data: regs } = await supabase
         .from("registrations")
-        .select("id, created_at, events(*)")
+        .select("id, created_at, payment_status, events(*)")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       const { data: atts } = await supabase.from("attendance").select("event_id").eq("user_id", user.id);
@@ -44,15 +44,26 @@ export default function Riwayat() {
                 <h3 className="line-clamp-1 font-semibold">{it.events.title}</h3>
                 <p className="text-xs text-muted-foreground">{it.events.venue}</p>
               </div>
-              {it.attended ? (
-                <span className="flex items-center gap-1 text-xs font-medium text-accent">
-                  <Check className="h-3.5 w-3.5" /> Hadir
-                </span>
-              ) : (
-                <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <Clock className="h-3.5 w-3.5" /> Terdaftar
-                </span>
-              )}
+              <div className="flex flex-col items-end gap-1">
+                {it.attended ? (
+                  <span className="flex items-center gap-1 text-xs font-medium text-accent">
+                    <Check className="h-3.5 w-3.5" /> Hadir
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Clock className="h-3.5 w-3.5" /> Terdaftar
+                  </span>
+                )}
+                {it.payment_status === "pending" && (
+                  <span className="text-[10px] text-amber-600 font-medium bg-amber-50 px-1.5 py-0.5 rounded">Menunggu Verifikasi</span>
+                )}
+                {it.payment_status === "rejected" && (
+                  <span className="text-[10px] text-destructive font-medium bg-destructive/5 px-1.5 py-0.5 rounded">Ditolak</span>
+                )}
+                {it.payment_status === "approved" && (
+                  <span className="text-[10px] text-blue-600 font-medium bg-blue-50 px-1.5 py-0.5 rounded">Lunas</span>
+                )}
+              </div>
             </Link>
           ))}
           {!items.length && <p className="text-sm text-muted-foreground">Belum ada event.</p>}

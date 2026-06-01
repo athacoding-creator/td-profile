@@ -19,6 +19,7 @@ const Poin = lazy(() => import("./pages/Poin"));
 const Riwayat = lazy(() => import("./pages/Riwayat"));
 const Events = lazy(() => import("./pages/Events"));
 const Profil = lazy(() => import("./pages/Profil"));
+const Payment = lazy(() => import("./pages/Payment"));
 const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
 const AdminDashboard = lazy(() => import("./pages/admin/Dashboard"));
 const AdminEvents = lazy(() => import("./pages/admin/Events"));
@@ -73,6 +74,7 @@ const App = () => (
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/onboarding" element={<RequireAuth><Onboarding /></RequireAuth>} />
                 <Route path="/event/:id" element={<EventDetail />} />
+                <Route path="/event/:id/bayar" element={<RequireAuth><Payment /></RequireAuth>} />
                 <Route path="/event/:id/scan" element={<RequireAuth><ScanQR /></RequireAuth>} />
                 <Route path="/event/:id/sukses" element={<RequireAuth><ScanSuccess /></RequireAuth>} />
                 <Route path="/scan" element={<ScanLanding />} />
