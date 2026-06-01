@@ -13,6 +13,7 @@ import { useAdmin } from "./AdminLayout";
 import { Section } from "./components";
 import { ImagePicker } from "@/components/admin/ImagePicker";
 import { isEventExpired, describeRecurring, DAY_NAMES } from "@/lib/eventSchedule";
+import { buildEventQrUrl, buildProgramQrUrl } from "@/lib/qrUrl";
 
 // datetime-local value -> ISO string with local timezone offset preserved
 const localInputToISO = (v?: string | null) => {
@@ -206,7 +207,10 @@ function EventList({ events, programs, onChanged }: { events: any[]; programs: a
         return;
       }
       console.log(`[Admin QR] Event token retrieved, generating QR image`);
-      const eventUrl = await QRCode.toDataURL(evToken, { width: 400, margin: 2 });
+      const eventUrl = await QRCode.toDataURL(
+        buildEventQrUrl(ev.id, evToken),
+        { width: 400, margin: 2 },
+      );
       let programUrl: string | undefined;
       if (ev.program_id) {
         console.log(`[Admin QR] Fetching program QR for ${ev.program_id}`);
@@ -216,7 +220,10 @@ function EventList({ events, programs, onChanged }: { events: any[]; programs: a
           toast.warning(`Program QR tidak tersedia: ${e2?.message}`);
         }
         if (progToken) {
-          programUrl = await QRCode.toDataURL(progToken, { width: 400, margin: 2 });
+          programUrl = await QRCode.toDataURL(
+            buildProgramQrUrl(ev.program_id, progToken),
+            { width: 400, margin: 2 },
+          );
           console.log(`[Admin QR] Program QR generated successfully`);
         }
       }
