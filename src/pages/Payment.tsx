@@ -54,7 +54,7 @@ export default function Payment() {
         }
       }
 
-      // Load payment method
+      // Load payment method from QRIS Manager based on event category
       if (eventData.payment_method_id) {
         const { data: pmData } = await supabase
           .from("payment_methods")
@@ -63,18 +63,27 @@ export default function Payment() {
           .maybeSingle();
         setPaymentMethod(pmData);
       } else {
-        const { data: qrisData } = await supabase
-          .from("donation_settings")
-          .select("value")
-          .eq("key", "qris_url")
-          .maybeSingle();
-        if (qrisData?.value) {
-          setPaymentMethod({
-            name: "QRIS Teras Dakwah",
-            type: "qris",
-            qr_url: qrisData.value,
-            description: "Scan QRIS untuk pembayaran event",
-          });
+        // Get QRIS from qris_methods table based on event registration type
+        const category = eventData.registration_type === "paid" ? "paid" : eventData.registration_type === "infaq" ? "infaq" : null;
+        
+        if (category) {
+          const { data: qrisData } = await supabase
+            .from("qris_methods")
+            .select("*")
+            .eq("category", category)
+            .eq("is_active", true)
+            .order("order_index", { ascending: true })
+            .maybeSingle();
+          
+          if (qrisData) {
+            setPaymentMethod({
+              id: qrisData.id,
+              name: qrisData.name,
+              type: "qris",
+              qr_url: qrisData.qr_url,
+              description: qrisData.description,
+            });
+          }
         }
       }
 
