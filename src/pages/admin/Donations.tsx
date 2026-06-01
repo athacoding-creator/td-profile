@@ -58,8 +58,8 @@ export default function DonationsPage() {
     <div className="w-full space-y-6">
       {/* Header */}
       <div>
-        <h1 className="font-display text-3xl font-bold">Daftar Donasi</h1>
-        <p className="text-sm text-muted-foreground">Lihat siapa saja yang berdonasi & verifikasi pembayaran... (tapi jangan lupa Download bukti transfernya ya!)</p>
+        <h1 className="font-display text-3xl font-bold">Daftar Pembayaran</h1>
+        <p className="text-sm text-muted-foreground">Lihat siapa saja yang melakukan pembayaran & verifikasi... (tapi jangan lupa Download bukti transfernya ya!)</p>
       </div>
 
       {/* Stats Grid - 3 columns on desktop, 2 on mobile */}
