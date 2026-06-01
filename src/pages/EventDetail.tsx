@@ -100,18 +100,21 @@ export default function EventDetail() {
     
     setSubmitting(true);
     try {
-      const { error } = await supabase.from("registrations").insert({ 
-        event_id: event.id, 
+      const amount_paid = event.registration_type === "free" ? 0 : event.registration_type === "paid" ? event.price : 0;
+      const { error } = await supabase.from("registrations").insert({
+        event_id: event.id,
         user_id: user.id,
-        payment_status: event.registration_type === "free" ? "none" : "pending"
+        payment_status: event.registration_type === "free" ? "none" : "pending",
+        amount_paid
       });
       setSubmitting(false);
       if (error) throw error;
-      
-      setRegistration({ 
-        event_id: event.id, 
-        user_id: user.id, 
-        payment_status: event.registration_type === "free" ? "none" : "pending"
+
+      setRegistration({
+        event_id: event.id,
+        user_id: user.id,
+        payment_status: event.registration_type === "free" ? "none" : "pending",
+        amount_paid
       });
       
       if (event.registration_type === "free") {
