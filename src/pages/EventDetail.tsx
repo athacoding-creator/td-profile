@@ -299,7 +299,8 @@ function PaymentForm({ event, qrisMethods, paymentForm, setPaymentForm, submitti
           onChange={(e) => setPaymentForm({ ...paymentForm, amount: Number(e.target.value) })}
           min={event.registration_type === "paid" ? event.price : event.min_infaq}
           max={event.registration_type === "paid" ? event.price : event.max_infaq}
-          className="text-sm"
+          disabled={event.registration_type === "paid"}
+          className="text-sm disabled:opacity-100 disabled:bg-muted/50"
         />
         <p className="text-xs text-muted-foreground">
           {event.registration_type === "paid"

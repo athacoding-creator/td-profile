@@ -345,6 +345,42 @@ export type Database = {
         }
         Relationships: []
       }
+      qris_methods: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          order_index: number | null
+          qr_url: string
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          order_index?: number | null
+          qr_url: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          order_index?: number | null
+          qr_url?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       point_transactions: {
         Row: {
           amount: number
