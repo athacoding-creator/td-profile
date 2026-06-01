@@ -3,9 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { MessageCircle, Eye, EyeOff, Check, X, Filter } from "lucide-react";
+import { MessageCircle, Eye, EyeOff, Check, X, Filter, Download } from "lucide-react";
 import { useAdmin } from "./AdminLayout";
-import { formatPhoneDisplay } from "@/lib/phone";
 
 export default function DonationsPage() {
   const { registrations, events } = useAdmin();
@@ -206,11 +205,20 @@ function StatCard({
 
 function DonationTableRow({ registration, event }: { registration: any; event: any }) {
   const [showProof, setShowProof] = useState(false);
+  const [updating, setUpdating] = useState(false);
 
   const update = async (status: string) => {
-    const { error } = await supabase.from("registrations").update({ payment_status: status }).eq("id", registration.id);
-    if (error) return toast.error(error.message);
-    toast.success("Status diperbarui");
+    setUpdating(true);
+    try {
+      const { error } = await supabase.from("registrations").update({ payment_status: status }).eq("id", registration.id);
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      toast.success("Status diperbarui");
+    } finally {
+      setUpdating(false);
+    }
   };
 
   const statusColor = {
@@ -249,17 +257,18 @@ function DonationTableRow({ registration, event }: { registration: any; event: a
           </span>
         </td>
         <td className="px-4 py-3 text-center">
-          <div className="flex items-center justify-center gap-2">
+          <div className="flex items-center justify-center gap-1.5">
             {registration.payment_proof_url && (
               <button
                 onClick={() => setShowProof(!showProof)}
-                className="p-1.5 hover:bg-muted rounded-md transition-colors"
+                disabled={updating}
+                className="p-2 hover:bg-blue-100 text-blue-600 rounded-md transition-colors disabled:opacity-50"
                 title={showProof ? "Sembunyikan bukti" : "Lihat bukti"}
               >
                 {showProof ? (
-                  <EyeOff className="h-4 w-4 text-muted-foreground" />
+                  <EyeOff className="h-4 w-4" />
                 ) : (
-                  <Eye className="h-4 w-4 text-muted-foreground" />
+                  <Eye className="h-4 w-4" />
                 )}
               </button>
             )}
@@ -267,30 +276,21 @@ function DonationTableRow({ registration, event }: { registration: any; event: a
               <>
                 <button
                   onClick={() => update("approved")}
-                  className="p-1.5 hover:bg-green-100 text-green-600 rounded-md transition-colors"
+                  disabled={updating}
+                  className="p-2 hover:bg-green-100 text-green-600 rounded-md transition-colors disabled:opacity-50"
                   title="Setujui"
                 >
                   <Check className="h-4 w-4" />
                 </button>
                 <button
                   onClick={() => update("rejected")}
-                  className="p-1.5 hover:bg-red-100 text-red-600 rounded-md transition-colors"
+                  disabled={updating}
+                  className="p-2 hover:bg-red-100 text-red-600 rounded-md transition-colors disabled:opacity-50"
                   title="Tolak"
                 >
                   <X className="h-4 w-4" />
                 </button>
               </>
-            )}
-            {registration.profiles?.phone && (
-              <a
-                href={`https://wa.me/${registration.profiles.phone}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-1.5 hover:bg-green-100 text-green-600 rounded-md transition-colors"
-                title="Chat WhatsApp"
-              >
-                <MessageCircle className="h-4 w-4" />
-              </a>
             )}
           </div>
         </td>
@@ -298,12 +298,24 @@ function DonationTableRow({ registration, event }: { registration: any; event: a
       {showProof && registration.payment_proof_url && (
         <tr className="border-b border-border/20 bg-muted/20">
           <td colSpan={6} className="px-4 py-4">
-            <div className="rounded-lg overflow-hidden bg-white p-2 inline-block max-w-full">
-              <img 
-                src={registration.payment_proof_url} 
-                alt="Bukti Pembayaran" 
-                className="max-h-96 max-w-full object-contain"
-              />
+            <div className="space-y-2">
+              <div className="rounded-lg overflow-hidden bg-white p-2 inline-block max-w-full border border-border/40">
+                <img 
+                  src={registration.payment_proof_url} 
+                  alt="Bukti Pembayaran" 
+                  className="max-h-96 max-w-full object-contain"
+                />
+              </div>
+              <div className="flex gap-2">
+                <a
+                  href={registration.payment_proof_url}
+                  download
+                  className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Download Bukti
+                </a>
+              </div>
             </div>
           </td>
         </tr>
@@ -314,11 +326,20 @@ function DonationTableRow({ registration, event }: { registration: any; event: a
 
 function DonationMobileCard({ registration, event }: { registration: any; event: any }) {
   const [showProof, setShowProof] = useState(false);
+  const [updating, setUpdating] = useState(false);
 
   const update = async (status: string) => {
-    const { error } = await supabase.from("registrations").update({ payment_status: status }).eq("id", registration.id);
-    if (error) return toast.error(error.message);
-    toast.success("Status diperbarui");
+    setUpdating(true);
+    try {
+      const { error } = await supabase.from("registrations").update({ payment_status: status }).eq("id", registration.id);
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      toast.success("Status diperbarui");
+    } finally {
+      setUpdating(false);
+    }
   };
 
   const statusColor = {
@@ -365,21 +386,32 @@ function DonationMobileCard({ registration, event }: { registration: any; event:
 
       {/* Proof Image */}
       {registration.payment_proof_url && (
-        <div className="rounded-lg bg-muted/30 p-2">
+        <div className="rounded-lg bg-muted/30 p-2 space-y-2">
           <button
             onClick={() => setShowProof(!showProof)}
-            className="flex items-center gap-1 text-xs font-medium text-primary hover:underline w-full"
+            disabled={updating}
+            className="flex items-center gap-1 text-xs font-medium text-primary hover:underline w-full disabled:opacity-50"
           >
             {showProof ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
             {showProof ? "Sembunyikan" : "Lihat"} Bukti
           </button>
           {showProof && (
-            <div className="mt-2 rounded-lg overflow-hidden bg-white">
-              <img 
-                src={registration.payment_proof_url} 
-                alt="Bukti Pembayaran" 
-                className="w-full max-h-64 object-contain"
-              />
+            <div className="space-y-2">
+              <div className="rounded-lg overflow-hidden bg-white border border-border/40">
+                <img 
+                  src={registration.payment_proof_url} 
+                  alt="Bukti Pembayaran" 
+                  className="w-full max-h-64 object-contain"
+                />
+              </div>
+              <a
+                href={registration.payment_proof_url}
+                download
+                className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors w-full justify-center"
+              >
+                <Download className="h-3 w-3" />
+                Download
+              </a>
             </div>
           )}
         </div>
@@ -392,6 +424,7 @@ function DonationMobileCard({ registration, event }: { registration: any; event:
             <Button
               size="sm"
               onClick={() => update("approved")}
+              disabled={updating}
               className="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs h-8"
             >
               <Check className="h-3 w-3 mr-1" /> Setujui
@@ -399,28 +432,13 @@ function DonationMobileCard({ registration, event }: { registration: any; event:
             <Button
               size="sm"
               onClick={() => update("rejected")}
+              disabled={updating}
               variant="outline"
               className="flex-1 text-destructive hover:text-destructive text-xs h-8"
             >
               <X className="h-3 w-3 mr-1" /> Tolak
             </Button>
           </>
-        )}
-        {registration.profiles?.phone && (
-          <a
-            href={`https://wa.me/${registration.profiles.phone}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1"
-          >
-            <Button
-              size="sm"
-              variant="outline"
-              className="w-full text-green-600 border-green-600 hover:bg-green-50 text-xs h-8"
-            >
-              <MessageCircle className="h-3 w-3 mr-1" /> Chat
-            </Button>
-          </a>
         )}
       </div>
     </div>

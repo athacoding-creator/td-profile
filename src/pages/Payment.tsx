@@ -159,7 +159,12 @@ export default function Payment() {
       }
 
       toast.success("Bukti pembayaran berhasil diunggah!");
-      navigate(`/event/${event.id}`);
+      
+      // Redirect to WhatsApp with verification message
+      const whatsappNumber = settings.admin_wa_number || "085111514040";
+      const template = settings.wa_verification_template || "Halo Admin, saya sudah melakukan pembayaran untuk event {{event_title}}. Berikut bukti pembayarannya. Mohon bantuannya untuk diverifikasi. Terima kasih.";
+      const whatsappMessage = template.replace("{{event_title}}", event.title);
+      window.location.href = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
     } catch (error: any) {
       toast.error(error.message);
     } finally {
@@ -168,10 +173,6 @@ export default function Payment() {
   };
 
   if (loading) return <div className="container py-20 text-center text-muted-foreground">Memuat…</div>;
-
-  const whatsappNumber = settings.admin_wa_number || "6285111514040";
-  const template = settings.wa_verification_template || "Halo Admin, saya sudah melakukan pembayaran untuk event {{event_title}}. Mohon diverifikasi. Terima kasih.";
-  const whatsappMessage = template.replace("{{event_title}}", event.title);
 
   const paymentSteps = [
     { number: 1, title: `Simpan detail ${paymentMethod?.type === 'qris' ? 'QRIS' : 'pembayaran'}.`, description: "Screenshot atau simpan gambarnya." },
@@ -272,15 +273,10 @@ export default function Payment() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                <Button onClick={submitPayment} disabled={submitting || !paymentForm.proofFile} className="h-12 font-bold">
-                  {submitting ? "Mengirim..." : "✓ Konfirmasi Pembayaran"}
+              <div className="pt-2">
+                <Button onClick={submitPayment} disabled={submitting || !paymentForm.proofFile} className="w-full h-12 font-bold bg-green-600 hover:bg-green-700">
+                  {submitting ? "Mengirim..." : <><MessageCircle className="mr-2 h-4 w-4" /> Konfirmasi & Chat Admin</>}
                 </Button>
-                <a href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`} target="_blank" rel="noreferrer">
-                  <Button variant="outline" className="w-full border-green-600 text-green-600 h-12 font-bold">
-                    <MessageCircle className="mr-2 h-4 w-4" /> Chat WA Admin
-                  </Button>
-                </a>
               </div>
             </div>
           </div>
