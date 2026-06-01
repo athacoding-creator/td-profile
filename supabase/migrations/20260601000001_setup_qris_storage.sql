@@ -12,19 +12,22 @@ CREATE POLICY "Admin Upload"
 ON storage.objects FOR INSERT
 WITH CHECK (
   bucket_id = 'qris' AND
-  public.has_role(auth.uid(), 'admin')
+  public.has_role('admin'::public.app_role, auth.uid())
 );
 
 CREATE POLICY "Admin Update"
 ON storage.objects FOR UPDATE
 USING (
   bucket_id = 'qris' AND
-  public.has_role(auth.uid(), 'admin')
+  public.has_role('admin'::public.app_role, auth.uid())
 );
 
 CREATE POLICY "Admin Delete"
 ON storage.objects FOR DELETE
 USING (
   bucket_id = 'qris' AND
-  public.has_role(auth.uid(), 'admin')
+  public.has_role('admin'::public.app_role, auth.uid())
 );
+
+-- Notify PostgREST to reload schema cache
+NOTIFY pgrst, 'reload schema';

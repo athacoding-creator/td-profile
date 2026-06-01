@@ -19,7 +19,10 @@ CREATE POLICY "Public can view active QRIS methods" ON public.qris_methods
   FOR SELECT USING (is_active = true);
 
 CREATE POLICY "Admins can manage QRIS methods" ON public.qris_methods
-  FOR ALL USING (public.has_role(auth.uid(), 'admin'));
+  FOR ALL USING (public.has_role('admin'::public.app_role, auth.uid()));
+
+-- Notify PostgREST to reload schema cache
+NOTIFY pgrst, 'reload schema';
 
 -- Create index for faster queries
 CREATE INDEX idx_qris_methods_category ON public.qris_methods(category);

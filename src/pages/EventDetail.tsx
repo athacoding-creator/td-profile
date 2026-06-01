@@ -74,7 +74,10 @@ export default function EventDetail() {
       toast.success("Pendaftaran berhasil!");
     } else {
       setShowPaymentForm(true);
-      setPaymentForm({ amount: event.registration_type === "paid" ? event.price : event.min_infaq, proofFile: null });
+      setPaymentForm({ 
+        amount: event.registration_type === "paid" ? event.price : 5000, 
+        proofFile: null 
+      });
     }
   };
 
@@ -82,11 +85,9 @@ export default function EventDetail() {
     if (!paymentForm.proofFile) {
       return toast.error("Upload bukti pembayaran terlebih dahulu");
     }
-    if (paymentForm.amount < (event.registration_type === "infaq" ? event.min_infaq : event.price)) {
-      return toast.error(`Nominal minimal Rp ${(event.registration_type === "infaq" ? event.min_infaq : event.price).toLocaleString("id-ID")}`);
-    }
-    if (event.registration_type === "infaq" && paymentForm.amount > event.max_infaq) {
-      return toast.error(`Nominal maksimal Rp ${event.max_infaq.toLocaleString("id-ID")}`);
+    const minRequired = event.registration_type === "infaq" ? 5000 : event.price;
+    if (paymentForm.amount < minRequired) {
+      return toast.error(`Nominal minimal Rp ${minRequired.toLocaleString("id-ID")}`);
     }
 
     setSubmitting(true);
@@ -293,19 +294,32 @@ function PaymentForm({ event, qrisMethods, paymentForm, setPaymentForm, submitti
         <label className="text-xs font-medium">
           Nominal {event.registration_type === "paid" ? "Pembayaran" : "Infaq"} (Rp)
         </label>
-        <Input
-          type="number"
-          value={paymentForm.amount}
-          onChange={(e) => setPaymentForm({ ...paymentForm, amount: Number(e.target.value) })}
-          min={event.registration_type === "paid" ? event.price : event.min_infaq}
-          max={event.registration_type === "paid" ? event.price : event.max_infaq}
-          disabled={event.registration_type === "paid"}
-          className="text-sm disabled:opacity-100 disabled:bg-muted/50"
-        />
+        {event.registration_type === "paid" ? (
+          <Input
+            type="number"
+            value={paymentForm.amount}
+            disabled
+            className="text-sm opacity-100 bg-muted/50"
+          />
+        ) : (
+          <div className="grid grid-cols-2 gap-2">
+            {[5000, 10000, 20000, 50000].map((nominal) => (
+              <Button
+                key={nominal}
+                type="button"
+                variant={paymentForm.amount === nominal ? "default" : "outline"}
+                className="text-sm h-9"
+                onClick={() => setPaymentForm({ ...paymentForm, amount: nominal })}
+              >
+                Rp {nominal.toLocaleString("id-ID")}
+              </Button>
+            ))}
+          </div>
+        )}
         <p className="text-xs text-muted-foreground">
           {event.registration_type === "paid"
-            ? `Nominal: Rp ${event.price.toLocaleString("id-ID")}`
-            : `Range: Rp ${event.min_infaq.toLocaleString("id-ID")} - Rp ${event.max_infaq.toLocaleString("id-ID")}`
+            ? `Nominal tetap: Rp ${event.price.toLocaleString("id-ID")}`
+            : "Pilih salah satu nominal infaq di atas"
           }
         </p>
       </div>
