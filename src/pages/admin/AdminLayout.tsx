@@ -16,7 +16,7 @@ const navItems = [
   { to: "/admin/kehadiran", label: "Kehadiran", icon: ClipboardCheck },
   { to: "/admin/scan", label: "Scan QR", icon: Camera },
   { to: "/admin/akun", label: "Akun", icon: UserCircle },
-  { to: "/admin/donasi", label: "Pembayaran", icon: Money },
+  { to: "/admin/donasi", label: "Pembayaran", icon: Heart },
   { to: "/admin/qris", label: "QRIS Manager", icon: QrCode },
   { to: "/admin/merchandise", label: "Merchandise", icon: ShoppingBag },
   { to: "/admin/penukaran", label: "Penukaran", icon: Gift },
