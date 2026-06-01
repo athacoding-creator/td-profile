@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
-import { MapPin, Calendar, Users, Lock, Link2, ChevronLeft, Upload } from "lucide-react";
+import { MapPin, Calendar, Users, Lock, Link2, ChevronLeft, Upload, Info, QrCode, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
@@ -194,7 +194,7 @@ export default function EventDetail() {
           <p className="mt-6 whitespace-pre-line text-foreground/80">{event.description}</p>
         )}
 
-        <div className="mt-8 space-y-3">
+        <div className="mt-8 space-y-4">
           {expired ? (
             <div className="flex items-center gap-2 rounded-xl bg-destructive/10 p-4 text-sm font-semibold text-destructive">
               <Lock className="h-4 w-4" /> Event Expired — pendaftaran & absensi ditutup.
@@ -205,12 +205,18 @@ export default function EventDetail() {
             </div>
           ) : registration ? (
             <>
-              <div className="rounded-xl bg-accent/10 p-4 text-center font-semibold text-accent">
-                ✓ Kamu sudah terdaftar
-                {registration.payment_status === "pending" && " (Menunggu verifikasi pembayaran)"}
-                {registration.payment_status === "approved" && " (Pembayaran disetujui)"}
-                {registration.payment_status === "rejected" && " (Pembayaran ditolak)"}
+              <div className={`rounded-xl p-4 text-center font-semibold border ${
+                registration.payment_status === "pending" ? "bg-amber-50 text-amber-700 border-amber-200" :
+                registration.payment_status === "approved" ? "bg-green-50 text-green-700 border-green-200" :
+                registration.payment_status === "rejected" ? "bg-red-50 text-red-700 border-red-200" :
+                "bg-accent/10 text-accent border-accent/20"
+              }`}>
+                {registration.payment_status === "pending" && "✓ Menunggu verifikasi pembayaran"}
+                {registration.payment_status === "approved" && "✓ Pendaftaran Disetujui"}
+                {registration.payment_status === "rejected" && "✕ Pembayaran Ditolak"}
+                {registration.payment_status === "none" && "✓ Kamu sudah terdaftar"}
               </div>
+              
               {registration.payment_status === "rejected" && (
                 <Button
                   onClick={() => setShowPaymentForm(true)}
@@ -219,40 +225,52 @@ export default function EventDetail() {
                   Kirim Ulang Bukti Pembayaran
                 </Button>
               )}
-	              {(registration.payment_status === "approved" || registration.payment_status === "none") && (
-	                <>
-	                  {scanNotYetAvailable ? (
-	                    <div className="rounded-xl bg-amber-50 p-4 text-center text-sm text-amber-800 border border-amber-200">
-	                      {sw.message ?? `Scan QR tersedia mulai jam ${scanStartTime.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}`}
-	                    </div>
-	                  ) : scanAvailable ? (
-	                    <Link to={`/event/${event.id}/scan`}>
-	                      <Button className="w-full bg-primary text-primary-foreground">Scan QR Absensi</Button>
-	                    </Link>
-	                  ) : (
-	                    <div className="rounded-xl bg-muted p-4 text-center text-sm text-muted-foreground">
-	                      {sw.message ?? "Scan QR sedang tidak tersedia"}
-	                    </div>
-	                  )}
-	                </>
-	              )}
+              
+              {(registration.payment_status === "approved" || registration.payment_status === "none") && (
+                <div className="space-y-3">
+                  {scanNotYetAvailable ? (
+                    <div className="rounded-xl bg-amber-50 p-4 text-center text-sm text-amber-800 border border-amber-200">
+                      {sw.message ?? `Scan QR tersedia mulai jam ${scanStartTime.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}`}
+                    </div>
+                  ) : scanAvailable ? (
+                    <Link to={`/event/${event.id}/scan`}>
+                      <Button className="w-full bg-primary text-primary-foreground py-6 text-lg font-bold shadow-lg shadow-primary/20">
+                        <QrCode className="mr-2 h-6 w-6" /> Scan QR Absensi
+                      </Button>
+                    </Link>
+                  ) : (
+                    <div className="rounded-xl bg-muted p-4 text-center text-sm text-muted-foreground">
+                      {sw.message ?? "Scan QR sedang tidak tersedia"}
+                    </div>
+                  )}
+                </div>
+              )}
+              
               {event.group_link && (
                 <a href={event.group_link} target="_blank" rel="noreferrer">
-                  <Button variant="outline" className="w-full">
-                    <Link2 className="mr-2 h-4 w-4" /> Gabung Grup
+                  <Button variant="outline" className="w-full py-5 border-2">
+                    <Link2 className="mr-2 h-4 w-4" /> Gabung Grup WhatsApp
                   </Button>
                 </a>
               )}
             </>
           ) : showPaymentForm ? (
-                      <PaymentForm event={event} qrisMethods={qrisMethods} paymentForm={paymentForm} setPaymentForm={setPaymentForm} submitting={submitting} onSubmit={submitPayment} onCancel={() => setShowPaymentForm(false)} />
+            <PaymentForm 
+              event={event} 
+              qrisMethods={qrisMethods} 
+              paymentForm={paymentForm} 
+              setPaymentForm={setPaymentForm} 
+              submitting={submitting} 
+              onSubmit={submitPayment} 
+              onCancel={() => setShowPaymentForm(false)} 
+            />
           ) : (
             <Button
               onClick={register}
               disabled={submitting}
-              className="w-full bg-primary text-primary-foreground"
+              className="w-full bg-primary text-primary-foreground py-6 text-lg font-bold shadow-lg shadow-primary/20"
             >
-              {submitting ? "Mendaftarkan…" : user ? "Daftar Event" : "Login untuk Daftar"}
+              {submitting ? "Mendaftarkan…" : user ? "Daftar Sekarang" : "Login untuk Daftar"}
             </Button>
           )}
         </div>
@@ -264,91 +282,138 @@ export default function EventDetail() {
 
 function PaymentForm({ event, qrisMethods, paymentForm, setPaymentForm, submitting, onSubmit, onCancel }: any) {
   return (
-    <div className="rounded-xl border border-border/60 p-4 space-y-4">
-      <h3 className="font-semibold">
-        {event.registration_type === "paid" ? "Pembayaran Event" : "Infaq Event"}
-      </h3>
+    <div className="rounded-2xl border-2 border-primary/20 bg-card p-5 sm:p-6 space-y-6 shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-300">
+      <div className="text-center space-y-1">
+        <h3 className="font-display text-xl font-bold">
+          {event.registration_type === "paid" ? "Selesaikan Pembayaran" : "Infaq Pendaftaran"}
+        </h3>
+        <p className="text-sm text-muted-foreground">Ikuti langkah di bawah untuk mendaftar</p>
+      </div>
       
       {qrisMethods && qrisMethods.length > 0 && (
-        <div className="space-y-3">
-          <p className="text-xs font-medium text-muted-foreground">QRIS Pembayaran</p>
-          {qrisMethods.map((qris: any) => (
-            <div key={qris.id} className="rounded-lg bg-muted/50 p-3">
-              <div className="flex items-start justify-between mb-2">
-                <div>
-                  <p className="text-xs font-semibold">{qris.name}</p>
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase tracking-wider">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">1</span>
+            Scan Salah Satu QRIS
+          </div>
+          
+          <div className="grid grid-cols-1 gap-4">
+            {qrisMethods.map((qris: any) => (
+              <div key={qris.id} className="rounded-xl border border-border/60 bg-muted/30 p-4 flex flex-col items-center">
+                <div className="text-center mb-3">
+                  <p className="font-bold text-sm">{qris.name}</p>
                   {qris.description && (
-                    <p className="text-xs text-muted-foreground">{qris.description}</p>
+                    <p className="text-[11px] text-muted-foreground">{qris.description}</p>
                   )}
                 </div>
+                {qris.qr_url && (
+                  <div className="bg-white p-3 rounded-xl shadow-inner mb-2">
+                    <img src={qris.qr_url} alt={qris.name} className="max-w-[200px] h-auto" />
+                  </div>
+                )}
+                <p className="text-[10px] text-muted-foreground italic">Tekan lama gambar untuk simpan/bagikan</p>
               </div>
-              {qris.qr_url && (
-                <img src={qris.qr_url} alt={qris.name} className="max-w-xs rounded-lg" />
-              )}
-            </div>
-          ))}
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-xl bg-amber-50 p-4 text-center border border-amber-200">
+          <Info className="h-5 w-5 text-amber-600 mx-auto mb-2" />
+          <p className="text-xs text-amber-800">Metode pembayaran QRIS belum tersedia. Silakan hubungi admin.</p>
         </div>
       )}
 
-      <div className="space-y-2">
-        <label className="text-xs font-medium">
-          Nominal {event.registration_type === "paid" ? "Pembayaran" : "Infaq"} (Rp)
-        </label>
-        {event.registration_type === "paid" ? (
-          <Input
-            type="number"
-            value={paymentForm.amount}
-            disabled
-            className="text-sm opacity-100 bg-muted/50"
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase tracking-wider">
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">2</span>
+          Nominal Transfer
+        </div>
+        
+        <div className="rounded-xl bg-primary/5 p-4 border border-primary/10">
+          {event.registration_type === "paid" ? (
+            <div className="text-center">
+              <p className="text-xs text-muted-foreground mb-1">Total Bayar</p>
+              <p className="text-2xl font-bold text-primary">Rp {event.price.toLocaleString("id-ID")}</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-xs text-center text-muted-foreground">Pilih nominal infaq terbaikmu</p>
+              <div className="grid grid-cols-2 gap-2">
+                {[5000, 10000, 20000, 50000].map((nominal) => (
+                  <Button
+                    key={nominal}
+                    type="button"
+                    variant={paymentForm.amount === nominal ? "default" : "outline"}
+                    className={`text-sm h-11 font-bold ${paymentForm.amount === nominal ? "bg-primary shadow-md" : ""}`}
+                    onClick={() => setPaymentForm({ ...paymentForm, amount: nominal })}
+                  >
+                    Rp {nominal.toLocaleString("id-ID")}
+                  </Button>
+                ))}
+              </div>
+              <div className="pt-2">
+                <Label className="text-[10px] text-muted-foreground mb-1 block">Atau masukkan nominal lain</Label>
+                <Input
+                  type="number"
+                  placeholder="Contoh: 15000"
+                  className="h-10 text-sm font-bold"
+                  onChange={(e) => setPaymentForm({ ...paymentForm, amount: parseInt(e.target.value) || 0 })}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase tracking-wider">
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">3</span>
+          Upload Bukti Bayar
+        </div>
+        
+        <div className="relative">
+          <input
+            id="proof-upload"
+            type="file"
+            accept="image/*"
+            onChange={(e) => setPaymentForm({ ...paymentForm, proofFile: e.target.files?.[0] || null })}
+            className="hidden"
           />
-        ) : (
-          <div className="grid grid-cols-2 gap-2">
-            {[5000, 10000, 20000, 50000].map((nominal) => (
-              <Button
-                key={nominal}
-                type="button"
-                variant={paymentForm.amount === nominal ? "default" : "outline"}
-                className="text-sm h-9"
-                onClick={() => setPaymentForm({ ...paymentForm, amount: nominal })}
-              >
-                Rp {nominal.toLocaleString("id-ID")}
-              </Button>
-            ))}
-          </div>
-        )}
-        <p className="text-xs text-muted-foreground">
-          {event.registration_type === "paid"
-            ? `Nominal tetap: Rp ${event.price.toLocaleString("id-ID")}`
-            : "Pilih salah satu nominal infaq di atas"
-          }
-        </p>
+          <label 
+            htmlFor="proof-upload"
+            className={`flex flex-col items-center justify-center w-full min-h-[100px] rounded-xl border-2 border-dashed transition-all cursor-pointer ${
+              paymentForm.proofFile ? "border-green-500 bg-green-50/30" : "border-border/60 hover:border-primary/50 hover:bg-muted/30"
+            }`}
+          >
+            {paymentForm.proofFile ? (
+              <div className="flex flex-col items-center p-4">
+                <CheckCircle2 className="h-8 w-8 text-green-500 mb-2" />
+                <p className="text-sm font-bold text-green-700 truncate max-w-[200px]">{paymentForm.proofFile.name}</p>
+                <p className="text-[10px] text-green-600/70">Klik untuk ganti file</p>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center p-4">
+                <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+                <p className="text-sm font-medium">Klik untuk upload bukti</p>
+                <p className="text-[10px] text-muted-foreground mt-1 text-center">Format JPG/PNG, Maks 5MB</p>
+              </div>
+            )}
+          </label>
+        </div>
       </div>
 
-      <div className="space-y-2">
-        <label className="text-xs font-medium">Upload Bukti Pembayaran</label>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => setPaymentForm({ ...paymentForm, proofFile: e.target.files?.[0] || null })}
-          className="block w-full text-xs text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
-        />
-        {paymentForm.proofFile && (
-          <p className="text-xs text-accent font-medium">✓ {paymentForm.proofFile.name}</p>
-        )}
-      </div>
-
-      <div className="flex gap-2 pt-2">
+      <div className="flex flex-col gap-2 pt-4">
         <Button
           onClick={onSubmit}
-          disabled={submitting}
-          className="flex-1 bg-primary text-primary-foreground"
+          disabled={submitting || !paymentForm.proofFile || paymentForm.amount <= 0}
+          className="w-full bg-primary text-primary-foreground py-6 text-lg font-bold shadow-lg shadow-primary/20"
         >
-          <Upload className="h-4 w-4 mr-2" /> {submitting ? "Mengirim…" : "Kirim Bukti"}
+          {submitting ? "Sedang Mengirim…" : "Konfirmasi & Daftar"}
         </Button>
         <Button
           onClick={onCancel}
-          variant="outline"
-          className="flex-1"
+          variant="ghost"
+          className="w-full text-muted-foreground"
         >
           Batal
         </Button>

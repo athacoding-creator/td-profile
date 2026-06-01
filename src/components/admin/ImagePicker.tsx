@@ -3,26 +3,41 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Upload, X } from "lucide-react";
+import { Upload, X, Loader2 } from "lucide-react";
 
-const MAX_SIZE = 5 * 1024 * 1024; // 5 MB (sebelum konversi)
+const MAX_SIZE = 10 * 1024 * 1024; // 10 MB (batas input awal)
+const TARGET_WIDTH = 1200; // Lebar maksimal untuk optimasi
 
 /**
- * Konversi file gambar apa pun ke WebP menggunakan Canvas API browser.
- * Kualitas default 0.85 — keseimbangan antara ukuran & kualitas visual.
+ * Konversi file gambar ke WebP dengan resizing untuk mengurangi ukuran file secara signifikan.
  */
-async function toWebP(file: File, quality = 0.85): Promise<File> {
+async function optimizeImage(file: File, quality = 0.8): Promise<File> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     const objectUrl = URL.createObjectURL(file);
     img.onload = () => {
       URL.revokeObjectURL(objectUrl);
       const canvas = document.createElement("canvas");
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
+      
+      let width = img.naturalWidth;
+      let height = img.naturalHeight;
+
+      // Resize jika terlalu besar
+      if (width > TARGET_WIDTH) {
+        height = Math.round((height * TARGET_WIDTH) / width);
+        width = TARGET_WIDTH;
+      }
+
+      canvas.width = width;
+      canvas.height = height;
       const ctx = canvas.getContext("2d");
       if (!ctx) return reject(new Error("Canvas context tidak tersedia"));
-      ctx.drawImage(img, 0, 0);
+      
+      // Gunakan smoothing untuk kualitas lebih baik saat resize
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(img, 0, 0, width, height);
+      
       canvas.toBlob(
         (blob) => {
           if (!blob) return reject(new Error("Konversi WebP gagal"));
@@ -37,29 +52,52 @@ async function toWebP(file: File, quality = 0.85): Promise<File> {
         quality,
       );
     };
-    img.onerror = () => { URL.revokeObjectURL(objectUrl); reject(new Error("Gagal memuat gambar")); };
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Gagal memuat gambar"));
+    };
     img.src = objectUrl;
   });
 }
 
 export async function uploadImage(bucket: string, file: File): Promise<string | null> {
-  if (file.size > MAX_SIZE) { toast.error("Ukuran gambar maksimal 5MB"); return null; }
-  if (!file.type.startsWith("image/")) { toast.error("File harus berupa gambar"); return null; }
+  if (file.size > MAX_SIZE) {
+    toast.error("Ukuran gambar terlalu besar (maksimal 10MB)");
+    return null;
+  }
+  if (!file.type.startsWith("image/")) {
+    toast.error("File harus berupa gambar");
+    return null;
+  }
 
-  // Konversi ke WebP sebelum upload
+  // Konversi & Kompresi ke WebP sebelum upload
   let uploadFile = file;
   try {
-    uploadFile = await toWebP(file);
-  } catch {
-    // Jika konversi gagal, tetap upload file asli
-    toast.warning("Konversi WebP gagal, menggunakan format asli");
+    uploadFile = await optimizeImage(file);
+  } catch (err) {
+    console.error("Optimization failed:", err);
+    // Jika konversi gagal, tetap upload file asli jika ukurannya masuk akal (< 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Gagal mengompresi gambar yang terlalu besar.");
+      return null;
+    }
+    toast.warning("Gagal mengoptimalkan gambar, menggunakan format asli");
   }
 
   const path = `${crypto.randomUUID()}.webp`;
   const { error } = await supabase.storage
     .from(bucket)
-    .upload(path, uploadFile, { cacheControl: "3600", upsert: false, contentType: "image/webp" });
-  if (error) { toast.error(error.message); return null; }
+    .upload(path, uploadFile, { 
+      cacheControl: "3600", 
+      upsert: false, 
+      contentType: "image/webp" 
+    });
+    
+  if (error) {
+    toast.error("Gagal upload: " + error.message);
+    return null;
+  }
+  
   return supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
 }
 
@@ -74,8 +112,9 @@ export function ImagePicker({
 }) {
   const ref = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
+
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <input
         ref={ref}
         type="file"
@@ -91,28 +130,69 @@ export function ImagePicker({
           if (url) onChange(url);
         }}
       />
+      
       {value ? (
-        <div className="relative inline-block">
-          <img src={value} alt="" className="h-28 w-44 rounded-lg object-cover" />
+        <div className="relative group inline-block overflow-hidden rounded-xl border border-border/60 bg-muted/30">
+          <img 
+            src={value} 
+            alt="Preview" 
+            className="h-32 w-full sm:w-48 object-cover transition group-hover:opacity-75" 
+          />
+          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+            <Button 
+              type="button" 
+              variant="secondary" 
+              size="sm" 
+              className="h-8 w-8 rounded-full p-0 shadow-lg"
+              onClick={() => ref.current?.click()}
+            >
+              <Upload className="h-4 w-4" />
+            </Button>
+          </div>
           <button
             type="button"
             onClick={() => onChange("")}
-            className="absolute -right-2 -top-2 rounded-full bg-destructive p-1 text-destructive-foreground"
+            className="absolute right-1 top-1 rounded-full bg-destructive/90 p-1.5 text-white shadow-sm hover:bg-destructive transition"
           >
-            <X className="h-3 w-3" />
+            <X className="h-3.5 w-3.5" />
           </button>
         </div>
       ) : (
-        <Button type="button" variant="outline" size="sm" disabled={busy} onClick={() => ref.current?.click()}>
-          <Upload className="mr-2 h-4 w-4" />
-          {busy ? "Mengonversi & mengunggah…" : "Upload gambar"}
+        <Button 
+          type="button" 
+          variant="outline" 
+          className="w-full sm:w-auto h-24 border-dashed border-2 flex flex-col gap-2 hover:bg-muted/50 transition" 
+          disabled={busy} 
+          onClick={() => ref.current?.click()}
+        >
+          {busy ? (
+            <>
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              <span className="text-xs font-medium">Mengoptimalkan & Mengunggah…</span>
+            </>
+          ) : (
+            <>
+              <Upload className="h-6 w-6 text-muted-foreground" />
+              <div className="text-center">
+                <p className="text-sm font-medium">Upload Gambar</p>
+                <p className="text-[10px] text-muted-foreground">Maksimal 10MB (WebP optimized)</p>
+              </div>
+            </>
+          )}
         </Button>
       )}
+      
+      <div className="flex items-center gap-2">
+        <div className="h-[1px] flex-1 bg-border/60"></div>
+        <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Atau URL</span>
+        <div className="h-[1px] flex-1 bg-border/60"></div>
+      </div>
+
       <Input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="…atau URL gambar"
-        className="text-xs"
+        placeholder="https://example.com/image.jpg"
+        className="text-xs h-9"
       />
     </div>
   );

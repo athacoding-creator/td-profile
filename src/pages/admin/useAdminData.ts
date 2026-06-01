@@ -28,7 +28,7 @@ export function useAdminData(): AdminData {
   const loadEvents = async () => {
     const { data, error } = await supabase
       .from("events")
-      .select("id,title,description,venue,city,starts_at,ends_at,status,gender,event_type,poster_url,group_link,points_reward,program_id,created_by,created_at,updated_at,success_message,is_pinned,is_recurring,recurring_days,recurring_start_time,recurring_end_time,recurring_until, programs(id, name, code)")
+      .select("id,title,description,venue,city,starts_at,ends_at,status,gender,event_type,poster_url,group_link,points_reward,program_id,created_by,created_at,updated_at,success_message,is_pinned,is_recurring,recurring_days,recurring_start_time,recurring_end_time,recurring_until,registration_type,price,min_infaq,max_infaq,speaker, programs(id, name, code)")
       .order("is_pinned", { ascending: false })
       .order("starts_at", { ascending: false });
     if (error) console.error("loadEvents", error);
@@ -58,7 +58,7 @@ export function useAdminData(): AdminData {
   const loadRegistrations = async () => {
     const { data } = await supabase
       .from("registrations")
-      .select("id, created_at, event_id, user_id, events(title, programs(name)), profiles:user_id(full_name, email, phone, gender, city)")
+      .select("id, created_at, event_id, user_id, payment_status, amount_paid, payment_proof_url, events(title, programs(name)), profiles:user_id(full_name, email, phone, gender, city)")
       .order("created_at", { ascending: false }).limit(200);
     setRegistrations(data ?? []);
   };

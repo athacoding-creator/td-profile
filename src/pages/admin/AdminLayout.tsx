@@ -1,9 +1,11 @@
 import { useLocation, NavLink, Outlet, useOutletContext } from "react-router-dom";
 import { Header } from "@/components/Header";
 import {
-  LayoutDashboard, CalendarDays, Sparkles, Gift, Users, Settings as SettingsIcon, ShoppingBag, Image as ImageIcon, UserCircle, Download, ClipboardCheck, Heart, Camera, QrCode
+  LayoutDashboard, CalendarDays, Sparkles, Gift, Users, Settings as SettingsIcon, ShoppingBag, Image as ImageIcon, UserCircle, Download, ClipboardCheck, Heart, Camera, QrCode, Menu, X
 } from "lucide-react";
 import { useAdminData, AdminData } from "./useAdminData";
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 
 const navItems = [
   { to: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -24,33 +26,71 @@ const navItems = [
 export default function AdminLayout() {
   const data = useAdminData();
   const location = useLocation();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const isDashboard = location.pathname === "/admin" || location.pathname === "/admin/dashboard";
 
+  // Close mobile menu when route changes
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Header />
-      <div className="container px-3 sm:px-6 py-4 sm:py-6">
-        <div className={isDashboard ? "" : "grid gap-4 sm:gap-6 md:grid-cols-[240px_1fr]"}>
+      
+      <div className="flex-1 container px-4 sm:px-6 py-4 sm:py-6">
+        <div className={isDashboard ? "" : "flex flex-col md:flex-row gap-6"}>
           {!isDashboard && (
-            <aside className="md:sticky md:top-24 md:self-start">
-              <nav className="flex md:flex-col gap-1 overflow-x-auto md:overflow-visible rounded-2xl bg-card p-2 sm:p-3" style={{ boxShadow: "var(--shadow-card)" }}>
-                {navItems.map(({ to, label, icon: Icon }) => (
-                  <NavLink
-                    key={to}
-                    to={to}
-                    className={({ isActive }) =>
-                      `flex items-center gap-2 whitespace-nowrap rounded-xl px-2.5 sm:px-3 py-2 sm:py-2.5 text-xs sm:text-sm font-medium transition ${
-                        isActive ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-muted"
-                      }`
-                    }
-                  >
-                    <Icon className="h-4 w-4" /> <span className="hidden sm:inline">{label}</span>
-                  </NavLink>
-                ))}
-              </nav>
-            </aside>
+            <>
+              {/* Mobile Menu Toggle */}
+              <div className="md:hidden flex items-center justify-between bg-card p-3 rounded-2xl border border-border/60 shadow-sm mb-2">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                    <Menu className="h-5 w-5" />
+                  </div>
+                  <span className="font-bold text-sm">Menu Admin</span>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                  className="h-9 px-3"
+                >
+                  {isMobileMenuOpen ? <X className="h-5 w-5" /> : "Buka Menu"}
+                </Button>
+              </div>
+
+              {/* Sidebar / Mobile Menu */}
+              <aside className={`
+                md:w-[240px] md:sticky md:top-24 md:self-start z-40
+                ${isMobileMenuOpen ? "fixed inset-0 top-[72px] bg-background/95 backdrop-blur-sm p-4 md:relative md:top-0 md:bg-transparent md:p-0 overflow-y-auto" : "hidden md:block"}
+              `}>
+                <nav className="flex flex-col gap-1.5 rounded-2xl bg-card p-2 sm:p-3 border border-border/60 shadow-sm">
+                  <div className="px-3 py-2 mb-1 hidden md:block border-b border-border/40">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Navigasi Admin</p>
+                  </div>
+                  {navItems.map(({ to, label, icon: Icon }) => (
+                    <NavLink
+                      key={to}
+                      to={to}
+                      className={({ isActive }) =>
+                        `flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all ${
+                          isActive 
+                            ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 scale-[1.02]" 
+                            : "text-foreground hover:bg-muted"
+                        }`
+                      }
+                    >
+                      <Icon className={`h-5 w-5 ${location.pathname.startsWith(to) ? "" : "text-muted-foreground"}`} /> 
+                      <span>{label}</span>
+                    </NavLink>
+                  ))}
+                </nav>
+              </aside>
+            </>
           )}
-          <main className="min-w-0 space-y-4 sm:space-y-6 pb-12">
+          
+          <main className="flex-1 min-w-0 space-y-6 pb-20">
             <Outlet context={data} />
           </main>
         </div>
