@@ -22,7 +22,7 @@ export default function EventDetail() {
   const [submitting, setSubmitting] = useState(false);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [paymentForm, setPaymentForm] = useState({ amount: 0, proofFile: null as File | null });
-  const [qrisUrl, setQrisUrl] = useState("");
+  const [qrisMethods, setQrisMethods] = useState<any[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -31,9 +31,15 @@ export default function EventDetail() {
         .eq("id", id).maybeSingle();
       setEvent(data);
       
-      // Load QRIS
-      const { data: qrisData } = await supabase.from("donation_settings").select("value").eq("key", "qris_url").maybeSingle();
-      if (qrisData?.value) setQrisUrl(qrisData.value);
+      // Load QRIS based on event type
+      const category = data?.registration_type === "paid" ? "paid" : "infaq";
+      const { data: qrisData } = await supabase
+        .from("qris_methods")
+        .select("*")
+        .eq("category", category)
+        .eq("is_active", true)
+        .order("order_index", { ascending: true });
+      if (qrisData) setQrisMethods(qrisData);
       
       if (user && data) {
         const { data: r } = await supabase
@@ -238,15 +244,7 @@ export default function EventDetail() {
               )}
             </>
           ) : showPaymentForm ? (
-            <PaymentForm
-              event={event}
-              qrisUrl={qrisUrl}
-              paymentForm={paymentForm}
-              setPaymentForm={setPaymentForm}
-              submitting={submitting}
-              onSubmit={submitPayment}
-              onCancel={() => setShowPaymentForm(false)}
-            />
+                      <PaymentForm event={event} qrisMethods={qrisMethods} paymentForm={paymentForm} setPaymentForm={setPaymentForm} submitting={submitting} onSubmit={submitPayment} onCancel={() => setShowPaymentForm(false)} />
           ) : (
             <Button
               onClick={register}
@@ -263,17 +261,31 @@ export default function EventDetail() {
   );
 }
 
-function PaymentForm({ event, qrisUrl, paymentForm, setPaymentForm, submitting, onSubmit, onCancel }: any) {
+function PaymentForm({ event, qrisMethods, paymentForm, setPaymentForm, submitting, onSubmit, onCancel }: any) {
   return (
     <div className="rounded-xl border border-border/60 p-4 space-y-4">
       <h3 className="font-semibold">
         {event.registration_type === "paid" ? "Pembayaran Event" : "Infaq Event"}
       </h3>
       
-      {qrisUrl && (
-        <div className="rounded-lg bg-muted/50 p-3">
-          <p className="text-xs font-medium text-muted-foreground mb-2">QRIS Pembayaran</p>
-          <img src={qrisUrl} alt="QRIS" className="max-w-xs rounded-lg" />
+      {qrisMethods && qrisMethods.length > 0 && (
+        <div className="space-y-3">
+          <p className="text-xs font-medium text-muted-foreground">QRIS Pembayaran</p>
+          {qrisMethods.map((qris: any) => (
+            <div key={qris.id} className="rounded-lg bg-muted/50 p-3">
+              <div className="flex items-start justify-between mb-2">
+                <div>
+                  <p className="text-xs font-semibold">{qris.name}</p>
+                  {qris.description && (
+                    <p className="text-xs text-muted-foreground">{qris.description}</p>
+                  )}
+                </div>
+              </div>
+              {qris.qr_url && (
+                <img src={qris.qr_url} alt={qris.name} className="max-w-xs rounded-lg" />
+              )}
+            </div>
+          ))}
         </div>
       )}
 

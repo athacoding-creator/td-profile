@@ -1,28 +1,22 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Save, Trash2 } from "lucide-react";
+import { Save, Info } from "lucide-react";
 import { useAdmin } from "./AdminLayout";
 import { Section } from "./components";
-import { ImagePicker } from "@/components/admin/ImagePicker";
 
 export default function SettingsPage() {
+  const navigate = useNavigate();
   const { settings, setSettings } = useAdmin();
-  const [qrisUrl, setQrisUrl] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadQris();
-  }, []);
-
-  const loadQris = async () => {
-    const { data } = await supabase.from("donation_settings").select("value").eq("key", "qris_url").maybeSingle();
-    if (data?.value) setQrisUrl(data.value);
     setLoading(false);
-  };
+  }, []);
 
   const save = async () => {
     const { error } = await supabase.from("app_settings").upsert([
@@ -33,30 +27,13 @@ export default function SettingsPage() {
     toast.success("Pengaturan tersimpan");
   };
 
-  const saveQris = async () => {
-    const { error } = await supabase.from("donation_settings").upsert(
-      { key: "qris_url", value: qrisUrl },
-      { onConflict: "key" }
-    );
-    if (error) return toast.error(error.message);
-    toast.success("QRIS berhasil disimpan");
-  };
-
-  const deleteQris = async () => {
-    if (!confirm("Hapus QRIS?")) return;
-    const { error } = await supabase.from("donation_settings").update({ value: "" }).eq("key", "qris_url");
-    if (error) return toast.error(error.message);
-    setQrisUrl("");
-    toast.success("QRIS dihapus");
-  };
-
   if (loading) return <div className="text-center text-muted-foreground">Memuat...</div>;
 
   return (
     <>
       <div>
         <h1 className="font-display text-3xl font-bold">Pengaturan</h1>
-        <p className="text-sm text-muted-foreground">Atur poin, QRIS & konfigurasi global (realtime)</p>
+        <p className="text-sm text-muted-foreground">Atur poin & konfigurasi global (realtime)</p>
       </div>
       <Section title="Pengaturan Poin">
         <div className="grid gap-4 md:grid-cols-2">
@@ -77,27 +54,22 @@ export default function SettingsPage() {
       </Section>
 
       <Section title="QRIS Donasi & Pembayaran">
-        <div className="space-y-4">
-          <div className="space-y-1.5">
-            <Label className="text-xs sm:text-sm">Upload QRIS Image</Label>
-            <ImagePicker bucket="qris" value={qrisUrl} onChange={(url) => setQrisUrl(url)} />
-          </div>
-          {qrisUrl && (
-            <div className="rounded-lg border border-border/60 p-4">
-              <p className="text-xs font-medium mb-2 text-muted-foreground">Preview QRIS</p>
-              <img src={qrisUrl} alt="QRIS" className="max-w-xs rounded-lg" />
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 space-y-3">
+          <div className="flex items-start gap-3">
+            <Info className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold text-sm text-blue-900">QRIS Manager</p>
+              <p className="text-xs text-blue-800 mt-1">
+                Kelola QRIS untuk pembayaran dan infaq telah dipindahkan ke halaman khusus QRIS Manager.
+              </p>
             </div>
-          )}
-          <div className="flex gap-2">
-            <Button onClick={saveQris} className="bg-primary text-primary-foreground">
-              <Save className="mr-2 h-4 w-4" /> Simpan QRIS
-            </Button>
-            {qrisUrl && (
-              <Button onClick={deleteQris} variant="outline" className="text-destructive">
-                <Trash2 className="mr-2 h-4 w-4" /> Hapus
-              </Button>
-            )}
           </div>
+          <Button 
+            onClick={() => navigate('/admin/qris')}
+            className="w-full bg-blue-600 text-white hover:bg-blue-700"
+          >
+            Buka QRIS Manager →
+          </Button>
         </div>
       </Section>
     </>

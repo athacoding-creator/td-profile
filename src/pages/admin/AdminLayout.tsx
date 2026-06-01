@@ -1,7 +1,7 @@
-import { NavLink, Outlet, useOutletContext, useLocation } from "react-router-dom";
+import { useLocation, NavLink, Outlet, useOutletContext } from "react-router-dom";
 import { Header } from "@/components/Header";
 import {
-  LayoutDashboard, CalendarDays, Sparkles, Gift, Users, Settings as SettingsIcon, ShoppingBag, Image as ImageIcon, UserCircle, Download, ClipboardCheck, Heart, Camera
+  LayoutDashboard, CalendarDays, Sparkles, Gift, Users, Settings as SettingsIcon, ShoppingBag, Image as ImageIcon, UserCircle, Download, ClipboardCheck, Heart, Camera, QrCode
 } from "lucide-react";
 import { useAdminData, AdminData } from "./useAdminData";
 
@@ -15,6 +15,7 @@ const navItems = [
   { to: "/admin/scan", label: "Scan QR", icon: Camera },
   { to: "/admin/akun", label: "Akun", icon: UserCircle },
   { to: "/admin/donasi", label: "Donasi", icon: Heart },
+  { to: "/admin/qris", label: "QRIS Manager", icon: QrCode },
   { to: "/admin/merchandise", label: "Merchandise", icon: ShoppingBag },
   { to: "/admin/penukaran", label: "Penukaran", icon: Gift },
   { to: "/admin/pengaturan", label: "Pengaturan", icon: SettingsIcon },
