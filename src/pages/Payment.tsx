@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
-import { ChevronLeft, CreditCard, Landmark, Wallet, Info, MessageCircle, Upload, ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronLeft, CreditCard, Landmark, Info, MessageCircle, CheckCircle2, Heart, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Payment() {
@@ -31,7 +31,7 @@ export default function Payment() {
         .from("events")
         .select("*")
         .eq("id", id)
-        .maybeSingle();
+        .maybeSingle() as any;
 
       if (eventError || !eventData) {
         toast.error("Event tidak ditemukan");
@@ -55,11 +55,11 @@ export default function Payment() {
       }
 
       // Load payment method from QRIS Manager based on event category
-      if (eventData.payment_method_id) {
+      if ((eventData as any).payment_method_id) {
         const { data: pmData } = await supabase
           .from("payment_methods")
           .select("*")
-          .eq("id", eventData.payment_method_id)
+          .eq("id", (eventData as any).payment_method_id)
           .maybeSingle();
         setPaymentMethod(pmData);
       } else {
