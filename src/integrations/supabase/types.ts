@@ -110,7 +110,6 @@ export type Database = {
           is_recurring: boolean
           max_infaq: number | null
           min_infaq: number | null
-          payment_method_id: string | null
           points_reward: number
           poster_url: string | null
           price: number | null
@@ -143,7 +142,6 @@ export type Database = {
           is_recurring?: boolean
           max_infaq?: number | null
           min_infaq?: number | null
-          payment_method_id?: string | null
           points_reward?: number
           poster_url?: string | null
           price?: number | null
@@ -176,7 +174,6 @@ export type Database = {
           is_recurring?: boolean
           max_infaq?: number | null
           min_infaq?: number | null
-          payment_method_id?: string | null
           points_reward?: number
           poster_url?: string | null
           price?: number | null
@@ -201,13 +198,6 @@ export type Database = {
             columns: ["program_id"]
             isOneToOne: false
             referencedRelation: "programs"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "events_payment_method_id_fkey"
-            columns: ["payment_method_id"]
-            isOneToOne: false
-            referencedRelation: "payment_methods"
             referencedColumns: ["id"]
           },
         ]
@@ -351,42 +341,6 @@ export type Database = {
           order?: number | null
           qr_url?: string | null
           type?: string
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      qris_methods: {
-        Row: {
-          category: string
-          created_at: string | null
-          description: string | null
-          id: string
-          is_active: boolean | null
-          name: string
-          order_index: number | null
-          qr_url: string
-          updated_at: string | null
-        }
-        Insert: {
-          category: string
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          name: string
-          order_index?: number | null
-          qr_url: string
-          updated_at?: string | null
-        }
-        Update: {
-          category?: string
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          name?: string
-          order_index?: number | null
-          qr_url?: string
           updated_at?: string | null
         }
         Relationships: []
@@ -537,6 +491,42 @@ export type Database = {
           name?: string
           qr_token?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      qris_methods: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          order_index: number | null
+          qr_url: string
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          order_index?: number | null
+          qr_url: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          order_index?: number | null
+          qr_url?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
