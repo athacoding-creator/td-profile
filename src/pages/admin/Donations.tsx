@@ -15,7 +15,6 @@ const extractStoragePath = (url: string | null): string | null => {
 
 export default function DonationsPage() {
   const { registrations, events, reloadRegistrations } = useAdmin();
-  const [filterType, setFilterType] = useState<"all" | "paid" | "infaq">("all");
   const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "approved" | "rejected">("all");
   const [searchQuery, setSearchQuery] = useState("");
 
