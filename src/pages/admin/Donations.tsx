@@ -3,12 +3,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { MessageCircle, Eye, EyeOff, Check, X, Filter, Download } from "lucide-react";
+import { Eye, Check, X, Filter } from "lucide-react";
 import { useAdmin } from "./AdminLayout";
 
+// Ekstrak path file storage dari URL publik Supabase
+const extractStoragePath = (url: string | null): string | null => {
+  if (!url) return null;
+  const m = url.match(/\/storage\/v1\/object\/public\/payment_proofs\/(.+)$/);
+  return m ? decodeURIComponent(m[1]) : null;
+};
+
 export default function DonationsPage() {
-  const { registrations, events } = useAdmin();
-  const [filterType, setFilterType] = useState<"all" | "paid" | "infaq">("all");
+  const { registrations, events, reloadRegistrations } = useAdmin();
   const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "approved" | "rejected">("all");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -17,13 +23,9 @@ export default function DonationsPage() {
     return registrations.filter((r) => {
       const event = events.find((e) => e.id === r.event_id);
       if (!event) return false;
-      
-      // Only show registrations from paid or infaq events
-      if (event.registration_type === "free") return false;
-      
-      // Filter by type
-      if (filterType === "paid" && event.registration_type !== "paid") return false;
-      if (filterType === "infaq" && event.registration_type !== "infaq") return false;
+
+      // Hanya event "paid" yang butuh verifikasi admin. Infaq sukarela diurus langsung via WA.
+      if (event.registration_type !== "paid") return false;
       
       // Filter by payment status
       if (filterStatus !== "all" && r.payment_status !== filterStatus) return false;
@@ -40,7 +42,7 @@ export default function DonationsPage() {
       
       return true;
     });
-  }, [registrations, events, filterType, filterStatus, searchQuery]);
+  }, [registrations, events, filterStatus, searchQuery]);
 
   const stats = useMemo(() => {
     const total = donationRegistrations.length;
@@ -59,7 +61,12 @@ export default function DonationsPage() {
       {/* Header */}
       <div>
         <h1 className="font-display text-3xl font-bold">Daftar Pembayaran</h1>
-        <p className="text-sm text-muted-foreground">Lihat siapa saja yang melakukan pembayaran & verifikasi... (tapi jangan lupa Download bukti transfernya ya!)</p>
+        <p className="text-sm text-muted-foreground">
+          Verifikasi pembayaran event berbayar. Bukti dibuka di tab baru &amp; akan otomatis terhapus setelah dikonfirmasi/ditolak.
+        </p>
+        <p className="text-xs text-muted-foreground mt-1">
+          ℹ️ Event <strong>Infaq</strong> tidak butuh verifikasi — donatur menghubungi admin langsung lewat WhatsApp.
+        </p>
       </div>
 
       {/* Stats Grid - 3 columns on desktop, 2 on mobile */}
@@ -93,20 +100,7 @@ export default function DonationsPage() {
           <span className="text-sm font-medium">Filter</span>
         </div>
         
-        <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">Semua Campaign</label>
-            <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value as any)}
-              className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
-            >
-              <option value="all">Semua</option>
-              <option value="paid">Wajib Bayar</option>
-              <option value="infaq">Berinfaq</option>
-            </select>
-          </div>
-          
+        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground">Semua Status</label>
             <select
@@ -159,6 +153,7 @@ export default function DonationsPage() {
                   key={r.id} 
                   registration={r} 
                   event={events.find((e) => e.id === r.event_id)} 
+                  onChanged={reloadRegistrations}
                 />
               ))
             )}
@@ -178,6 +173,7 @@ export default function DonationsPage() {
               key={r.id} 
               registration={r} 
               event={events.find((e) => e.id === r.event_id)} 
+              onChanged={reloadRegistrations}
             />
           ))
         )}
@@ -203,19 +199,27 @@ function StatCard({
   );
 }
 
-function DonationTableRow({ registration, event }: { registration: any; event: any }) {
-  const [showProof, setShowProof] = useState(false);
+function DonationTableRow({ registration, event, onChanged }: { registration: any; event: any; onChanged: () => Promise<void> | void }) {
   const [updating, setUpdating] = useState(false);
 
   const update = async (status: string) => {
     setUpdating(true);
     try {
-      const { error } = await supabase.from("registrations").update({ payment_status: status }).eq("id", registration.id);
+      // Hapus bukti dari storage (jika ada)
+      const path = extractStoragePath(registration.payment_proof_url);
+      if (path) {
+        await supabase.storage.from("payment_proofs").remove([path]);
+      }
+      const { error } = await supabase
+        .from("registrations")
+        .update({ payment_status: status, payment_proof_url: null })
+        .eq("id", registration.id);
       if (error) {
         toast.error(error.message);
         return;
       }
-      toast.success("Status diperbarui");
+      toast.success(status === "approved" ? "Pembayaran disetujui" : "Pembayaran ditolak");
+      await onChanged();
     } finally {
       setUpdating(false);
     }
@@ -259,18 +263,15 @@ function DonationTableRow({ registration, event }: { registration: any; event: a
         <td className="px-4 py-3 text-center">
           <div className="flex items-center justify-center gap-1.5">
             {registration.payment_proof_url && (
-              <button
-                onClick={() => setShowProof(!showProof)}
-                disabled={updating}
-                className="p-2 hover:bg-blue-100 text-blue-600 rounded-md transition-colors disabled:opacity-50"
-                title={showProof ? "Sembunyikan bukti" : "Lihat bukti"}
+              <a
+                href={registration.payment_proof_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 hover:bg-blue-100 text-blue-600 rounded-md transition-colors"
+                title="Lihat bukti di tab baru"
               >
-                {showProof ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
-              </button>
+                <Eye className="h-4 w-4" />
+              </a>
             )}
             {registration.payment_status === "pending" && (
               <>
@@ -295,48 +296,30 @@ function DonationTableRow({ registration, event }: { registration: any; event: a
           </div>
         </td>
       </tr>
-      {showProof && registration.payment_proof_url && (
-        <tr className="border-b border-border/20 bg-muted/20">
-          <td colSpan={6} className="px-4 py-4">
-            <div className="space-y-2">
-              <div className="rounded-lg overflow-hidden bg-white p-2 inline-block max-w-full border border-border/40">
-                <img 
-                  src={registration.payment_proof_url} 
-                  alt="Bukti Pembayaran" 
-                  className="max-h-96 max-w-full object-contain"
-                />
-              </div>
-              <div className="flex gap-2">
-                <a
-                  href={registration.payment_proof_url}
-                  download
-                  className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                >
-                  <Download className="h-3.5 w-3.5" />
-                  Download Bukti
-                </a>
-              </div>
-            </div>
-          </td>
-        </tr>
-      )}
     </>
   );
 }
 
-function DonationMobileCard({ registration, event }: { registration: any; event: any }) {
-  const [showProof, setShowProof] = useState(false);
+function DonationMobileCard({ registration, event, onChanged }: { registration: any; event: any; onChanged: () => Promise<void> | void }) {
   const [updating, setUpdating] = useState(false);
 
   const update = async (status: string) => {
     setUpdating(true);
     try {
-      const { error } = await supabase.from("registrations").update({ payment_status: status }).eq("id", registration.id);
+      const path = extractStoragePath(registration.payment_proof_url);
+      if (path) {
+        await supabase.storage.from("payment_proofs").remove([path]);
+      }
+      const { error } = await supabase
+        .from("registrations")
+        .update({ payment_status: status, payment_proof_url: null })
+        .eq("id", registration.id);
       if (error) {
         toast.error(error.message);
         return;
       }
-      toast.success("Status diperbarui");
+      toast.success(status === "approved" ? "Pembayaran disetujui" : "Pembayaran ditolak");
+      await onChanged();
     } finally {
       setUpdating(false);
     }
@@ -386,35 +369,14 @@ function DonationMobileCard({ registration, event }: { registration: any; event:
 
       {/* Proof Image */}
       {registration.payment_proof_url && (
-        <div className="rounded-lg bg-muted/30 p-2 space-y-2">
-          <button
-            onClick={() => setShowProof(!showProof)}
-            disabled={updating}
-            className="flex items-center gap-1 text-xs font-medium text-primary hover:underline w-full disabled:opacity-50"
-          >
-            {showProof ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-            {showProof ? "Sembunyikan" : "Lihat"} Bukti
-          </button>
-          {showProof && (
-            <div className="space-y-2">
-              <div className="rounded-lg overflow-hidden bg-white border border-border/40">
-                <img 
-                  src={registration.payment_proof_url} 
-                  alt="Bukti Pembayaran" 
-                  className="w-full max-h-64 object-contain"
-                />
-              </div>
-              <a
-                href={registration.payment_proof_url}
-                download
-                className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors w-full justify-center"
-              >
-                <Download className="h-3 w-3" />
-                Download
-              </a>
-            </div>
-          )}
-        </div>
+        <a
+          href={registration.payment_proof_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 px-3 py-2 text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 rounded-md hover:bg-blue-100 transition-colors justify-center w-full"
+        >
+          <Eye className="h-3.5 w-3.5" /> Lihat Bukti (Tab Baru)
+        </a>
       )}
 
       {/* Actions */}

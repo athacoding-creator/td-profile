@@ -59,7 +59,7 @@ export default function QrisManagerPage() {
     if (error) {
       toast.error("Gagal memuat QRIS: " + error.message);
     } else {
-      setQrisMethods(data || []);
+      setQrisMethods((data || []) as QrisMethod[]);
     }
     setLoading(false);
   };
