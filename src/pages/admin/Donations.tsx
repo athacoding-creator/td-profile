@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Eye, Check, X, Filter } from "lucide-react";
 import { useAdmin } from "./AdminLayout";
-<<<<<<< HEAD
 
 // Ekstrak path file storage dari URL publik Supabase
 const extractStoragePath = (url: string | null): string | null => {
@@ -13,11 +12,6 @@ const extractStoragePath = (url: string | null): string | null => {
   const m = url.match(/\/storage\/v1\/object\/public\/payment_proofs\/(.+)$/);
   return m ? decodeURIComponent(m[1]) : null;
 };
-=======
-import { useCallback } from "react";
-import { Section } from "./components";
-import { formatPhoneDisplay } from "@/lib/phone";
->>>>>>> f64cf79 (Fix admin verification: fix status update, proof visibility, and storage policies)
 
 export default function DonationsPage() {
   const { registrations, events, reloadRegistrations } = useAdmin();
@@ -188,7 +182,6 @@ export default function DonationsPage() {
   );
 }
 
-<<<<<<< HEAD
 function StatCard({ 
   label, 
   value, 
@@ -215,7 +208,10 @@ function DonationTableRow({ registration, event, onChanged }: { registration: an
       // Update status terlebih dahulu agar user bisa segera akses QR
       const { error } = await supabase
         .from("registrations")
-        .update({ payment_status: status })
+        .update({ 
+          payment_status: status,
+          updated_at: new Date().toISOString()
+        })
         .eq("id", registration.id);
         
       if (error) {
@@ -224,8 +220,6 @@ function DonationTableRow({ registration, event, onChanged }: { registration: an
       }
 
       // Hapus bukti dari storage SETELAH status berhasil diupdate (opsional, tapi bagus untuk hemat storage)
-      // Namun jika status rejected, mungkin bukti masih dibutuhkan untuk referensi admin? 
-      // Untuk amannya, kita hapus hanya jika disetujui atau jika Anda memang ingin menghapusnya.
       const path = extractStoragePath(registration.payment_proof_url);
       if (path && status === "approved") {
         await supabase.storage.from("payment_proofs").remove([path]);
@@ -237,28 +231,6 @@ function DonationTableRow({ registration, event, onChanged }: { registration: an
       await onChanged();
     } finally {
       setUpdating(false);
-=======
-function DonationRow({ registration, event }: { registration: any; event: any }) {
-  const [showProof, setShowProof] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
-  const { reloadRegistrations } = useAdmin();
-
-  const update = async (status: string) => {
-    setIsUpdating(true);
-    try {
-      const { error } = await supabase.from("registrations").update({ 
-        payment_status: status,
-        updated_at: new Date().toISOString()
-      }).eq("id", registration.id);
-      if (error) throw error;
-      toast.success(`Status berhasil diubah menjadi ${status}`);
-      // Reload registrations to reflect changes
-      if (reloadRegistrations) await reloadRegistrations();
-    } catch (error: any) {
-      toast.error(error.message);
-    } finally {
-      setIsUpdating(false);
->>>>>>> f64cf79 (Fix admin verification: fix status update, proof visibility, and storage policies)
     }
   };
 
@@ -345,7 +317,10 @@ function DonationMobileCard({ registration, event, onChanged }: { registration: 
     try {
       const { error } = await supabase
         .from("registrations")
-        .update({ payment_status: status })
+        .update({ 
+          payment_status: status,
+          updated_at: new Date().toISOString()
+        })
         .eq("id", registration.id);
         
       if (error) {
@@ -381,93 +356,52 @@ function DonationMobileCard({ registration, event, onChanged }: { registration: 
 
   return (
     <div className="rounded-lg border border-border/40 bg-card p-3 space-y-3">
-      {/* Header */}
       <div className="flex items-start justify-between gap-2">
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold text-sm truncate">{event?.title ?? "Event"}</p>
-          <p className="text-xs text-muted-foreground truncate">{registration.profiles?.full_name ?? "User"}</p>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs text-muted-foreground">
+            {registration.paid_at ? new Date(registration.paid_at).toLocaleDateString("id-ID") : "—"}
+          </p>
+          <h3 className="font-semibold text-sm truncate">{registration.profiles?.full_name ?? "User"}</h3>
+          <p className="text-xs text-muted-foreground line-clamp-1">{event?.title ?? "Event"}</p>
         </div>
-        <span className={`rounded-full px-2 py-1 text-xs font-medium whitespace-nowrap ${statusColor}`}>
+        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${statusColor}`}>
           {statusLabel}
         </span>
       </div>
 
-      {/* Details Grid */}
-      <div className="grid grid-cols-2 gap-2 text-xs">
-        <div>
-          <p className="text-muted-foreground">Nominal</p>
-          <p className="font-semibold">Rp {(registration.amount_paid || 0).toLocaleString("id-ID")}</p>
-        </div>
-        <div>
-          <p className="text-muted-foreground">Tanggal</p>
-          <p className="font-semibold">
-            {registration.paid_at
-              ? new Date(registration.paid_at).toLocaleDateString("id-ID")
-              : "—"}
-          </p>
+      <div className="flex items-center justify-between gap-2 pt-1">
+        <p className="text-sm font-bold">Rp {(registration.amount_paid || 0).toLocaleString("id-ID")}</p>
+        <div className="flex items-center gap-1.5">
+          {registration.payment_proof_url && (
+            <a
+              href={registration.payment_proof_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded-md text-[10px] font-bold border border-blue-200"
+            >
+              <Eye className="h-3 w-3" /> BUKTI
+            </a>
+          )}
+          {registration.payment_status === "pending" && (
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => update("approved")}
+                disabled={updating}
+                className="p-1.5 bg-green-50 text-green-600 rounded-md border border-green-200 disabled:opacity-50"
+              >
+                <Check className="h-3.5 w-3.5" />
+              </button>
+              <button
+                onClick={() => update("rejected")}
+                disabled={updating}
+                className="p-1.5 bg-red-50 text-red-600 rounded-md border border-red-200 disabled:opacity-50"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
-
-      {/* Proof Image */}
-      {registration.payment_proof_url && (
-        <a
-          href={registration.payment_proof_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 px-3 py-2 text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 rounded-md hover:bg-blue-100 transition-colors justify-center w-full"
-        >
-          <Eye className="h-3.5 w-3.5" /> LIHAT BUKTI TRANSFER
-        </a>
-      )}
-
-<<<<<<< HEAD
-      {/* Actions */}
-      <div className="flex gap-2 pt-2 border-t border-border/40">
-        {registration.payment_status === "pending" && (
-          <>
-            <Button
-              size="sm"
-              onClick={() => update("approved")}
-              disabled={updating}
-              className="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs h-8"
-            >
-              <Check className="h-3 w-3 mr-1" /> Setujui
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => update("rejected")}
-              disabled={updating}
-              variant="outline"
-              className="flex-1 text-destructive hover:text-destructive text-xs h-8"
-            >
-              <X className="h-3 w-3 mr-1" /> Tolak
-            </Button>
-          </>
-        )}
-      </div>
-=======
-      {registration.payment_status === "pending" && registration.payment_proof_url && (
-        <div className="flex gap-2 pt-2 border-t border-border/60">
-          <Button
-            size="sm"
-            onClick={() => update("approved")}
-            disabled={isUpdating}
-            className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-          >
-            <Check className="h-3.5 w-3.5 mr-1" /> {isUpdating ? "Memproses..." : "Setujui"}
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => update("rejected")}
-            disabled={isUpdating}
-            variant="outline"
-            className="flex-1 text-destructive hover:text-destructive"
-          >
-            <X className="h-3.5 w-3.5 mr-1" /> {isUpdating ? "Memproses..." : "Tolak"}
-          </Button>
-        </div>
-      )}
->>>>>>> f64cf79 (Fix admin verification: fix status update, proof visibility, and storage policies)
     </div>
   );
 }
