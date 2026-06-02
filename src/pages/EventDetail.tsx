@@ -112,11 +112,16 @@ export default function EventDetail() {
     
     setSubmitting(true);
     try {
-      const amount_paid = event.registration_type === "free" ? 0 : event.registration_type === "paid" ? event.price : 0;
+      const isInfaq = event.registration_type === "infaq";
+      const isPaid = event.registration_type === "paid";
+      // Infaq sukarela: pendaftaran langsung "none" (tidak perlu verifikasi). amount_paid = min_infaq agar lulus trigger.
+      const payment_status = event.registration_type === "free" ? "none" : isInfaq ? "none" : "pending";
+      const amount_paid = isPaid ? event.price : isInfaq ? (event.min_infaq || 0) : 0;
+
       const { error } = await supabase.from("registrations").insert({
         event_id: event.id,
         user_id: user.id,
-        payment_status: event.registration_type === "free" ? "none" : "pending",
+        payment_status,
         amount_paid
       });
       setSubmitting(false);
@@ -125,12 +130,14 @@ export default function EventDetail() {
       setRegistration({
         event_id: event.id,
         user_id: user.id,
-        payment_status: event.registration_type === "free" ? "none" : "pending",
+        payment_status,
         amount_paid
       });
-      
+
       if (event.registration_type === "free") {
         toast.success("Pendaftaran berhasil!");
+      } else if (isInfaq) {
+        toast.success("Pendaftaran berhasil! Infaq sukarela bisa dikirim via WA.");
       } else {
         toast.success("Pendaftaran berhasil! Silakan upload bukti pembayaran.");
         navigate(`/event/${event.id}/bayar`);
