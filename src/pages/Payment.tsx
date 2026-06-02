@@ -174,6 +174,103 @@ export default function Payment() {
 
   if (loading) return <div className="container py-20 text-center text-muted-foreground">Memuat…</div>;
 
+  const isInfaq = event?.registration_type === "infaq";
+  const isPaid = event?.registration_type === "paid";
+  const alreadyApproved = isPaid && registration?.payment_status === "approved";
+
+  const waNumber = settings.admin_wa_number || "085111514040";
+  const infaqMsg = `Assalamu'alaikum Admin, saya ingin berinfaq untuk "${event?.title}" sebesar Rp ${paymentForm.amount.toLocaleString("id-ID")}. Mohon konfirmasinya, terima kasih.`;
+  const infaqWaUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(infaqMsg)}`;
+
+  // Cabang 1: Pembayaran paid sudah dikonfirmasi → tidak perlu bayar lagi
+  if (alreadyApproved) {
+    return (
+      <div className="min-h-screen bg-background pb-32">
+        <Header />
+        <main className="container max-w-3xl py-4 px-3">
+          <button onClick={() => navigate(`/event/${id}`)} className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+            <ChevronLeft className="h-4 w-4" /> Kembali ke Detail Event
+          </button>
+          <div className="rounded-2xl border border-green-200 bg-green-50 p-6 text-center space-y-3">
+            <CheckCircle2 className="h-12 w-12 text-green-600 mx-auto" />
+            <h2 className="font-display text-xl font-bold text-green-800">Pembayaran Sudah Dikonfirmasi</h2>
+            <p className="text-sm text-green-700">
+              Kamu sudah terdaftar &amp; pembayaran kamu untuk <strong>{event.title}</strong> telah disetujui admin.
+              Tidak perlu bayar lagi selama event ini aktif.
+            </p>
+            <Button onClick={() => navigate(`/event/${id}`)} className="mt-2">Kembali ke Detail Event</Button>
+          </div>
+        </main>
+        <BottomNav />
+      </div>
+    );
+  }
+
+  // Cabang 2: Infaq → sukarela, langsung ke WA admin, tanpa upload bukti
+  if (isInfaq) {
+    return (
+      <div className="min-h-screen bg-background pb-32">
+        <Header />
+        <main className="container max-w-3xl py-4 px-3">
+          <button onClick={() => navigate(`/event/${id}`)} className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+            <ChevronLeft className="h-4 w-4" /> Kembali ke Detail Event
+          </button>
+
+          <div className="space-y-5 rounded-2xl border border-border/60 bg-card p-4 sm:p-6 shadow-sm">
+            <div className="border-b pb-4">
+              <h2 className="font-display text-xl font-bold flex items-center gap-2">
+                <Heart className="h-5 w-5 text-rose-500" /> Berinfaq: {event.title}
+              </h2>
+              <p className="text-xs text-muted-foreground mt-1">
+                Infaq bersifat sukarela. Tidak perlu unggah bukti — silakan kontak admin langsung via WhatsApp.
+              </p>
+            </div>
+
+            {paymentMethod?.qr_url && (
+              <div className="flex flex-col items-center gap-3 rounded-xl bg-muted/30 p-4 border border-border/40">
+                <div className="flex items-center gap-2 text-xs font-semibold uppercase text-muted-foreground">
+                  <CreditCard className="h-3 w-3" /> {paymentMethod.name}
+                </div>
+                <div className="rounded-2xl border-4 border-white bg-white p-2 shadow-md">
+                  <img src={paymentMethod.qr_url} alt="QRIS Infaq" className="w-48 h-48 sm:w-64 sm:h-64 object-contain" />
+                </div>
+                <div className="flex items-center gap-2 rounded-full bg-rose-50 px-4 py-1.5 text-xs font-medium text-rose-700 border border-rose-100">
+                  <Info className="h-3 w-3" /> Scan QR di atas dengan aplikasi favoritmu.
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold">Nominal infaq (Rp)</Label>
+              <Input
+                type="number"
+                min={event.min_infaq || 0}
+                value={paymentForm.amount}
+                onChange={(e) => setPaymentForm({ ...paymentForm, amount: Number(e.target.value) })}
+                className="h-12"
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Saran: Rp {(event.min_infaq || 0).toLocaleString("id-ID")} — Rp {(event.max_infaq || 0).toLocaleString("id-ID")}. Bebas sesuai keikhlasan.
+              </p>
+            </div>
+
+            <a href={infaqWaUrl} target="_blank" rel="noopener noreferrer">
+              <Button className="w-full h-12 font-bold bg-green-600 hover:bg-green-700">
+                <MessageCircle className="mr-2 h-4 w-4" /> Hubungi Admin via WhatsApp
+              </Button>
+            </a>
+
+            <div className="rounded-xl bg-blue-50 p-3 text-xs text-blue-800 border border-blue-100">
+              <Info className="h-3 w-3 inline mr-1" />
+              Karena infaq sukarela, admin tidak perlu memverifikasi bukti. Semua urusan langsung lewat WA.
+            </div>
+          </div>
+        </main>
+        <BottomNav />
+      </div>
+    );
+  }
+
   const paymentSteps = [
     { number: 1, title: `Simpan detail ${paymentMethod?.type === 'qris' ? 'QRIS' : 'pembayaran'}.`, description: "Screenshot atau simpan gambarnya." },
     { number: 2, title: "Buka aplikasi m-banking atau e-wallet.", description: "Pilih menu bayar atau transfer." },
