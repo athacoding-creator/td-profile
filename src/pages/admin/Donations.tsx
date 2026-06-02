@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Eye, Check, X, Filter } from "lucide-react";
 import { useAdmin } from "./AdminLayout";
+<<<<<<< HEAD
 
 // Ekstrak path file storage dari URL publik Supabase
 const extractStoragePath = (url: string | null): string | null => {
@@ -12,6 +13,11 @@ const extractStoragePath = (url: string | null): string | null => {
   const m = url.match(/\/storage\/v1\/object\/public\/payment_proofs\/(.+)$/);
   return m ? decodeURIComponent(m[1]) : null;
 };
+=======
+import { useCallback } from "react";
+import { Section } from "./components";
+import { formatPhoneDisplay } from "@/lib/phone";
+>>>>>>> f64cf79 (Fix admin verification: fix status update, proof visibility, and storage policies)
 
 export default function DonationsPage() {
   const { registrations, events, reloadRegistrations } = useAdmin();
@@ -182,6 +188,7 @@ export default function DonationsPage() {
   );
 }
 
+<<<<<<< HEAD
 function StatCard({ 
   label, 
   value, 
@@ -230,6 +237,28 @@ function DonationTableRow({ registration, event, onChanged }: { registration: an
       await onChanged();
     } finally {
       setUpdating(false);
+=======
+function DonationRow({ registration, event }: { registration: any; event: any }) {
+  const [showProof, setShowProof] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const { reloadRegistrations } = useAdmin();
+
+  const update = async (status: string) => {
+    setIsUpdating(true);
+    try {
+      const { error } = await supabase.from("registrations").update({ 
+        payment_status: status,
+        updated_at: new Date().toISOString()
+      }).eq("id", registration.id);
+      if (error) throw error;
+      toast.success(`Status berhasil diubah menjadi ${status}`);
+      // Reload registrations to reflect changes
+      if (reloadRegistrations) await reloadRegistrations();
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setIsUpdating(false);
+>>>>>>> f64cf79 (Fix admin verification: fix status update, proof visibility, and storage policies)
     }
   };
 
@@ -391,6 +420,7 @@ function DonationMobileCard({ registration, event, onChanged }: { registration: 
         </a>
       )}
 
+<<<<<<< HEAD
       {/* Actions */}
       <div className="flex gap-2 pt-2 border-t border-border/40">
         {registration.payment_status === "pending" && (
@@ -415,6 +445,29 @@ function DonationMobileCard({ registration, event, onChanged }: { registration: 
           </>
         )}
       </div>
+=======
+      {registration.payment_status === "pending" && registration.payment_proof_url && (
+        <div className="flex gap-2 pt-2 border-t border-border/60">
+          <Button
+            size="sm"
+            onClick={() => update("approved")}
+            disabled={isUpdating}
+            className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+          >
+            <Check className="h-3.5 w-3.5 mr-1" /> {isUpdating ? "Memproses..." : "Setujui"}
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => update("rejected")}
+            disabled={isUpdating}
+            variant="outline"
+            className="flex-1 text-destructive hover:text-destructive"
+          >
+            <X className="h-3.5 w-3.5 mr-1" /> {isUpdating ? "Memproses..." : "Tolak"}
+          </Button>
+        </div>
+      )}
+>>>>>>> f64cf79 (Fix admin verification: fix status update, proof visibility, and storage policies)
     </div>
   );
 }
