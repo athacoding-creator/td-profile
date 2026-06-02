@@ -205,19 +205,27 @@ function DonationTableRow({ registration, event, onChanged }: { registration: an
   const update = async (status: string) => {
     setUpdating(true);
     try {
-      // Hapus bukti dari storage (jika ada)
-      const path = extractStoragePath(registration.payment_proof_url);
-      if (path) {
-        await supabase.storage.from("payment_proofs").remove([path]);
-      }
+      // Update status terlebih dahulu agar user bisa segera akses QR
       const { error } = await supabase
         .from("registrations")
-        .update({ payment_status: status, payment_proof_url: null })
+        .update({ payment_status: status })
         .eq("id", registration.id);
+        
       if (error) {
         toast.error(error.message);
         return;
       }
+
+      // Hapus bukti dari storage SETELAH status berhasil diupdate (opsional, tapi bagus untuk hemat storage)
+      // Namun jika status rejected, mungkin bukti masih dibutuhkan untuk referensi admin? 
+      // Untuk amannya, kita hapus hanya jika disetujui atau jika Anda memang ingin menghapusnya.
+      const path = extractStoragePath(registration.payment_proof_url);
+      if (path && status === "approved") {
+        await supabase.storage.from("payment_proofs").remove([path]);
+        // Update URL menjadi null setelah dihapus dari storage
+        await supabase.from("registrations").update({ payment_proof_url: null }).eq("id", registration.id);
+      }
+
       toast.success(status === "approved" ? "Pembayaran disetujui" : "Pembayaran ditolak");
       await onChanged();
     } finally {
@@ -267,10 +275,10 @@ function DonationTableRow({ registration, event, onChanged }: { registration: an
                 href={registration.payment_proof_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2 hover:bg-blue-100 text-blue-600 rounded-md transition-colors"
+                className="flex items-center gap-1 px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-md transition-colors text-xs font-bold border border-blue-200"
                 title="Lihat bukti di tab baru"
               >
-                <Eye className="h-4 w-4" />
+                <Eye className="h-3.5 w-3.5" /> LIHAT BUKTI
               </a>
             )}
             {registration.payment_status === "pending" && (
@@ -306,18 +314,22 @@ function DonationMobileCard({ registration, event, onChanged }: { registration: 
   const update = async (status: string) => {
     setUpdating(true);
     try {
-      const path = extractStoragePath(registration.payment_proof_url);
-      if (path) {
-        await supabase.storage.from("payment_proofs").remove([path]);
-      }
       const { error } = await supabase
         .from("registrations")
-        .update({ payment_status: status, payment_proof_url: null })
+        .update({ payment_status: status })
         .eq("id", registration.id);
+        
       if (error) {
         toast.error(error.message);
         return;
       }
+
+      const path = extractStoragePath(registration.payment_proof_url);
+      if (path && status === "approved") {
+        await supabase.storage.from("payment_proofs").remove([path]);
+        await supabase.from("registrations").update({ payment_proof_url: null }).eq("id", registration.id);
+      }
+
       toast.success(status === "approved" ? "Pembayaran disetujui" : "Pembayaran ditolak");
       await onChanged();
     } finally {
@@ -373,9 +385,9 @@ function DonationMobileCard({ registration, event, onChanged }: { registration: 
           href={registration.payment_proof_url}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 px-3 py-2 text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 rounded-md hover:bg-blue-100 transition-colors justify-center w-full"
+          className="inline-flex items-center gap-1 px-3 py-2 text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 rounded-md hover:bg-blue-100 transition-colors justify-center w-full"
         >
-          <Eye className="h-3.5 w-3.5" /> Lihat Bukti (Tab Baru)
+          <Eye className="h-3.5 w-3.5" /> LIHAT BUKTI TRANSFER
         </a>
       )}
 
