@@ -32,7 +32,7 @@ export default function Events() {
     supabase
       .from("events")
       .select("id,title,venue,poster_url,gender,starts_at,ends_at,status,is_pinned,is_recurring,recurring_days,recurring_start_time,recurring_end_time,recurring_until")
-      .in("status", ["active", "finished", "archived"])
+      .in("status", ["active", "finished"])
       .order("is_pinned", { ascending: false })
       .order("starts_at", { ascending: false })
       .limit(200)
