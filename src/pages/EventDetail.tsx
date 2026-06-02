@@ -279,18 +279,19 @@ export default function EventDetail() {
             <>
               <div className="rounded-xl bg-accent/10 p-4 text-center font-semibold text-accent text-sm sm:text-base">
                 ✓ Kamu sudah terdaftar
-                {registration.payment_status === "pending" && " (Menunggu verifikasi pembayaran)"}
-                {registration.payment_status === "approved" && " (Pembayaran disetujui)"}
-                {registration.payment_status === "rejected" && " (Pembayaran ditolak)"}
+                {event.registration_type === "paid" && registration.payment_status === "pending" && " (Menunggu verifikasi pembayaran)"}
+                {event.registration_type === "paid" && registration.payment_status === "approved" && " (Pembayaran disetujui)"}
+                {event.registration_type === "paid" && registration.payment_status === "rejected" && " (Pembayaran ditolak)"}
+                {event.registration_type === "infaq" && " (Infaq sukarela via WA)"}
               </div>
-              
-              {/* Show payment button if pending or rejected */}
-              {(registration.payment_status === "pending" || registration.payment_status === "rejected") && (
+
+              {/* Tombol bayar HANYA untuk event paid yang belum disetujui */}
+              {event.registration_type === "paid" && (registration.payment_status === "pending" || registration.payment_status === "rejected") && (
                 <Button
                   onClick={() => navigate(`/event/${event.id}/bayar`)}
                   className={`w-full text-white text-sm sm:text-base ${
-                    registration.payment_status === "rejected" 
-                      ? "bg-amber-600 hover:bg-amber-700" 
+                    registration.payment_status === "rejected"
+                      ? "bg-amber-600 hover:bg-amber-700"
                       : "bg-blue-600 hover:bg-blue-700"
                   }`}
                 >
@@ -298,8 +299,18 @@ export default function EventDetail() {
                 </Button>
               )}
 
-              {/* Show scan QR button for free events or approved payments */}
-              {(registration.payment_status === "none" || registration.payment_status === "approved") && (
+              {/* Infaq sukarela: tombol opsional ke halaman berinfaq via WA */}
+              {event.registration_type === "infaq" && (
+                <Button
+                  onClick={() => navigate(`/event/${event.id}/bayar`)}
+                  className="w-full bg-rose-500 hover:bg-rose-600 text-white text-sm sm:text-base"
+                >
+                  💝 Berinfaq via WhatsApp (Sukarela)
+                </Button>
+              )}
+
+              {/* Scan QR untuk free, infaq, atau paid yang sudah approved */}
+              {(registration.payment_status === "none" || (event.registration_type === "paid" && registration.payment_status === "approved")) && (
                 <>
                   {scanNotYetAvailable ? (
                     <div className="rounded-xl bg-amber-50 p-4 text-center text-xs sm:text-sm text-amber-800 border border-amber-200">
