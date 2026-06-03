@@ -187,7 +187,7 @@ export default function Payment() {
 
   if (loading) return <div className="container py-20 text-center text-muted-foreground">Memuat…</div>;
 
-  const isOnline = !!event?.is_online;
+  const isOnline = !!event?.is_online && registration?.attendance_mode === "online";
   const isInfaq = event?.registration_type === "infaq" || isOnline;
   const isPaid = event?.registration_type === "paid" && !isOnline;
   const alreadyApproved = isPaid && registration?.payment_status === "approved";

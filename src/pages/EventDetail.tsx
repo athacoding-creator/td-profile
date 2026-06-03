@@ -124,16 +124,23 @@ export default function EventDetail() {
       return navigate("/profil");
     }
     
-    // Jika event online, tampilkan mode selector
+    // Jika event online mode aktif
     if (event.is_online) {
-      // Jika sudah lewat jadwal, otomatis daftar online (karena offline sudah tutup)
+      // Jika sudah lewat jadwal (expired), HANYA boleh daftar online
       if (sw.expired) {
         register("online");
       } else {
+        // Jika belum expired, user bisa pilih offline atau online
         setShowModeSelector(true);
       }
     } else {
-      // Jika offline biasa, langsung register dengan mode offline
+      // Jika online mode TIDAK aktif (offline only)
+      // Cek apakah event sudah expired
+      if (sw.expired) {
+        toast.error("Pendaftaran sudah ditutup karena acara sudah selesai.");
+        return;
+      }
+      // Jika belum expired, daftar offline
       register("offline");
     }
   };
@@ -251,6 +258,7 @@ export default function EventDetail() {
     user && profile?.gender && event.gender !== "ALL" && event.gender !== profile.gender;
   const sw = computeScanWindow(event);
   // Untuk online event, abaikan expired status agar video tetap bisa diakses selamanya
+  // Namun pendaftaran tetap mengikuti aturan sw.expired kecuali jika is_online aktif
   const expired = event.is_online ? false : sw.expired;
   const scanAvailable = sw.scanAvailable;
   const scanNotYetAvailable = sw.scanNotYetAvailable;

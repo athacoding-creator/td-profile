@@ -172,7 +172,7 @@ function OnlineFields({ form, setForm }: { form: any; setForm: (f: any) => void 
             className="text-sm h-9 sm:h-10"
           />
           <p className="text-xs text-muted-foreground">
-            Event online pakai alur infaq sukarela & tidak memberi poin. Video tampil setelah peserta mendaftar.
+            Online Mode memungkinkan pendaftaran tetap dibuka meskipun acara sudah selesai (pendaftaran online). Event online menggunakan alur infaq sukarela & tidak memberikan poin.
           </p>
         </div>
       )}
