@@ -305,23 +305,36 @@ export default function EventDetail() {
         )}
 
         <div className="mt-6 sm:mt-8 space-y-3">
-          {event.is_online && registration && (registration.attendance_mode === "offline" || showVideoAfterInfaq) ? (
+          {registration ? (
             <>
-              <div className="rounded-xl bg-accent/10 p-4 text-center space-y-2 border border-accent/20">
-                <div className="text-sm font-bold text-accent flex items-center justify-center gap-2">
-                  <Video className="h-4 w-4" /> 
-                  {registration.attendance_mode === "online" 
-                    ? "Akses Video Terbuka"
-                    : "Terdaftar Offline"}
-                </div>
-                <p className="text-xs text-accent/80 leading-relaxed">
-                  {registration.attendance_mode === "online" 
-                    ? "Alhamdulillah, pendaftaran online berhasil. Kamu bisa menonton video ini berulang kali kapan saja melalui halaman ini."
-                    : "Kamu sudah terdaftar untuk hadir langsung di lokasi. Sampai jumpa!"}
-                </p>
+              {/* Status terdaftar */}
+              <div className="rounded-xl bg-accent/10 p-4 text-center font-semibold text-accent text-sm sm:text-base border border-accent/20">
+                {event.is_online && registration.attendance_mode === "online" && showVideoAfterInfaq ? (
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center justify-center gap-2">
+                      <Video className="h-4 w-4" /> Akses Video Terbuka
+                    </div>
+                    <p className="text-[11px] font-normal text-accent/80">
+                      Alhamdulillah, pendaftaran online berhasil. Kamu bisa menonton video ini berulang kali kapan saja.
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    ✓ Kamu sudah terdaftar
+                    {registration.attendance_mode === "online" && " (Online)"}
+                    {registration.attendance_mode === "offline" && " (Offline)"}
+                    {event.registration_type === "paid" && registration.payment_status === "pending" && " (Menunggu verifikasi pembayaran)"}
+                    {event.registration_type === "paid" && registration.payment_status === "approved" && " (Pembayaran disetujui)"}
+                    {event.registration_type === "paid" && registration.payment_status === "rejected" && " (Pembayaran ditolak)"}
+                    {event.registration_type === "infaq" && registration.attendance_mode === "offline" && " (Infaq sukarela via WA)"}
+                    {event.is_online && registration.attendance_mode === "online" && !showVideoAfterInfaq && " (Belum Berinfaq)"}
+                  </>
+                )}
               </div>
-              {registration.attendance_mode === "online" && showVideoAfterInfaq && (
-                <>
+
+              {/* Konten Video Online (Hanya jika unlocked) */}
+              {event.is_online && registration.attendance_mode === "online" && showVideoAfterInfaq && (
+                <div className="mt-4 space-y-3">
                   <YoutubeEmbed url={event.youtube_url} title={event.title} />
                   {event.group_link && (
                     <a href={event.group_link} target="_blank" rel="noreferrer">
@@ -330,82 +343,41 @@ export default function EventDetail() {
                       </Button>
                     </a>
                   )}
-                </>
+                </div>
               )}
-            </>
-          ) : event.is_online && registration && registration.attendance_mode === "online" && !showVideoAfterInfaq ? (
-            <>
-              <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 space-y-2">
-                <p className="text-xs sm:text-sm text-amber-800 font-bold flex items-center gap-2">
-                  <Video className="h-4 w-4" /> Pendaftaran Berhasil
-                </p>
-                <p className="text-[11px] sm:text-xs text-amber-700 leading-relaxed">
-                  Alhamdulillah, kamu sudah terdaftar. Silakan berinfaq sukarela untuk membuka akses video rekaman selamanya.
-                </p>
-              </div>
-              <Button
-                onClick={() => {
-                  if (event.id) {
-                    localStorage.setItem(`video_unlocked_${event.id}`, "true");
-                    setShowVideoAfterInfaq(true);
-                  }
-                  navigate(`/event/${event.id}/bayar`);
-                }}
-                className="w-full bg-green-600 hover:bg-green-700 text-white text-sm sm:text-base font-bold"
-              >
-                💚 Saya Sudah Infaq — Buka Video
-              </Button>
-              {event.group_link && (
-                <a href={event.group_link} target="_blank" rel="noreferrer">
-                  <Button variant="outline" className="w-full text-sm sm:text-base">
-                    <Link2 className="mr-2 h-4 w-4" /> Gabung Grup
-                  </Button>
-                </a>
-              )}
-            </>
-          ) : event.is_online ? (
-            <>
-              <div className="rounded-xl bg-rose-50 border border-rose-100 p-4 space-y-2">
-                <p className="text-xs sm:text-sm text-rose-800 font-bold flex items-center gap-2">
-                  <Video className="h-4 w-4" /> {sw.expired ? "Rekaman Video Tersedia" : "Kajian Online Tersedia"}
-                </p>
-                <p className="text-[11px] sm:text-xs text-rose-700 leading-relaxed">
-                  {sw.expired 
-                    ? "Event ini sudah selesai, namun kamu tetap bisa mendaftar untuk mengakses rekaman videonya selamanya cukup dengan berinfaq sukarela."
-                    : "Pilih mode Online untuk mendapatkan akses video rekaman yang bisa ditonton berulang kali cukup dengan berinfaq sukarela."}
-                </p>
-              </div>
-              <Button
-                onClick={handleRegisterClick}
-                disabled={submitting}
-                className="w-full bg-green-600 hover:bg-green-700 text-white text-sm sm:text-base font-bold"
-              >
-                {submitting ? "Memproses…" : sw.expired ? "Daftar Online (Akses Video)" : "Pilih Cara Mengikuti"}
-              </Button>
-            </>
-          ) : expired ? (
-            <div className="flex items-center gap-2 rounded-xl bg-destructive/10 p-4 text-sm font-semibold text-destructive">
-              <Lock className="h-4 w-4" /> Event Expired — pendaftaran & absensi ditutup.
-            </div>
-          ) : genderMismatch ? (
-            <div className="flex items-center gap-2 rounded-xl bg-muted p-4 text-sm text-muted-foreground">
-              <Lock className="h-4 w-4" /> Event ini tidak sesuai dengan gender profilmu.
-            </div>
-          ) : registration ? (
-            <>
-              <div className="rounded-xl bg-accent/10 p-4 text-center font-semibold text-accent text-sm sm:text-base">
-                ✓ Kamu sudah terdaftar
-                {registration.attendance_mode === "online" && " (Online)"}
-                {registration.attendance_mode === "offline" && " (Offline)"}
-                {event.registration_type === "paid" && registration.payment_status === "pending" && " (Menunggu verifikasi pembayaran)"}
-                {event.registration_type === "paid" && registration.payment_status === "approved" && " (Pembayaran disetujui)"}
-                {event.registration_type === "paid" && registration.payment_status === "rejected" && " (Pembayaran ditolak)"}
-                {event.registration_type === "infaq" && registration.attendance_mode === "offline" && " (Infaq sukarela via WA)"}
-                {event.is_online && registration.attendance_mode === "online" && !showVideoAfterInfaq && " (Belum Berinfaq)"}
-              </div>
 
-              {/* Tombol bayar HANYA untuk event paid yang belum disetujui */}
-              {event.registration_type === "paid" && (registration.payment_status === "pending" || registration.payment_status === "rejected") && (
+              {/* Tombol Buka Video (Hanya jika online mode dan belum unlocked) */}
+              {event.is_online && registration.attendance_mode === "online" && !showVideoAfterInfaq && (
+                <div className="space-y-3">
+                  <div className="rounded-xl bg-amber-50 border border-amber-200 p-4">
+                    <p className="text-[11px] sm:text-xs text-amber-700 leading-relaxed text-center">
+                      Silakan berinfaq sukarela untuk membuka akses video rekaman selamanya.
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => {
+                      if (event.id) {
+                        localStorage.setItem(`video_unlocked_${event.id}`, "true");
+                        setShowVideoAfterInfaq(true);
+                      }
+                      navigate(`/event/${event.id}/bayar`);
+                    }}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white text-sm sm:text-base font-bold"
+                  >
+                    💚 Saya Sudah Infaq — Buka Video
+                  </Button>
+                  {event.group_link && (
+                    <a href={event.group_link} target="_blank" rel="noreferrer">
+                      <Button variant="outline" className="w-full text-sm sm:text-base">
+                        <Link2 className="mr-2 h-4 w-4" /> Gabung Grup
+                      </Button>
+                    </a>
+                  )}
+                </div>
+              )}
+
+              {/* Tombol bayar HANYA untuk event paid yang belum disetujui (Offline) */}
+              {event.registration_type === "paid" && registration.attendance_mode === "offline" && (registration.payment_status === "pending" || registration.payment_status === "rejected") && (
                 <Button
                   onClick={() => navigate(`/event/${event.id}/bayar`)}
                   className={`w-full text-white text-sm sm:text-base ${
@@ -418,29 +390,13 @@ export default function EventDetail() {
                 </Button>
               )}
 
-              {/* Infaq sukarela: tombol opsional ke halaman berinfaq via WA */}
+              {/* Infaq sukarela: tombol opsional ke halaman berinfaq via WA (Offline) */}
               {event.registration_type === "infaq" && registration.attendance_mode === "offline" && (
                 <Button
                   onClick={() => navigate(`/event/${event.id}/bayar`)}
                   className="w-full bg-rose-500 hover:bg-rose-600 text-white text-sm sm:text-base"
                 >
                   💝 Berinfaq via WhatsApp (Sukarela)
-                </Button>
-              )}
-
-              {/* Tombol berinfaq untuk online mode */}
-              {event.is_online && registration.attendance_mode === "online" && registration.payment_status === "none" && (
-                <Button
-                  onClick={() => {
-                    if (event.id) {
-                      localStorage.setItem(`video_unlocked_${event.id}`, "true");
-                      setShowVideoAfterInfaq(true);
-                    }
-                    navigate(`/event/${event.id}/bayar`);
-                  }}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white text-sm sm:text-base font-bold"
-                >
-                  💚 Saya Sudah Infaq — Buka Video
                 </Button>
               )}
 
