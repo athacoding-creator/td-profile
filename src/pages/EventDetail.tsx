@@ -268,7 +268,40 @@ export default function EventDetail() {
         )}
 
         <div className="mt-6 sm:mt-8 space-y-3">
-          {expired ? (
+          {event.is_online && registration ? (
+            <>
+              <div className="rounded-xl bg-accent/10 p-3 text-center text-sm font-semibold text-accent">
+                <Video className="inline h-4 w-4 mr-1" /> Kamu sudah terdaftar untuk kajian online ini. Selamat menyimak!
+              </div>
+              <YoutubeEmbed url={event.youtube_url} title={event.title} />
+              {event.group_link && (
+                <a href={event.group_link} target="_blank" rel="noreferrer">
+                  <Button variant="outline" className="w-full text-sm sm:text-base">
+                    <Link2 className="mr-2 h-4 w-4" /> Gabung Grup
+                  </Button>
+                </a>
+              )}
+            </>
+          ) : event.is_online ? (
+            <>
+              <div className="rounded-xl bg-rose-50 border border-rose-100 p-4 text-xs sm:text-sm text-rose-800">
+                📺 <strong>Kajian Online</strong> — Daftar dengan berinfaq sukarela. Setelah daftar, video akan tampil di halaman ini. Event online tidak memberi poin.
+              </div>
+              <Button
+                onClick={() => {
+                  if (!user) return navigate("/auth");
+                  if (!profile?.is_complete) {
+                    toast.error("Lengkapi profil dulu di halaman Profil.");
+                    return navigate("/profil");
+                  }
+                  navigate(`/event/${event.id}/bayar`);
+                }}
+                className="w-full bg-rose-500 hover:bg-rose-600 text-white text-sm sm:text-base"
+              >
+                💝 Daftar & Berinfaq untuk Tonton
+              </Button>
+            </>
+          ) : expired ? (
             <div className="flex items-center gap-2 rounded-xl bg-destructive/10 p-4 text-sm font-semibold text-destructive">
               <Lock className="h-4 w-4" /> Event Expired — pendaftaran & absensi ditutup.
             </div>
