@@ -588,6 +588,7 @@ export type Database = {
           payment_proof_url: string | null
           payment_status: string | null
           user_id: string
+          attendance_mode: string | null
         }
         Insert: {
           amount_paid?: number | null
@@ -598,6 +599,7 @@ export type Database = {
           payment_proof_url?: string | null
           payment_status?: string | null
           user_id: string
+          attendance_mode?: string | null
         }
         Update: {
           amount_paid?: number | null
@@ -608,6 +610,7 @@ export type Database = {
           payment_proof_url?: string | null
           payment_status?: string | null
           user_id?: string
+          attendance_mode?: string | null
         }
         Relationships: [
           {

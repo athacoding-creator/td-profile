@@ -9,7 +9,6 @@ import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
 import { MapPin, Calendar, Users, Lock, Link2, ChevronLeft, Upload, ChevronDown, ChevronUp, Info, MessageCircle, CreditCard, Landmark, Wallet, Video } from "lucide-react";
 import { YoutubeEmbed } from "@/components/YoutubeEmbed";
-import { AttendanceModeSelector } from "@/components/AttendanceModeSelector";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
@@ -26,7 +25,6 @@ export default function EventDetail() {
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [paymentForm, setPaymentForm] = useState({ amount: 0, proofFile: null as File | null });
   const [paymentMethod, setPaymentMethod] = useState<any>(null);
-  const [showModeSelector, setShowModeSelector] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -106,27 +104,17 @@ export default function EventDetail() {
     })();
   }, [id, user]);
 
-  const handleRegisterClick = () => {
+  const register = async () => {
     if (!user) return navigate("/auth");
     if (!profile?.is_complete) {
       toast.error("Lengkapi profil dulu di halaman Profil.");
       return navigate("/profil");
     }
     
-    // Jika event online, tampilkan mode selector
-    if (event.is_online) {
-      setShowModeSelector(true);
-    } else {
-      // Jika offline biasa, langsung register dengan mode offline
-      register("offline");
-    }
-  };
-
-  const register = async (mode: "online" | "offline" = "offline") => {
     setSubmitting(true);
     try {
-      const isInfaq = event.registration_type === "infaq" || mode === "online";
-      const isPaid = event.registration_type === "paid" && mode === "offline";
+      const isInfaq = event.registration_type === "infaq";
+      const isPaid = event.registration_type === "paid";
       // Infaq sukarela: pendaftaran langsung "none" (tidak perlu verifikasi). amount_paid = min_infaq agar lulus trigger.
       const payment_status = event.registration_type === "free" ? "none" : isInfaq ? "none" : "pending";
       const amount_paid = isPaid ? event.price : isInfaq ? (event.min_infaq || 0) : 0;
@@ -135,8 +123,7 @@ export default function EventDetail() {
         event_id: event.id,
         user_id: user.id,
         payment_status,
-        amount_paid,
-        attendance_mode: mode
+        amount_paid
       });
       setSubmitting(false);
       if (error) throw error;
@@ -145,17 +132,10 @@ export default function EventDetail() {
         event_id: event.id,
         user_id: user.id,
         payment_status,
-        amount_paid,
-        attendance_mode: mode
+        amount_paid
       });
-      setShowModeSelector(false);
 
-      if (event.registration_type === "free" && mode === "offline") {
-        toast.success("Pendaftaran offline berhasil!");
-      } else if (isInfaq && mode === "online") {
-        toast.success("Pendaftaran online berhasil! Silakan berinfaq untuk akses video.");
-        navigate(`/event/${event.id}/bayar`);
-      } else if (event.registration_type === "free") {
+      if (event.registration_type === "free") {
         toast.success("Pendaftaran berhasil!");
       } else if (isInfaq) {
         toast.success("Pendaftaran berhasil! Infaq sukarela bisa dikirim via WA.");
@@ -291,35 +271,34 @@ export default function EventDetail() {
           {event.is_online && registration ? (
             <>
               <div className="rounded-xl bg-accent/10 p-3 text-center text-sm font-semibold text-accent">
-                <Video className="inline h-4 w-4 mr-1" /> 
-                {registration.attendance_mode === "online" 
-                  ? "Kamu sudah terdaftar untuk kajian online ini. Selamat menyimak!"
-                  : "Kamu sudah terdaftar untuk kajian offline ini. Sampai jumpa di lokasi!"}
+                <Video className="inline h-4 w-4 mr-1" /> Kamu sudah terdaftar untuk kajian online ini. Selamat menyimak!
               </div>
-              {registration.attendance_mode === "online" && (
-                <>
-                  <YoutubeEmbed url={event.youtube_url} title={event.title} />
-                  {event.group_link && (
-                    <a href={event.group_link} target="_blank" rel="noreferrer">
-                      <Button variant="outline" className="w-full text-sm sm:text-base">
-                        <Link2 className="mr-2 h-4 w-4" /> Gabung Grup
-                      </Button>
-                    </a>
-                  )}
-                </>
+              <YoutubeEmbed url={event.youtube_url} title={event.title} />
+              {event.group_link && (
+                <a href={event.group_link} target="_blank" rel="noreferrer">
+                  <Button variant="outline" className="w-full text-sm sm:text-base">
+                    <Link2 className="mr-2 h-4 w-4" /> Gabung Grup
+                  </Button>
+                </a>
               )}
             </>
           ) : event.is_online ? (
             <>
               <div className="rounded-xl bg-rose-50 border border-rose-100 p-4 text-xs sm:text-sm text-rose-800">
-                📺 <strong>Kajian Online & Offline</strong> — Pilih cara mengikuti: online (berinfaq sukarela) atau offline (hadir langsung).
+                📺 <strong>Kajian Online</strong> — Daftar dengan berinfaq sukarela. Setelah daftar, video akan tampil di halaman ini. Event online tidak memberi poin.
               </div>
               <Button
-                onClick={handleRegisterClick}
-                disabled={submitting}
+                onClick={() => {
+                  if (!user) return navigate("/auth");
+                  if (!profile?.is_complete) {
+                    toast.error("Lengkapi profil dulu di halaman Profil.");
+                    return navigate("/profil");
+                  }
+                  navigate(`/event/${event.id}/bayar`);
+                }}
                 className="w-full bg-rose-500 hover:bg-rose-600 text-white text-sm sm:text-base"
               >
-                {submitting ? "Memproses…" : "Pilih Cara Mengikuti"}
+                💝 Daftar & Berinfaq untuk Tonton
               </Button>
             </>
           ) : expired ? (
@@ -334,12 +313,10 @@ export default function EventDetail() {
             <>
               <div className="rounded-xl bg-accent/10 p-4 text-center font-semibold text-accent text-sm sm:text-base">
                 ✓ Kamu sudah terdaftar
-                {registration.attendance_mode === "online" && " (Online)"}
-                {registration.attendance_mode === "offline" && " (Offline)"}
                 {event.registration_type === "paid" && registration.payment_status === "pending" && " (Menunggu verifikasi pembayaran)"}
                 {event.registration_type === "paid" && registration.payment_status === "approved" && " (Pembayaran disetujui)"}
                 {event.registration_type === "paid" && registration.payment_status === "rejected" && " (Pembayaran ditolak)"}
-                {event.registration_type === "infaq" && registration.attendance_mode === "offline" && " (Infaq sukarela via WA)"}
+                {event.registration_type === "infaq" && " (Infaq sukarela via WA)"}
               </div>
 
               {/* Tombol bayar HANYA untuk event paid yang belum disetujui */}
@@ -357,7 +334,7 @@ export default function EventDetail() {
               )}
 
               {/* Infaq sukarela: tombol opsional ke halaman berinfaq via WA */}
-              {event.registration_type === "infaq" && registration.attendance_mode === "offline" && (
+              {event.registration_type === "infaq" && (
                 <Button
                   onClick={() => navigate(`/event/${event.id}/bayar`)}
                   className="w-full bg-rose-500 hover:bg-rose-600 text-white text-sm sm:text-base"
@@ -366,18 +343,8 @@ export default function EventDetail() {
                 </Button>
               )}
 
-              {/* Tombol berinfaq untuk online mode */}
-              {event.is_online && registration.attendance_mode === "online" && registration.payment_status === "none" && (
-                <Button
-                  onClick={() => navigate(`/event/${event.id}/bayar`)}
-                  className="w-full bg-rose-500 hover:bg-rose-600 text-white text-sm sm:text-base"
-                >
-                  💝 Berinfaq untuk Akses Video
-                </Button>
-              )}
-
-              {/* Scan QR untuk free, infaq offline, atau paid yang sudah approved */}
-              {((registration.payment_status === "none" && registration.attendance_mode === "offline") || (event.registration_type === "paid" && registration.payment_status === "approved")) && (
+              {/* Scan QR untuk free, infaq, atau paid yang sudah approved */}
+              {(registration.payment_status === "none" || (event.registration_type === "paid" && registration.payment_status === "approved")) && (
                 <>
                   {scanNotYetAvailable ? (
                     <div className="rounded-xl bg-amber-50 p-4 text-center text-xs sm:text-sm text-amber-800 border border-amber-200">
@@ -417,7 +384,7 @@ export default function EventDetail() {
             />
           ) : (
             <Button
-              onClick={handleRegisterClick}
+              onClick={register}
               disabled={submitting}
               className="w-full bg-primary text-primary-foreground text-sm sm:text-base"
             >
@@ -425,16 +392,6 @@ export default function EventDetail() {
             </Button>
           )}
         </div>
-
-        {/* Mode Selector Modal */}
-        <AttendanceModeSelector
-          open={showModeSelector}
-          onSelect={(mode) => {
-            register(mode);
-          }}
-          eventTitle={event.title}
-          isOnlineEvent={event.is_online}
-        />
       </main>
       <BottomNav />
     </div>
@@ -472,7 +429,7 @@ async function convertToWebP(file: File): Promise<Blob> {
       img.onerror = () => reject(new Error("Could not load image"));
       img.src = event.target?.result as string;
     };
-    img.onerror = () => reject(new Error("Could not read file"));
+    reader.onerror = () => reject(new Error("Could not read file"));
     reader.readAsDataURL(file);
   });
 }
