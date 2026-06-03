@@ -1,50 +1,66 @@
-# Rencana Perbaikan Pembayaran — Auto-Fix Tanpa Error
+## Tujuan
 
-Setelah saya teliti, ada **3 bug akar** yang membuat fitur kemarin terasa "tidak berfungsi". Semuanya akan diperbaiki sekaligus.
+Tambah fitur **Event Online** dengan embed video YouTube. Flow berbeda untuk online vs offline:
 
----
+- **Offline** → daftar → Scan QR di lokasi → dapat poin (alur lama, tidak berubah)
+- **Online** → daftar → wajib infaq dulu (pakai flow infaq yang sudah ada, walaupun event aslinya free) → setelah kirim WA, halaman event menampilkan embed YouTube → tanpa poin
+- Kalau user buka ulang halaman event online setelah konfirmasi infaq → video langsung tampil (tidak perlu bayar lagi)
 
-## Bug 1 — Tombol Setujui / Tolak di Admin tidak berefek
-**Akar masalah:** Tabel `registrations` **tidak punya policy UPDATE** sama sekali (cek RLS: hanya ada SELECT/INSERT/DELETE). Jadi saat admin klik Setujui, Supabase diam-diam mengembalikan `0 rows updated` — toast "berhasil" muncul tapi data tidak berubah.
+## Perubahan Database (minimal, hemat)
 
-**Fix:** Tambah RLS policy via migration:
-```sql
-CREATE POLICY reg_update_admin ON public.registrations
-  FOR UPDATE TO authenticated
-  USING (public.has_role(auth.uid(), 'admin'::app_role))
-  WITH CHECK (public.has_role(auth.uid(), 'admin'::app_role));
-```
+Tambah **2 kolom saja** di tabel `events` (tidak bikin tabel baru — hemat database):
 
-## Bug 2 — Update error karena kolom `updated_at` tidak ada
-**Akar masalah:** Di `Donations.tsx`, fungsi `update()` mengirim `updated_at: new Date().toISOString()`. Tapi skema `registrations` **tidak punya kolom `updated_at`** → PostgREST menolak dengan error 400.
+| Kolom | Tipe | Kegunaan |
+|---|---|---|
+| `is_online` | boolean default false | Penanda event online |
+| `youtube_url` | text nullable | Link YouTube (full URL atau ID, parser di frontend) |
 
-**Fix:** Hapus field `updated_at` dari kedua `update()` (DonationTableRow & DonationMobileCard). Tidak perlu menambah kolom karena tidak dipakai di mana-mana.
+**Tidak perlu** tabel baru karena 1 event = 1 link YouTube. Status "sudah daftar online" sudah tercatat di `registrations` (pakai `payment_status` yang sudah ada).
 
-## Bug 3 — QRIS user tidak muncul ("Metode pembayaran belum dikonfigurasi")
-**Akar masalah:** Di `Payment.tsx` load QRIS pakai `.maybeSingle()`. Jika admin punya **lebih dari 1 QRIS aktif** untuk kategori yang sama (misalnya 2 QRIS "paid"), `.maybeSingle()` akan **throw error** "more than one row returned" → user lihat pesan error tanpa QRIS.
+## Perubahan Admin (`src/pages/admin/Events.tsx`)
 
-**Fix:** Ganti ke `.limit(1).maybeSingle()` dengan ordering yang sudah ada, supaya pasti ambil 1 baris meskipun banyak QRIS aktif:
-```ts
-.select("*")
-.eq("category", category)
-.eq("is_active", true)
-.order("order_index", { ascending: true })
-.limit(1)
-.maybeSingle();
-```
+Di form Create & Edit event, tambah:
+- Toggle **"Event Online (YouTube)"**
+- Kalau aktif → muncul input **"Link YouTube"** (placeholder: `https://youtube.com/watch?v=...` atau ID)
+- Kalau aktif → otomatis perlakukan event seperti **infaq** untuk pendaftaran (frontend logic), walaupun `registration_type` aslinya free
+- Validasi: kalau is_online = true, youtube_url wajib diisi
 
----
+## Perubahan User Flow
 
-## File yang berubah
-1. **Migration baru** — tambah policy UPDATE untuk admin di `registrations`.
-2. **`src/pages/admin/Donations.tsx`** — hapus `updated_at` dari 2 fungsi `update()`.
-3. **`src/pages/Payment.tsx`** — tambah `.limit(1)` sebelum `.maybeSingle()` di query `qris_methods`.
+### `src/pages/EventDetail.tsx`
+- Kalau `event.is_online`:
+  - Tombol "Daftar" → arahkan ke halaman Payment dengan mode **infaq paksa** (lewat query param `?mode=infaq` atau cek `is_online` di Payment)
+  - Cek `registration` user: kalau sudah ada record (status apapun selain rejected) → tampilkan **embed YouTube** (komponen `<YoutubeEmbed url={event.youtube_url} />`)
+  - Kalau belum daftar → sembunyikan video, tampilkan CTA daftar
+- Kalau offline → alur lama (Scan QR + poin)
 
-## Tidak diubah
-- Struktur tabel (tidak ada perubahan skema kolom).
-- `QrisManager.tsx` (tidak ada bug riil di sana — semua CRUD QRIS sudah jalan; gejala "error" sebenarnya muncul di sisi user karena Bug 3).
-- Alur infaq via WA (sudah benar).
+### `src/pages/Payment.tsx`
+- Kalau `event.is_online === true` → pakai cabang infaq (yang sudah ada — tidak perlu upload bukti, langsung WA admin), abaikan `registration_type` event
+- Setelah klik WA admin, **insert registration** dengan `payment_status='pending'` dan `amount_paid` sesuai input → supaya halaman EventDetail bisa deteksi "sudah daftar" dan tampilkan video
 
-Setelah 3 perbaikan ini, alur lengkap akan jalan: admin klik Setujui → status berubah → user yang sudah approved skip halaman bayar → user lain selalu lihat QRIS aktif tanpa error.
+### Komponen baru: `src/components/YoutubeEmbed.tsx`
+- Parser sederhana: terima URL/ID YouTube → render `<iframe>` responsive 16:9
+- Pakai lazy loading
 
-Setujui rencana ini? Setelah disetujui, saya implementasi sekaligus.
+## Yang TIDAK berubah
+
+- Event offline: alur Scan QR + poin tetap sama
+- Sistem poin: event online tidak kasih poin (cukup skip insert ke `attendance`)
+- QRIS Manager & Donations admin: tetap pakai infrastruktur yang ada
+
+## Saran Tambahan (opsional, untuk dipertimbangkan)
+
+1. **Validasi link YouTube** di admin — regex sederhana untuk youtube.com/youtu.be agar tidak salah paste.
+2. **Tombol "Buka di YouTube"** di bawah embed sebagai fallback kalau iframe diblokir.
+3. **Indikator visual** di card event list: badge "🔴 ONLINE" supaya user langsung tahu sebelum klik.
+4. **Privacy mode**: pakai `youtube-nocookie.com/embed/...` supaya lebih ringan dan tidak tracking.
+5. **Kalau infaq online ditolak admin** → record tetap ada, tapi video disembunyikan lagi (cek `payment_status !== 'rejected'`). Atau alternatif: untuk event online infaq bebas (sukarela seperti infaq biasa), tidak perlu konfirmasi admin sama sekali → video langsung muncul begitu user klik "Saya sudah infaq". **Saya rekomendasi opsi kedua** karena konsisten dengan aturan infaq sebelumnya (sukarela, urusan langsung WA admin, tanpa verifikasi).
+
+## File yang Disentuh
+
+- Migration baru: tambah `is_online`, `youtube_url` di `events`
+- `src/pages/admin/Events.tsx` — toggle + input link
+- `src/pages/EventDetail.tsx` — branching online/offline + render embed
+- `src/pages/Payment.tsx` — paksa mode infaq jika `is_online`
+- `src/components/YoutubeEmbed.tsx` — komponen baru
+- `src/pages/admin/useAdminData.ts` — tambah field di select query
