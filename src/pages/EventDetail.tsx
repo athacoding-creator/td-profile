@@ -305,7 +305,7 @@ export default function EventDetail() {
         )}
 
         <div className="mt-6 sm:mt-8 space-y-3">
-          {event.is_online && registration ? (
+          {event.is_online && registration && (registration.attendance_mode === "offline" || showVideoAfterInfaq) ? (
             <>
               <div className="rounded-xl bg-accent/10 p-4 text-center space-y-2 border border-accent/20">
                 <div className="text-sm font-bold text-accent flex items-center justify-center gap-2">
@@ -331,6 +331,36 @@ export default function EventDetail() {
                     </a>
                   )}
                 </>
+              )}
+            </>
+          ) : event.is_online && registration && registration.attendance_mode === "online" && !showVideoAfterInfaq ? (
+            <>
+              <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 space-y-2">
+                <p className="text-xs sm:text-sm text-amber-800 font-bold flex items-center gap-2">
+                  <Video className="h-4 w-4" /> Pendaftaran Berhasil
+                </p>
+                <p className="text-[11px] sm:text-xs text-amber-700 leading-relaxed">
+                  Alhamdulillah, kamu sudah terdaftar. Silakan berinfaq sukarela untuk membuka akses video rekaman selamanya.
+                </p>
+              </div>
+              <Button
+                onClick={() => {
+                  if (event.id) {
+                    localStorage.setItem(`video_unlocked_${event.id}`, "true");
+                    setShowVideoAfterInfaq(true);
+                  }
+                  navigate(`/event/${event.id}/bayar`);
+                }}
+                className="w-full bg-green-600 hover:bg-green-700 text-white text-sm sm:text-base font-bold"
+              >
+                💚 Saya Sudah Infaq — Buka Video
+              </Button>
+              {event.group_link && (
+                <a href={event.group_link} target="_blank" rel="noreferrer">
+                  <Button variant="outline" className="w-full text-sm sm:text-base">
+                    <Link2 className="mr-2 h-4 w-4" /> Gabung Grup
+                  </Button>
+                </a>
               )}
             </>
           ) : event.is_online ? (
@@ -371,6 +401,7 @@ export default function EventDetail() {
                 {event.registration_type === "paid" && registration.payment_status === "approved" && " (Pembayaran disetujui)"}
                 {event.registration_type === "paid" && registration.payment_status === "rejected" && " (Pembayaran ditolak)"}
                 {event.registration_type === "infaq" && registration.attendance_mode === "offline" && " (Infaq sukarela via WA)"}
+                {event.is_online && registration.attendance_mode === "online" && !showVideoAfterInfaq && " (Belum Berinfaq)"}
               </div>
 
               {/* Tombol bayar HANYA untuk event paid yang belum disetujui */}
