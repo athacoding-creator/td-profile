@@ -187,13 +187,45 @@ export default function Payment() {
 
   if (loading) return <div className="container py-20 text-center text-muted-foreground">Memuat…</div>;
 
-  const isInfaq = event?.registration_type === "infaq";
-  const isPaid = event?.registration_type === "paid";
+  const isOnline = !!event?.is_online;
+  const isInfaq = event?.registration_type === "infaq" || isOnline;
+  const isPaid = event?.registration_type === "paid" && !isOnline;
   const alreadyApproved = isPaid && registration?.payment_status === "approved";
 
   const waNumber = settings.admin_wa_number || "085111514040";
-  const infaqMsg = `Assalamu'alaikum Admin, saya ingin berinfaq untuk "${event?.title}" sebesar Rp ${paymentForm.amount.toLocaleString("id-ID")}. Mohon konfirmasinya, terima kasih.`;
+  const infaqMsg = isOnline
+    ? `Assalamu'alaikum Admin, saya sudah berinfaq Rp ${paymentForm.amount.toLocaleString("id-ID")} untuk kajian online "${event?.title}". Mohon kontennya bisa saya akses. Terima kasih.`
+    : `Assalamu'alaikum Admin, saya ingin berinfaq untuk "${event?.title}" sebesar Rp ${paymentForm.amount.toLocaleString("id-ID")}. Mohon konfirmasinya, terima kasih.`;
   const infaqWaUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(infaqMsg)}`;
+
+  const handleInfaqWa = async () => {
+    // For online events, persist a registration so the video unlocks on return.
+    if (isOnline && user && event) {
+      try {
+        const amount = Number(paymentForm.amount) || 0;
+        if (registration) {
+          await supabase.from("registrations").update({
+            payment_status: "none",
+            amount_paid: amount,
+            paid_at: new Date().toISOString(),
+          }).eq("id", registration.id);
+        } else {
+          await supabase.from("registrations").insert({
+            event_id: event.id,
+            user_id: user.id,
+            payment_status: "none",
+            amount_paid: amount,
+            paid_at: new Date().toISOString(),
+          });
+        }
+        toast.success("Pendaftaran tercatat. Video akan tersedia di halaman event.");
+      } catch (e: any) {
+        toast.error(e?.message ?? "Gagal mencatat pendaftaran");
+      }
+    }
+    window.open(infaqWaUrl, "_blank", "noopener,noreferrer");
+    if (isOnline && event) navigate(`/event/${event.id}`);
+  };
 
   // Cabang 1: Pembayaran paid sudah dikonfirmasi → tidak perlu bayar lagi
   if (alreadyApproved) {
