@@ -39,7 +39,13 @@ export default function Payment() {
         return;
       }
       setEvent(eventData);
-      setPaymentForm(prev => ({ ...prev, amount: eventData.registration_type === "paid" ? eventData.price : eventData.min_infaq }));
+      const onlineDefault = eventData.is_online ? (eventData.min_infaq || 5000) : 0;
+      setPaymentForm(prev => ({
+        ...prev,
+        amount: eventData.registration_type === "paid"
+          ? eventData.price
+          : (eventData.registration_type === "infaq" ? eventData.min_infaq : onlineDefault)
+      }));
 
       if (user) {
         const { data: regData } = await supabase
@@ -63,8 +69,14 @@ export default function Payment() {
           .maybeSingle();
         setPaymentMethod(pmData);
       } else {
-        // Get QRIS from qris_methods table based on event registration type
-        const category = eventData.registration_type === "paid" ? "paid" : eventData.registration_type === "infaq" ? "infaq" : null;
+        // Get QRIS from qris_methods table — online events always pakai kategori infaq
+        const category = eventData.is_online
+          ? "infaq"
+          : eventData.registration_type === "paid"
+            ? "paid"
+            : eventData.registration_type === "infaq"
+              ? "infaq"
+              : null;
         
         if (category) {
           const { data: qrisData } = await supabase
@@ -175,13 +187,45 @@ export default function Payment() {
 
   if (loading) return <div className="container py-20 text-center text-muted-foreground">Memuat…</div>;
 
-  const isInfaq = event?.registration_type === "infaq";
-  const isPaid = event?.registration_type === "paid";
+  const isOnline = !!event?.is_online;
+  const isInfaq = event?.registration_type === "infaq" || isOnline;
+  const isPaid = event?.registration_type === "paid" && !isOnline;
   const alreadyApproved = isPaid && registration?.payment_status === "approved";
 
   const waNumber = settings.admin_wa_number || "085111514040";
-  const infaqMsg = `Assalamu'alaikum Admin, saya ingin berinfaq untuk "${event?.title}" sebesar Rp ${paymentForm.amount.toLocaleString("id-ID")}. Mohon konfirmasinya, terima kasih.`;
+  const infaqMsg = isOnline
+    ? `Assalamu'alaikum Admin, saya sudah berinfaq Rp ${paymentForm.amount.toLocaleString("id-ID")} untuk kajian online "${event?.title}". Mohon kontennya bisa saya akses. Terima kasih.`
+    : `Assalamu'alaikum Admin, saya ingin berinfaq untuk "${event?.title}" sebesar Rp ${paymentForm.amount.toLocaleString("id-ID")}. Mohon konfirmasinya, terima kasih.`;
   const infaqWaUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(infaqMsg)}`;
+
+  const handleInfaqWa = async () => {
+    // For online events, persist a registration so the video unlocks on return.
+    if (isOnline && user && event) {
+      try {
+        const amount = Number(paymentForm.amount) || 0;
+        if (registration) {
+          await supabase.from("registrations").update({
+            payment_status: "none",
+            amount_paid: amount,
+            paid_at: new Date().toISOString(),
+          }).eq("id", registration.id);
+        } else {
+          await supabase.from("registrations").insert({
+            event_id: event.id,
+            user_id: user.id,
+            payment_status: "none",
+            amount_paid: amount,
+            paid_at: new Date().toISOString(),
+          });
+        }
+        toast.success("Pendaftaran tercatat. Video akan tersedia di halaman event.");
+      } catch (e: any) {
+        toast.error(e?.message ?? "Gagal mencatat pendaftaran");
+      }
+    }
+    window.open(infaqWaUrl, "_blank", "noopener,noreferrer");
+    if (isOnline && event) navigate(`/event/${event.id}`);
+  };
 
   // Cabang 1: Pembayaran paid sudah dikonfirmasi → tidak perlu bayar lagi
   if (alreadyApproved) {
@@ -255,11 +299,9 @@ export default function Payment() {
               </p>
             </div>
 
-            <a href={infaqWaUrl} target="_blank" rel="noopener noreferrer">
-              <Button className="w-full h-12 font-bold bg-green-600 hover:bg-green-700">
-                <MessageCircle className="mr-2 h-4 w-4" /> Hubungi Admin via WhatsApp
-              </Button>
-            </a>
+            <Button onClick={handleInfaqWa} className="w-full h-12 font-bold bg-green-600 hover:bg-green-700">
+              <MessageCircle className="mr-2 h-4 w-4" /> {isOnline ? "Saya Sudah Infaq — Buka Video" : "Hubungi Admin via WhatsApp"}
+            </Button>
 
             <div className="rounded-xl bg-blue-50 p-3 text-xs text-blue-800 border border-blue-100">
               <Info className="h-3 w-3 inline mr-1" />

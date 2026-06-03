@@ -57,13 +57,16 @@ export default function EventsPage() {
 }
 
 function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; defaultPoints: number; onCreated: () => void }) {
-  const [form, setForm] = useState<any>({ gender: "ALL", points_reward: defaultPoints, program_id: "", is_pinned: false, is_recurring: false, recurring_days: [], registration_type: "free", price: 0, min_infaq: 5000, max_infaq: 50000 });
+  const [form, setForm] = useState<any>({ gender: "ALL", points_reward: defaultPoints, program_id: "", is_pinned: false, is_recurring: false, recurring_days: [], registration_type: "free", price: 0, min_infaq: 5000, max_infaq: 50000, is_online: false, youtube_url: "" });
   useEffect(() => { setForm((f: any) => ({ ...f, points_reward: f.points_reward ?? defaultPoints })); }, [defaultPoints]);
 
   const create = async (e: React.FormEvent) => {
     e.preventDefault();
     if (form.is_recurring && (!form.recurring_days?.length || !form.recurring_start_time || !form.recurring_end_time)) {
       return toast.error("Pilih hari & jam mulai/selesai untuk event berkelanjutan");
+    }
+    if (form.is_online && !form.youtube_url?.trim()) {
+      return toast.error("Event online wajib mengisi Link YouTube");
     }
     const { error } = await supabase.from("events").insert({
       title: form.title, description: form.description, venue: form.venue, city: form.city,
@@ -83,10 +86,12 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
       price: form.registration_type === "paid" ? Number(form.price ?? 0) : 0,
       min_infaq: form.registration_type === "infaq" ? Number(form.min_infaq ?? 5000) : 0,
       max_infaq: form.registration_type === "infaq" ? Number(form.max_infaq ?? 50000) : 0,
-    });
+      is_online: !!form.is_online,
+      youtube_url: form.is_online ? (form.youtube_url || null) : null,
+    } as any);
     if (error) return toast.error(error.message);
     toast.success("Event dibuat");
-    setForm({ gender: "ALL", points_reward: defaultPoints, program_id: "", is_pinned: false, is_recurring: false, recurring_days: [], registration_type: "free", price: 0, min_infaq: 5000, max_infaq: 50000 });
+    setForm({ gender: "ALL", points_reward: defaultPoints, program_id: "", is_pinned: false, is_recurring: false, recurring_days: [], registration_type: "free", price: 0, min_infaq: 5000, max_infaq: 50000, is_online: false, youtube_url: "" });
     onCreated();
   };
 
@@ -140,10 +145,36 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
           <Label className="text-xs sm:text-sm">Pesan Sukses (ditampilkan setelah user scan QR)</Label>
           <Textarea rows={3} placeholder="Selamat, kamu telah berhasil mendaftar! Sampai jumpa di acara 🎉" value={form.success_message ?? ""} onChange={(e) => setForm({ ...form, success_message: e.target.value })} className="text-sm" />
         </div>
+        <OnlineFields form={form} setForm={setForm} />
         <RecurringPinFields form={form} setForm={setForm} />
         <div className="md:col-span-2"><Button type="submit" className="w-full bg-primary text-primary-foreground h-9 sm:h-10 text-sm">Buat Event</Button></div>
       </form>
     </Section>
+  );
+}
+
+function OnlineFields({ form, setForm }: { form: any; setForm: (f: any) => void }) {
+  return (
+    <div className="md:col-span-2 space-y-3 rounded-xl border border-border/60 bg-muted/30 p-3 text-sm">
+      <label className="flex items-center gap-2 text-xs sm:text-sm font-medium cursor-pointer">
+        <input type="checkbox" checked={!!form.is_online} onChange={(e) => setForm({ ...form, is_online: e.target.checked })} />
+        📺 Event Online (tampilkan video YouTube ke peserta)
+      </label>
+      {form.is_online && (
+        <div className="pl-6 pt-1 space-y-1.5">
+          <Label className="text-xs sm:text-sm">Link YouTube</Label>
+          <Input
+            placeholder="https://www.youtube.com/watch?v=… atau ID"
+            value={form.youtube_url ?? ""}
+            onChange={(e) => setForm({ ...form, youtube_url: e.target.value })}
+            className="text-sm h-9 sm:h-10"
+          />
+          <p className="text-xs text-muted-foreground">
+            Event online pakai alur infaq sukarela & tidak memberi poin. Video tampil setelah peserta mendaftar.
+          </p>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -340,6 +371,8 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
       recurring_start_time: (ev.recurring_start_time ?? "").slice(0, 5),
       recurring_end_time: (ev.recurring_end_time ?? "").slice(0, 5),
       recurring_until: ev.recurring_until ?? "",
+      is_online: !!ev.is_online,
+      youtube_url: ev.youtube_url ?? "",
     });
   }, [ev]);
 
@@ -348,6 +381,9 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
   const save = async () => {
     if (form.is_recurring && (!form.recurring_days?.length || !form.recurring_start_time || !form.recurring_end_time)) {
       return toast.error("Pilih hari & jam mulai/selesai untuk event berkelanjutan");
+    }
+    if (form.is_online && !form.youtube_url?.trim()) {
+      return toast.error("Event online wajib mengisi Link YouTube");
     }
     const { error } = await supabase.from("events").update({
       title: form.title, description: form.description, venue: form.venue, city: form.city,
@@ -364,7 +400,9 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
       recurring_start_time: form.is_recurring ? form.recurring_start_time : null,
       recurring_end_time: form.is_recurring ? form.recurring_end_time : null,
       recurring_until: form.is_recurring ? (form.recurring_until || null) : null,
-    }).eq("id", ev.id);
+      is_online: !!form.is_online,
+      youtube_url: form.is_online ? (form.youtube_url || null) : null,
+    } as any).eq("id", ev.id);
     if (error) return toast.error(error.message);
     toast.success("Event diperbarui");
     onSaved();
@@ -413,6 +451,7 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
             <Label>Pesan Sukses (ditampilkan setelah user scan QR)</Label>
             <Textarea rows={3} placeholder="Selamat, kamu telah berhasil mendaftar! Sampai jumpa di acara 🎉" value={form.success_message ?? ""} onChange={(e) => setForm({ ...form, success_message: e.target.value })} />
           </div>
+          <OnlineFields form={form} setForm={setForm} />
           <RecurringPinFields form={form} setForm={setForm} />
         </div>
         <DialogFooter>
