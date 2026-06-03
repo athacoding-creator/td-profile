@@ -371,6 +371,8 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
       recurring_start_time: (ev.recurring_start_time ?? "").slice(0, 5),
       recurring_end_time: (ev.recurring_end_time ?? "").slice(0, 5),
       recurring_until: ev.recurring_until ?? "",
+      is_online: !!ev.is_online,
+      youtube_url: ev.youtube_url ?? "",
     });
   }, [ev]);
 
@@ -379,6 +381,9 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
   const save = async () => {
     if (form.is_recurring && (!form.recurring_days?.length || !form.recurring_start_time || !form.recurring_end_time)) {
       return toast.error("Pilih hari & jam mulai/selesai untuk event berkelanjutan");
+    }
+    if (form.is_online && !form.youtube_url?.trim()) {
+      return toast.error("Event online wajib mengisi Link YouTube");
     }
     const { error } = await supabase.from("events").update({
       title: form.title, description: form.description, venue: form.venue, city: form.city,
@@ -395,7 +400,9 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
       recurring_start_time: form.is_recurring ? form.recurring_start_time : null,
       recurring_end_time: form.is_recurring ? form.recurring_end_time : null,
       recurring_until: form.is_recurring ? (form.recurring_until || null) : null,
-    }).eq("id", ev.id);
+      is_online: !!form.is_online,
+      youtube_url: form.is_online ? (form.youtube_url || null) : null,
+    } as any).eq("id", ev.id);
     if (error) return toast.error(error.message);
     toast.success("Event diperbarui");
     onSaved();
@@ -444,6 +451,7 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
             <Label>Pesan Sukses (ditampilkan setelah user scan QR)</Label>
             <Textarea rows={3} placeholder="Selamat, kamu telah berhasil mendaftar! Sampai jumpa di acara 🎉" value={form.success_message ?? ""} onChange={(e) => setForm({ ...form, success_message: e.target.value })} />
           </div>
+          <OnlineFields form={form} setForm={setForm} />
           <RecurringPinFields form={form} setForm={setForm} />
         </div>
         <DialogFooter>
