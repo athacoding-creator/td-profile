@@ -106,6 +106,7 @@ export type Database = {
           gender: Database["public"]["Enums"]["event_gender"]
           group_link: string | null
           id: string
+          is_online: boolean
           is_pinned: boolean
           is_recurring: boolean
           max_infaq: number | null
@@ -127,6 +128,7 @@ export type Database = {
           title: string
           updated_at: string
           venue: string
+          youtube_url: string | null
         }
         Insert: {
           city?: string | null
@@ -138,6 +140,7 @@ export type Database = {
           gender?: Database["public"]["Enums"]["event_gender"]
           group_link?: string | null
           id?: string
+          is_online?: boolean
           is_pinned?: boolean
           is_recurring?: boolean
           max_infaq?: number | null
@@ -159,6 +162,7 @@ export type Database = {
           title: string
           updated_at?: string
           venue: string
+          youtube_url?: string | null
         }
         Update: {
           city?: string | null
@@ -170,6 +174,7 @@ export type Database = {
           gender?: Database["public"]["Enums"]["event_gender"]
           group_link?: string | null
           id?: string
+          is_online?: boolean
           is_pinned?: boolean
           is_recurring?: boolean
           max_infaq?: number | null
@@ -191,6 +196,7 @@ export type Database = {
           title?: string
           updated_at?: string
           venue?: string
+          youtube_url?: string | null
         }
         Relationships: [
           {
