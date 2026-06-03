@@ -299,11 +299,9 @@ export default function Payment() {
               </p>
             </div>
 
-            <a href={infaqWaUrl} target="_blank" rel="noopener noreferrer">
-              <Button className="w-full h-12 font-bold bg-green-600 hover:bg-green-700">
-                <MessageCircle className="mr-2 h-4 w-4" /> Hubungi Admin via WhatsApp
-              </Button>
-            </a>
+            <Button onClick={handleInfaqWa} className="w-full h-12 font-bold bg-green-600 hover:bg-green-700">
+              <MessageCircle className="mr-2 h-4 w-4" /> {isOnline ? "Saya Sudah Infaq — Buka Video" : "Hubungi Admin via WhatsApp"}
+            </Button>
 
             <div className="rounded-xl bg-blue-50 p-3 text-xs text-blue-800 border border-blue-100">
               <Info className="h-3 w-3 inline mr-1" />
