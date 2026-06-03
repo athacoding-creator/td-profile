@@ -1,68 +1,50 @@
-# Rencana Perbaikan Alur Pembayaran (User & Admin)
+# Rencana Perbaikan Pembayaran — Auto-Fix Tanpa Error
 
-## Masalah saat ini
-1. Di admin **Daftar Pembayaran** (Donations), tombol Setujui/Tolak terasa "tidak berfungsi" karena daftar tidak ter-refresh setelah update — status di layar tetap "Pending".
-2. Bukti pembayaran dibuka inline di bawah baris/kartu → tampilan jadi penuh & sesak.
-3. Bukti pembayaran tidak pernah terhapus dari storage walaupun sudah dikonfirmasi/ditolak.
-4. User yang sudah dikonfirmasi pembayarannya tetap diminta bayar ulang ketika membuka event.
-5. Event **Infaq** ikut alur upload bukti + verifikasi admin, padahal sifatnya sukarela & langsung diurus via WA.
+Setelah saya teliti, ada **3 bug akar** yang membuat fitur kemarin terasa "tidak berfungsi". Semuanya akan diperbaiki sekaligus.
 
 ---
 
-## Bagian 1 — Sisi Admin (`src/pages/admin/Donations.tsx`)
+## Bug 1 — Tombol Setujui / Tolak di Admin tidak berefek
+**Akar masalah:** Tabel `registrations` **tidak punya policy UPDATE** sama sekali (cek RLS: hanya ada SELECT/INSERT/DELETE). Jadi saat admin klik Setujui, Supabase diam-diam mengembalikan `0 rows updated` — toast "berhasil" muncul tapi data tidak berubah.
 
-### A. Tombol Setujui / Tolak berfungsi & auto-refresh
-- Ambil `refresh` (atau setara) dari `useAdmin()`; jika belum ada, tambahkan helper refresh registrations di `useAdminData.ts`.
-- Setelah `update()` sukses → panggil refresh agar baris berpindah status / hilang dari filter "pending".
+**Fix:** Tambah RLS policy via migration:
+```sql
+CREATE POLICY reg_update_admin ON public.registrations
+  FOR UPDATE TO authenticated
+  USING (public.has_role(auth.uid(), 'admin'::app_role))
+  WITH CHECK (public.has_role(auth.uid(), 'admin'::app_role));
+```
 
-### B. Bukti pembayaran dibuka di tab baru (bukan inline)
-- Hapus state `showProof` + blok `<tr>` / `<div>` preview gambar di `DonationTableRow` dan `DonationMobileCard`.
-- Ganti tombol "Lihat Bukti" menjadi link `<a href={payment_proof_url} target="_blank" rel="noopener noreferrer">` dengan ikon `Eye` — buka langsung di tab baru.
-- Tombol Download tetap, tapi pindah jadi link kecil di samping (opsional) — tidak lagi muncul setelah expand.
+## Bug 2 — Update error karena kolom `updated_at` tidak ada
+**Akar masalah:** Di `Donations.tsx`, fungsi `update()` mengirim `updated_at: new Date().toISOString()`. Tapi skema `registrations` **tidak punya kolom `updated_at`** → PostgREST menolak dengan error 400.
 
-### C. Auto-hapus bukti setelah dikonfirmasi / ditolak
-- Pada fungsi `update(status)` di kedua komponen:
-  1. Hapus file di Supabase Storage bucket `payment_proofs` berdasarkan path yang diekstrak dari `payment_proof_url`.
-  2. Update row: `payment_status = status`, `payment_proof_url = null`.
-  3. Refresh data.
-- Helper kecil: `extractStoragePath(publicUrl)` → ambil bagian setelah `/payment_proofs/`.
+**Fix:** Hapus field `updated_at` dari kedua `update()` (DonationTableRow & DonationMobileCard). Tidak perlu menambah kolom karena tidak dipakai di mana-mana.
 
-### D. (Opsional) Sembunyikan registrasi infaq dari daftar verifikasi
-- Karena infaq tidak butuh verifikasi (lihat Bagian 2), filter `donationRegistrations` hanya menampilkan `event.registration_type === "paid"`.
-- Tambahkan ringkasan terpisah "Infaq masuk via WA" sebagai catatan kecil (tanpa tabel), atau biarkan stats total tetap menghitung infaq tapi tabel hanya menampilkan `paid`.
+## Bug 3 — QRIS user tidak muncul ("Metode pembayaran belum dikonfigurasi")
+**Akar masalah:** Di `Payment.tsx` load QRIS pakai `.maybeSingle()`. Jika admin punya **lebih dari 1 QRIS aktif** untuk kategori yang sama (misalnya 2 QRIS "paid"), `.maybeSingle()` akan **throw error** "more than one row returned" → user lihat pesan error tanpa QRIS.
 
----
-
-## Bagian 2 — Sisi User (`src/pages/Payment.tsx` & `src/pages/EventDetail.tsx`)
-
-### A. Paid event — skip jika sudah dikonfirmasi
-- Saat load di `Payment.tsx`, jika `event.registration_type === "paid"` dan `registration?.payment_status === "approved"`:
-  - Tampilkan kartu "✅ Pembayaran sudah dikonfirmasi" + tombol kembali ke detail event.
-  - Selama event masih aktif (status `active` / belum lewat), user tidak perlu bayar ulang.
-- Tambahkan logika sama di `EventDetail.tsx`: tombol CTA berubah dari "Bayar Sekarang" → "Sudah Terbayar" (disabled) jika `approved`.
-
-### B. Infaq event — alur baru: langsung ke WA tanpa upload bukti
-- Di `Payment.tsx`, deteksi `event.registration_type === "infaq"`:
-  - Tampilkan QRIS Infaq + nominal anjuran (min/max sebagai info).
-  - **Hilangkan**: input upload bukti, tombol "Konfirmasi & Chat Admin" yang submit ke storage.
-  - **Ganti**: satu tombol "💬 Hubungi Admin via WhatsApp" yang langsung membuka `wa.me/<admin>?text=…` dengan template: "Saya sudah berinfaq sebesar Rp ... untuk {{event_title}}. Terima kasih."
-  - Tidak ada row registrations dibuat dari sini (infaq sukarela, tidak diverifikasi sistem).
-- `EventDetail.tsx`: CTA infaq berbunyi "Berinfaq via WA".
-
-### C. Tetap untuk Paid
-- Alur upload bukti + chat admin **hanya berlaku untuk `paid`**.
-- Setelah upload, status `pending` → user diarahkan ke WA seperti sekarang.
+**Fix:** Ganti ke `.limit(1).maybeSingle()` dengan ordering yang sudah ada, supaya pasti ambil 1 baris meskipun banyak QRIS aktif:
+```ts
+.select("*")
+.eq("category", category)
+.eq("is_active", true)
+.order("order_index", { ascending: true })
+.limit(1)
+.maybeSingle();
+```
 
 ---
 
 ## File yang berubah
-- `src/pages/admin/Donations.tsx` — refresh, hapus inline preview, buka tab baru, auto-delete bukti, filter paid-only.
-- `src/pages/admin/useAdminData.ts` — pastikan ada cara refresh registrations.
-- `src/pages/Payment.tsx` — cabang `paid` (skip jika approved) vs `infaq` (tanpa upload, langsung WA).
-- `src/pages/EventDetail.tsx` — label CTA sesuai status.
+1. **Migration baru** — tambah policy UPDATE untuk admin di `registrations`.
+2. **`src/pages/admin/Donations.tsx`** — hapus `updated_at` dari 2 fungsi `update()`.
+3. **`src/pages/Payment.tsx`** — tambah `.limit(1)` sebelum `.maybeSingle()` di query `qris_methods`.
 
 ## Tidak diubah
-- Skema database (struktur tabel `registrations`, `payment_proofs` bucket tetap).
-- `QrisManager.tsx` (admin QRIS) tetap, hanya jadi sumber gambar QRIS.
+- Struktur tabel (tidak ada perubahan skema kolom).
+- `QrisManager.tsx` (tidak ada bug riil di sana — semua CRUD QRIS sudah jalan; gejala "error" sebenarnya muncul di sisi user karena Bug 3).
+- Alur infaq via WA (sudah benar).
+
+Setelah 3 perbaikan ini, alur lengkap akan jalan: admin klik Setujui → status berubah → user yang sudah approved skip halaman bayar → user lain selalu lihat QRIS aktif tanpa error.
 
 Setujui rencana ini? Setelah disetujui, saya implementasi sekaligus.
