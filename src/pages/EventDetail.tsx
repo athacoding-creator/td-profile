@@ -290,11 +290,18 @@ export default function EventDetail() {
         <div className="mt-6 sm:mt-8 space-y-3">
           {event.is_online && registration ? (
             <>
-              <div className="rounded-xl bg-accent/10 p-3 text-center text-sm font-semibold text-accent">
-                <Video className="inline h-4 w-4 mr-1" /> 
-                {registration.attendance_mode === "online" 
-                  ? "Kamu sudah terdaftar untuk kajian online ini. Selamat menyimak!"
-                  : "Kamu sudah terdaftar untuk kajian offline ini. Sampai jumpa di lokasi!"}
+              <div className="rounded-xl bg-accent/10 p-4 text-center space-y-2 border border-accent/20">
+                <div className="text-sm font-bold text-accent flex items-center justify-center gap-2">
+                  <Video className="h-4 w-4" /> 
+                  {registration.attendance_mode === "online" 
+                    ? "Akses Video Terbuka"
+                    : "Terdaftar Offline"}
+                </div>
+                <p className="text-xs text-accent/80 leading-relaxed">
+                  {registration.attendance_mode === "online" 
+                    ? "Alhamdulillah, pendaftaran online berhasil. Kamu bisa menonton video ini berulang kali kapan saja melalui halaman ini."
+                    : "Kamu sudah terdaftar untuk hadir langsung di lokasi. Sampai jumpa!"}
+                </p>
               </div>
               {registration.attendance_mode === "online" && (
                 <>
@@ -311,8 +318,13 @@ export default function EventDetail() {
             </>
           ) : event.is_online ? (
             <>
-              <div className="rounded-xl bg-rose-50 border border-rose-100 p-4 text-xs sm:text-sm text-rose-800">
-                📺 <strong>Kajian Online & Offline</strong> — Pilih cara mengikuti: online (berinfaq sukarela) atau offline (hadir langsung).
+              <div className="rounded-xl bg-rose-50 border border-rose-100 p-4 space-y-2">
+                <p className="text-xs sm:text-sm text-rose-800 font-bold flex items-center gap-2">
+                  <Video className="h-4 w-4" /> Kajian Online Tersedia
+                </p>
+                <p className="text-[11px] sm:text-xs text-rose-700 leading-relaxed">
+                  Pilih mode <strong>Online</strong> untuk mendapatkan akses video rekaman yang bisa ditonton berulang kali cukup dengan berinfaq sukarela.
+                </p>
               </div>
               <Button
                 onClick={handleRegisterClick}

@@ -285,17 +285,22 @@ export default function Payment() {
               </div>
             )}
 
-            <div className="space-y-2">
-              <Label className="text-sm font-semibold">Nominal infaq (Rp)</Label>
-              <Input
-                type="number"
-                min={event.min_infaq || 0}
-                value={paymentForm.amount}
-                onChange={(e) => setPaymentForm({ ...paymentForm, amount: Number(e.target.value) })}
-                className="h-12"
-              />
+            <div className="space-y-3">
+              <Label className="text-sm font-semibold">Pilih Nominal Infaq (Rp)</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {[5000, 10000, 20000, 50000].map((amt) => (
+                  <Button
+                    key={amt}
+                    variant={paymentForm.amount === amt ? "default" : "outline"}
+                    className={`h-12 text-sm font-bold ${paymentForm.amount === amt ? 'bg-accent text-white border-accent' : 'border-border'}`}
+                    onClick={() => setPaymentForm({ ...paymentForm, amount: amt })}
+                  >
+                    Rp {amt.toLocaleString("id-ID")}
+                  </Button>
+                ))}
+              </div>
               <p className="text-[11px] text-muted-foreground">
-                Saran: Rp {(event.min_infaq || 0).toLocaleString("id-ID")} — Rp {(event.max_infaq || 0).toLocaleString("id-ID")}. Bebas sesuai keikhlasan.
+                Pilih salah satu nominal di atas sebagai bentuk dukungan dakwah kami.
               </p>
             </div>
 
@@ -392,15 +397,29 @@ export default function Payment() {
             </div>
 
             <div className="space-y-4 pt-2">
-              <div className="space-y-1.5">
+              <div className="space-y-3">
                 <Label className="text-sm font-semibold">Nominal (Rp)</Label>
-                <Input
-                  type="number"
-                  value={paymentForm.amount}
-                  onChange={(e) => setPaymentForm({ ...paymentForm, amount: Number(e.target.value) })}
-                  disabled={event.registration_type === "paid"}
-                  className="h-12 bg-muted/20"
-                />
+                {event.registration_type === "paid" ? (
+                  <Input
+                    type="number"
+                    value={paymentForm.amount}
+                    disabled
+                    className="h-12 bg-muted/20 font-bold"
+                  />
+                ) : (
+                  <div className="grid grid-cols-2 gap-2">
+                    {[5000, 10000, 20000, 50000].map((amt) => (
+                      <Button
+                        key={amt}
+                        variant={paymentForm.amount === amt ? "default" : "outline"}
+                        className={`h-12 text-sm font-bold ${paymentForm.amount === amt ? 'bg-accent text-white border-accent' : 'border-border'}`}
+                        onClick={() => setPaymentForm({ ...paymentForm, amount: amt })}
+                      >
+                        Rp {amt.toLocaleString("id-ID")}
+                      </Button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="space-y-1.5">
