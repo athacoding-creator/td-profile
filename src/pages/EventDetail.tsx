@@ -450,10 +450,21 @@ export default function EventDetail() {
           ) : (
             <Button
               onClick={handleRegisterClick}
-              disabled={submitting}
-              className="w-full bg-green-600 hover:bg-green-700 text-white text-sm sm:text-base font-bold"
+              disabled={submitting || (sw.expired && !event.is_online)}
+              className={`w-full text-white text-sm sm:text-base font-bold ${
+                sw.expired && !event.is_online 
+                  ? "bg-muted text-muted-foreground cursor-not-allowed" 
+                  : "bg-green-600 hover:bg-green-700"
+              }`}
             >
-              {submitting ? "Mendaftarkan…" : user ? "Daftar Event" : "Login untuk Daftar"}
+              {submitting 
+                ? "Mendaftarkan…" 
+                : !user 
+                  ? "Login untuk Daftar" 
+                  : sw.expired 
+                    ? (event.is_online ? "Daftar Online (Akses Video)" : "Pendaftaran Ditutup")
+                    : "Daftar Event"
+              }
             </Button>
           )}
         </div>
