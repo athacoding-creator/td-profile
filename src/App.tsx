@@ -29,7 +29,7 @@ const AdminKehadiran = lazy(() => import("./pages/admin/Registrations"));
 const AdminUsers = lazy(() => import("./pages/admin/Users"));
 const AdminRedemptions = lazy(() => import("./pages/admin/Redemptions"));
 const AdminMerchandise = lazy(() => import("./pages/admin/Merchandise"));
-const AdminHero = lazy(() => import("./pages/admin/Hero"));
+
 const AdminSettings = lazy(() => import("./pages/admin/Settings"));
 const AdminDonations = lazy(() => import("./pages/admin/Donations"));
 const AdminQrisManager = lazy(() => import("./pages/admin/QrisManager"));
@@ -94,7 +94,7 @@ const App = () => (
                   <Route path="donasi" element={<AdminDonations />} />
 	<Route path="qris" element={<AdminQrisManager />} />
 	<Route path="merchandise" element={<AdminMerchandise />} />
-	                  <Route path="hero" element={<AdminHero />} />
+
 	                  <Route path="scan" element={<AdminScan />} />
 	                  <Route path="pengaturan" element={<AdminSettings />} />
 	                </Route>

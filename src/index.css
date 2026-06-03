@@ -48,7 +48,7 @@ All colors MUST be HSL.
     --brand-horizon: 213 90% 71%;
     --brand-emerald: 161 82% 24%;
 
-    --gradient-hero: linear-gradient(135deg, hsl(var(--brand-prussian)) 0%, hsl(var(--brand-emerald)) 100%);
+
     --gradient-soft: linear-gradient(180deg, hsl(var(--brand-parchment)) 0%, hsl(var(--brand-white)) 100%);
     --shadow-card: 0 10px 30px -12px hsl(var(--brand-prussian) / 0.25);
     --shadow-glow: 0 0 40px hsl(var(--brand-horizon) / 0.35);

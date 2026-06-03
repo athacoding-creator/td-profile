@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 
 const navItems = [
   { to: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/admin/hero", label: "Hero", icon: ImageIcon },
+
   { to: "/admin/event", label: "Event", icon: CalendarDays },
   { to: "/admin/program", label: "Program", icon: Sparkles },
   { to: "/admin/pendaftar", label: "Pendaftar", icon: Users },

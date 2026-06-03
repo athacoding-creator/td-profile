@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
-import { HeroSlider } from "@/components/HeroSlider";
+
 
 export default function Index() {
   const { profile, user } = useAuth();
@@ -29,7 +29,7 @@ export default function Index() {
   return (
     <div className="min-h-screen bg-background pb-24">
       <Header />
-      <HeroSlider />
+
 
       <section className="container mt-4 md:mt-6">
         <div className="flex items-end justify-between">

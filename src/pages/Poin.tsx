@@ -73,10 +73,7 @@ export default function Poin() {
     <div className="min-h-screen bg-background pb-24">
       <Header />
       <main className="container py-8">
-        <div
-          className="rounded-2xl p-8 text-center"
-          style={{ background: "var(--gradient-hero)", color: "hsl(var(--primary-foreground))" }}
-        >
+        <div className="rounded-2xl p-8 text-center bg-primary text-primary-foreground">
           <p className="text-sm opacity-80">Poin kamu</p>
           <p className="mt-2 font-display text-5xl font-black">{profile?.points ?? 0}</p>
         </div>
