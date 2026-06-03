@@ -145,10 +145,36 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
           <Label className="text-xs sm:text-sm">Pesan Sukses (ditampilkan setelah user scan QR)</Label>
           <Textarea rows={3} placeholder="Selamat, kamu telah berhasil mendaftar! Sampai jumpa di acara 🎉" value={form.success_message ?? ""} onChange={(e) => setForm({ ...form, success_message: e.target.value })} className="text-sm" />
         </div>
+        <OnlineFields form={form} setForm={setForm} />
         <RecurringPinFields form={form} setForm={setForm} />
         <div className="md:col-span-2"><Button type="submit" className="w-full bg-primary text-primary-foreground h-9 sm:h-10 text-sm">Buat Event</Button></div>
       </form>
     </Section>
+  );
+}
+
+function OnlineFields({ form, setForm }: { form: any; setForm: (f: any) => void }) {
+  return (
+    <div className="md:col-span-2 space-y-3 rounded-xl border border-border/60 bg-muted/30 p-3 text-sm">
+      <label className="flex items-center gap-2 text-xs sm:text-sm font-medium cursor-pointer">
+        <input type="checkbox" checked={!!form.is_online} onChange={(e) => setForm({ ...form, is_online: e.target.checked })} />
+        📺 Event Online (tampilkan video YouTube ke peserta)
+      </label>
+      {form.is_online && (
+        <div className="pl-6 pt-1 space-y-1.5">
+          <Label className="text-xs sm:text-sm">Link YouTube</Label>
+          <Input
+            placeholder="https://www.youtube.com/watch?v=… atau ID"
+            value={form.youtube_url ?? ""}
+            onChange={(e) => setForm({ ...form, youtube_url: e.target.value })}
+            className="text-sm h-9 sm:h-10"
+          />
+          <p className="text-xs text-muted-foreground">
+            Event online pakai alur infaq sukarela & tidak memberi poin. Video tampil setelah peserta mendaftar.
+          </p>
+        </div>
+      )}
+    </div>
   );
 }
 
