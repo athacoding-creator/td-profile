@@ -27,6 +27,17 @@ export default function EventDetail() {
   const [paymentForm, setPaymentForm] = useState({ amount: 0, proofFile: null as File | null });
   const [paymentMethod, setPaymentMethod] = useState<any>(null);
   const [showModeSelector, setShowModeSelector] = useState(false);
+  const [showVideoAfterInfaq, setShowVideoAfterInfaq] = useState(() => {
+    if (!id) return false;
+    const stored = localStorage.getItem(`video_unlocked_${id}`);
+    return stored === "true";
+  });
+
+  useEffect(() => {
+    if (showVideoAfterInfaq && id) {
+      localStorage.setItem(`video_unlocked_${id}`, "true");
+    }
+  }, [showVideoAfterInfaq, id]);
 
   useEffect(() => {
     (async () => {
@@ -234,7 +245,8 @@ export default function EventDetail() {
   const genderMismatch =
     user && profile?.gender && event.gender !== "ALL" && event.gender !== profile.gender;
   const sw = computeScanWindow(event);
-  const expired = sw.expired;
+  // Untuk online event, abaikan expired status agar video tetap bisa diakses selamanya
+  const expired = event.is_online ? false : sw.expired;
   const scanAvailable = sw.scanAvailable;
   const scanNotYetAvailable = sw.scanNotYetAvailable;
   const scanStartTime = sw.scanStartTime;
@@ -303,7 +315,7 @@ export default function EventDetail() {
                     : "Kamu sudah terdaftar untuk hadir langsung di lokasi. Sampai jumpa!"}
                 </p>
               </div>
-              {registration.attendance_mode === "online" && (
+              {registration.attendance_mode === "online" && showVideoAfterInfaq && (
                 <>
                   <YoutubeEmbed url={event.youtube_url} title={event.title} />
                   {event.group_link && (
@@ -329,7 +341,7 @@ export default function EventDetail() {
               <Button
                 onClick={handleRegisterClick}
                 disabled={submitting}
-                className="w-full bg-rose-500 hover:bg-rose-600 text-white text-sm sm:text-base"
+                className="w-full bg-green-600 hover:bg-green-700 text-white text-sm sm:text-base font-bold"
               >
                 {submitting ? "Memproses…" : "Pilih Cara Mengikuti"}
               </Button>
@@ -381,10 +393,16 @@ export default function EventDetail() {
               {/* Tombol berinfaq untuk online mode */}
               {event.is_online && registration.attendance_mode === "online" && registration.payment_status === "none" && (
                 <Button
-                  onClick={() => navigate(`/event/${event.id}/bayar`)}
-                  className="w-full bg-rose-500 hover:bg-rose-600 text-white text-sm sm:text-base"
+                  onClick={() => {
+                    if (event.id) {
+                      localStorage.setItem(`video_unlocked_${event.id}`, "true");
+                      setShowVideoAfterInfaq(true);
+                    }
+                    navigate(`/event/${event.id}/bayar`);
+                  }}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white text-sm sm:text-base font-bold"
                 >
-                  💝 Berinfaq untuk Akses Video
+                  💚 Saya Sudah Infaq — Buka Video
                 </Button>
               )}
 
@@ -431,7 +449,7 @@ export default function EventDetail() {
             <Button
               onClick={handleRegisterClick}
               disabled={submitting}
-              className="w-full bg-primary text-primary-foreground text-sm sm:text-base"
+              className="w-full bg-green-600 hover:bg-green-700 text-white text-sm sm:text-base font-bold"
             >
               {submitting ? "Mendaftarkan…" : user ? "Daftar Event" : "Login untuk Daftar"}
             </Button>
