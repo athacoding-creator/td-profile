@@ -208,10 +208,7 @@ function DonationTableRow({ registration, event, onChanged }: { registration: an
       // Update status terlebih dahulu agar user bisa segera akses QR
       const { error } = await supabase
         .from("registrations")
-        .update({ 
-          payment_status: status,
-          updated_at: new Date().toISOString()
-        })
+        .update({ payment_status: status })
         .eq("id", registration.id);
         
       if (error) {
@@ -317,10 +314,7 @@ function DonationMobileCard({ registration, event, onChanged }: { registration: 
     try {
       const { error } = await supabase
         .from("registrations")
-        .update({ 
-          payment_status: status,
-          updated_at: new Date().toISOString()
-        })
+        .update({ payment_status: status })
         .eq("id", registration.id);
         
       if (error) {

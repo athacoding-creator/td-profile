@@ -73,6 +73,7 @@ export default function Payment() {
             .eq("category", category)
             .eq("is_active", true)
             .order("order_index", { ascending: true })
+            .limit(1)
             .maybeSingle();
           
           if (qrisData) {
