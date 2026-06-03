@@ -39,7 +39,13 @@ export default function Payment() {
         return;
       }
       setEvent(eventData);
-      setPaymentForm(prev => ({ ...prev, amount: eventData.registration_type === "paid" ? eventData.price : eventData.min_infaq }));
+      const onlineDefault = eventData.is_online ? (eventData.min_infaq || 5000) : 0;
+      setPaymentForm(prev => ({
+        ...prev,
+        amount: eventData.registration_type === "paid"
+          ? eventData.price
+          : (eventData.registration_type === "infaq" ? eventData.min_infaq : onlineDefault)
+      }));
 
       if (user) {
         const { data: regData } = await supabase
@@ -63,8 +69,14 @@ export default function Payment() {
           .maybeSingle();
         setPaymentMethod(pmData);
       } else {
-        // Get QRIS from qris_methods table based on event registration type
-        const category = eventData.registration_type === "paid" ? "paid" : eventData.registration_type === "infaq" ? "infaq" : null;
+        // Get QRIS from qris_methods table — online events always pakai kategori infaq
+        const category = eventData.is_online
+          ? "infaq"
+          : eventData.registration_type === "paid"
+            ? "paid"
+            : eventData.registration_type === "infaq"
+              ? "infaq"
+              : null;
         
         if (category) {
           const { data: qrisData } = await supabase
