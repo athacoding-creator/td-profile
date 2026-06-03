@@ -22,6 +22,7 @@ type Ev = {
   recurring_start_time?: string | null;
   recurring_end_time?: string | null;
   recurring_until?: string | null;
+  is_online?: boolean;
 };
 
 export default function Events() {
@@ -31,7 +32,7 @@ export default function Events() {
   useEffect(() => {
     supabase
       .from("events")
-      .select("id,title,venue,poster_url,gender,starts_at,ends_at,status,is_pinned,is_recurring,recurring_days,recurring_start_time,recurring_end_time,recurring_until")
+      .select("id,title,venue,poster_url,gender,starts_at,ends_at,status,is_pinned,is_recurring,recurring_days,recurring_start_time,recurring_end_time,recurring_until,is_online")
       .in("status", ["active", "finished"])
       .order("is_pinned", { ascending: false })
       .order("starts_at", { ascending: false })
@@ -45,12 +46,12 @@ export default function Events() {
   }, []);
 
   const upcoming = events
-    .filter((e) => e.status === "active" && !isEventExpired(e))
+    .filter((e) => e.status === "active" && (!isEventExpired(e) || e.is_online))
     .sort((a, b) => {
       if (!!b.is_pinned !== !!a.is_pinned) return b.is_pinned ? 1 : -1;
       return new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime();
     });
-  const finished = events.filter((e) => !isRecurring(e) && (e.status === "finished" || isEventExpired(e)));
+  const finished = events.filter((e) => !isRecurring(e) && (e.status === "finished" || (isEventExpired(e) && !e.is_online)));
 
   const Card = ({ e, isFinished }: { e: Ev; isFinished: boolean }) => {
     const locked = profile?.gender && e.gender !== "ALL" && e.gender !== profile.gender;

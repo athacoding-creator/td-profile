@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { toast } from "sonner";
 import QRCode from "qrcode";
 import { QrCode as QrIcon, Trash2, Pencil, Lock, Pin, Repeat, Camera } from "lucide-react";
+import { useEffect } from "react";
 import { useAdmin } from "./AdminLayout";
 import { Section } from "./components";
 import { ImagePicker } from "@/components/admin/ImagePicker";
@@ -35,8 +36,9 @@ export default function EventsPage() {
   const { events, programs, settings, reloadEvents } = useAdmin();
 
   // Auto-mark expired events as 'finished' so the lock is reflected globally
+  // Exception: online events remain 'active' even after expiry so registration stays open
   useEffect(() => {
-    const expiredActive = events.filter((e) => e.status === "active" && !e.is_recurring && isExpired(e));
+    const expiredActive = events.filter((e) => e.status === "active" && !e.is_recurring && !e.is_online && isExpired(e));
     if (expiredActive.length === 0) return;
     (async () => {
       await supabase.from("events").update({ status: "finished" }).in("id", expiredActive.map((e) => e.id));

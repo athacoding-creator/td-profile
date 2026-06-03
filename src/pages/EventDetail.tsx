@@ -126,7 +126,12 @@ export default function EventDetail() {
     
     // Jika event online, tampilkan mode selector
     if (event.is_online) {
-      setShowModeSelector(true);
+      // Jika sudah lewat jadwal, otomatis daftar online (karena offline sudah tutup)
+      if (sw.expired) {
+        register("online");
+      } else {
+        setShowModeSelector(true);
+      }
     } else {
       // Jika offline biasa, langsung register dengan mode offline
       register("offline");
@@ -332,10 +337,12 @@ export default function EventDetail() {
             <>
               <div className="rounded-xl bg-rose-50 border border-rose-100 p-4 space-y-2">
                 <p className="text-xs sm:text-sm text-rose-800 font-bold flex items-center gap-2">
-                  <Video className="h-4 w-4" /> Kajian Online Tersedia
+                  <Video className="h-4 w-4" /> {sw.expired ? "Rekaman Video Tersedia" : "Kajian Online Tersedia"}
                 </p>
                 <p className="text-[11px] sm:text-xs text-rose-700 leading-relaxed">
-                  Pilih mode <strong>Online</strong> untuk mendapatkan akses video rekaman yang bisa ditonton berulang kali cukup dengan berinfaq sukarela.
+                  {sw.expired 
+                    ? "Event ini sudah selesai, namun kamu tetap bisa mendaftar untuk mengakses rekaman videonya selamanya cukup dengan berinfaq sukarela."
+                    : "Pilih mode Online untuk mendapatkan akses video rekaman yang bisa ditonton berulang kali cukup dengan berinfaq sukarela."}
                 </p>
               </div>
               <Button
@@ -343,7 +350,7 @@ export default function EventDetail() {
                 disabled={submitting}
                 className="w-full bg-green-600 hover:bg-green-700 text-white text-sm sm:text-base font-bold"
               >
-                {submitting ? "Memproses…" : "Pilih Cara Mengikuti"}
+                {submitting ? "Memproses…" : sw.expired ? "Daftar Online (Akses Video)" : "Pilih Cara Mengikuti"}
               </Button>
             </>
           ) : expired ? (
