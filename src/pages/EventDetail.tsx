@@ -515,7 +515,7 @@ async function convertToWebP(file: File): Promise<Blob> {
       img.onerror = () => reject(new Error("Could not load image"));
       img.src = event.target?.result as string;
     };
-    img.onerror = () => reject(new Error("Could not read file"));
+    reader.onerror = () => reject(new Error("Could not read file"));
     reader.readAsDataURL(file);
   });
 }

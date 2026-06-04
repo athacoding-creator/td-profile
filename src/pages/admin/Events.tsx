@@ -9,7 +9,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { toast } from "sonner";
 import QRCode from "qrcode";
 import { QrCode as QrIcon, Trash2, Pencil, Lock, Pin, Repeat, Camera } from "lucide-react";
-import { useEffect } from "react";
 import { useAdmin } from "./AdminLayout";
 import { Section } from "./components";
 import { ImagePicker } from "@/components/admin/ImagePicker";
