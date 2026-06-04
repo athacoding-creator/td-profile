@@ -19,6 +19,7 @@ const Poin = lazy(() => import("./pages/Poin"));
 const Riwayat = lazy(() => import("./pages/Riwayat"));
 const Events = lazy(() => import("./pages/Events"));
 const Profil = lazy(() => import("./pages/Profil"));
+const DownloadApp = lazy(() => import("./pages/DownloadApp"));
 const Payment = lazy(() => import("./pages/Payment"));
 const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
 const AdminDashboard = lazy(() => import("./pages/admin/Dashboard"));
@@ -82,6 +83,7 @@ const App = () => (
                 <Route path="/riwayat" element={<RequireAuth><Riwayat /></RequireAuth>} />
                 <Route path="/event" element={<Events />} />
                 <Route path="/profil" element={<RequireAuth><Profil /></RequireAuth>} />
+                <Route path="/profil/download" element={<DownloadApp />} />
                 <Route path="/admin" element={<RequireAuth adminOnly><AdminLayout /></RequireAuth>}>
                   <Route index element={<AdminDashboard />} />
                   <Route path="dashboard" element={<AdminDashboard />} />
