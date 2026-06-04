@@ -35,9 +35,8 @@ export default function EventsPage() {
   const { events, programs, settings, reloadEvents } = useAdmin();
 
   // Auto-mark expired events as 'finished' so the lock is reflected globally
-  // Exception: online events remain 'active' even after expiry so registration stays open
   useEffect(() => {
-    const expiredActive = events.filter((e) => e.status === "active" && !e.is_recurring && !e.is_online && isExpired(e));
+    const expiredActive = events.filter((e) => e.status === "active" && !e.is_recurring && isExpired(e));
     if (expiredActive.length === 0) return;
     (async () => {
       await supabase.from("events").update({ status: "finished" }).in("id", expiredActive.map((e) => e.id));
