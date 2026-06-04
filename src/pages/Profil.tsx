@@ -26,6 +26,7 @@ import {
   QrCode,
   KeyRound,
   Shield,
+  Download,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { formatPhoneDisplay } from "@/lib/phone";
@@ -165,6 +166,7 @@ export default function Profil() {
     { icon: Ticket, label: "Event saya", to: "/riwayat" },
     { icon: HeartHandshake, label: "Donasi", href: "https://sedekah.terasdakwah.com" },
     { icon: Award, label: "Poin", to: "/poin" },
+    { icon: Download, label: "Download Aplikasi", to: "/profil/download" },
     ...(isAdmin ? [{ icon: Shield, label: "Admin", to: "/admin" }] : []),
   ];
 
