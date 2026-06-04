@@ -46,12 +46,12 @@ export default function Events() {
   }, []);
 
   const upcoming = events
-    .filter((e) => e.status === "active" && (!isEventExpired(e) || e.is_online))
+    .filter((e) => e.status === "active" && !isEventExpired(e))
     .sort((a, b) => {
       if (!!b.is_pinned !== !!a.is_pinned) return b.is_pinned ? 1 : -1;
       return new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime();
     });
-  const finished = events.filter((e) => !isRecurring(e) && (e.status === "finished" || (isEventExpired(e) && !e.is_online)));
+  const finished = events.filter((e) => e.status === "finished" || isEventExpired(e));
 
   const Card = ({ e, isFinished }: { e: Ev; isFinished: boolean }) => {
     const locked = profile?.gender && e.gender !== "ALL" && e.gender !== profile.gender;
