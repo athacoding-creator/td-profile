@@ -9,6 +9,7 @@ import { Html5Qrcode } from "html5-qrcode";
 import { Camera, StopCircle } from "lucide-react";
 import { useAdmin } from "./AdminLayout";
 import { Section } from "./components";
+import { isEventExpired } from "@/lib/eventSchedule";
 
 export default function ScanPage() {
   const { events } = useAdmin();
@@ -17,7 +18,7 @@ export default function ScanPage() {
   const [scanning, setScanning] = useState(false);
   const [manual, setManual] = useState("");
   const scannerRef = useRef<Html5Qrcode | null>(null);
-  const activeEvents = events.filter((e) => e.status === "active");
+  const activeEvents = events.filter((e) => e.status === "active" && !isEventExpired(e));
 
   useEffect(() => () => { scannerRef.current?.stop().catch(() => {}); }, []);
 

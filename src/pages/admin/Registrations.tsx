@@ -5,6 +5,7 @@ import { useAdmin } from "./AdminLayout";
 import { Section } from "./components";
 import { MessageCircle, Download, ChevronDown } from "lucide-react";
 import * as XLSX from "xlsx";
+import { isEventExpired } from "@/lib/eventSchedule";
 
 export default function RegistrationsPage() {
   const { events, attendance } = useAdmin();
@@ -23,8 +24,8 @@ export default function RegistrationsPage() {
     if (a.event_id) counts[a.event_id] = (counts[a.event_id] || 0) + 1;
   });
 
-  const activeEvents = events.filter((e) => e.status === "active");
-  const pastEvents = events.filter((e) => e.status !== "active");
+  const activeEvents = events.filter((e) => e.status === "active" && !isEventExpired(e));
+  const pastEvents = events.filter((e) => e.status !== "active" || isEventExpired(e));
   const filteredPastEvents = pastEvents.filter((e) =>
     e.title?.toLowerCase().includes(searchPast.toLowerCase())
   );
