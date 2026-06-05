@@ -280,8 +280,8 @@ export default function Payment() {
               </h2>
               <p className="text-xs text-muted-foreground mt-1">
                 {isOnline 
-                  ? "Khusus pendaftaran online, silakan berinfaq untuk mengakses video kajian." 
-                  : "Silakan pilih cara Anda berkontribusi untuk event ini."}
+                  ? "Khusus pendaftaran online, silakan berinfaq untuk mengakses video kajian selamanya." 
+                  : "Silakan pilih cara Anda berkontribusi untuk event ini. Infaq uang atau doa terbaik saja — tidak ada yang memaksa."}
               </p>
             </div>
 
@@ -293,6 +293,7 @@ export default function Payment() {
                 >
                   <Coins className={`h-6 w-6 ${infaqType === "money" ? "text-primary" : "text-muted-foreground"}`} />
                   <span className="text-sm font-bold">Infaq Uang</span>
+                  <span className="text-[10px] text-muted-foreground">Nominal bebas</span>
                 </button>
                 <button
                   onClick={() => setInfaqType("prayer")}
@@ -300,6 +301,7 @@ export default function Payment() {
                 >
                   <Star className={`h-6 w-6 ${infaqType === "prayer" ? "text-rose-500" : "text-muted-foreground"}`} />
                   <span className="text-sm font-bold">Doa Terbaik</span>
+                  <span className="text-[10px] text-muted-foreground">Gratis</span>
                 </button>
               </div>
             )}
@@ -373,8 +375,8 @@ export default function Payment() {
             <div className="rounded-xl bg-blue-50 p-3 text-xs text-blue-800 border border-blue-100">
               <Info className="h-3 w-3 inline mr-1" />
               {infaqType === "money" 
-                ? "Infaq Anda sangat membantu operasional dakwah kami. Terima kasih!" 
-                : "Doa yang tulus adalah hadiah yang sangat berharga. Terima kasih!"}
+                ? "Infaq Anda sangat membantu operasional dakwah kami. Terima kasih! Nominal bebas sesuai kemampuan." 
+                : "Doa yang tulus adalah hadiah yang sangat berharga. Terima kasih telah mendukung kami dengan doa terbaik!"}
             </div>
           </div>
         </main>

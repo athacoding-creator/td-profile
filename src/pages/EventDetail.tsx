@@ -181,6 +181,9 @@ export default function EventDetail() {
         navigate(`/event/${event.id}/bayar`);
       } else if (event.registration_type === "free") {
         toast.success("Pendaftaran berhasil!");
+      } else if (isInfaq && mode === "offline") {
+        toast.success("Pendaftaran berhasil! Silakan pilih infaq uang atau doa terbaik.");
+        navigate(`/event/${event.id}/bayar`);
       } else if (isInfaq) {
         toast.success("Pendaftaran berhasil! Infaq sukarela bisa dikirim via WA.");
       } else {
@@ -484,6 +487,8 @@ export default function EventDetail() {
           }}
           eventTitle={event.title}
           isOnlineEvent={event.is_online}
+          isInfaqEvent={event.registration_type === "infaq"}
+          registrationType={event.registration_type}
         />
       </main>
       <BottomNav />

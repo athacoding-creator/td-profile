@@ -170,7 +170,7 @@ function OnlineFields({ form, setForm }: { form: any; setForm: (f: any) => void 
             className="text-sm h-9 sm:h-10"
           />
           <p className="text-xs text-muted-foreground">
-            Online Mode memungkinkan pendaftaran tetap dibuka meskipun acara sudah selesai (pendaftaran online). Event online menggunakan alur infaq wajib berbayar (nominal bebas >= minimal infaq) untuk akses video & tidak memberikan poin. Sedangkan event offline kategori infaq memberikan pilihan Infaq Uang atau Doa Terbaik.
+            Online Mode memungkinkan pendaftaran tetap dibuka meskipun acara sudah selesai (pendaftaran online). Event online menggunakan alur infaq wajib berbayar (nominal bebas &gt;= minimal infaq) untuk akses video & tidak memberikan poin. Sedangkan event offline kategori infaq memberikan pilihan Infaq Uang atau Doa Terbaik.
           </p>
         </div>
       )}

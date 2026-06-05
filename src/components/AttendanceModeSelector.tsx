@@ -7,6 +7,8 @@ interface AttendanceModeSelectorProps {
   onSelect: (mode: "online" | "offline") => void;
   eventTitle: string;
   isOnlineEvent: boolean;
+  isInfaqEvent?: boolean;
+  registrationType?: string;
 }
 
 export function AttendanceModeSelector({
@@ -14,6 +16,8 @@ export function AttendanceModeSelector({
   onSelect,
   eventTitle,
   isOnlineEvent,
+  isInfaqEvent = false,
+  registrationType = "free",
 }: AttendanceModeSelectorProps) {
   return (
     <Dialog open={open}>
@@ -37,7 +41,9 @@ export function AttendanceModeSelector({
             <div className="flex-1">
               <h3 className="font-semibold text-sm sm:text-base">Mengikuti Offline</h3>
               <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-                Hadir langsung ke lokasi. Dapatkan poin dengan scan QR saat acara.
+                {isInfaqEvent 
+                  ? "Hadir langsung ke lokasi. Pilih infaq uang atau doa terbaik saja." 
+                  : "Hadir langsung ke lokasi. Dapatkan poin dengan scan QR saat acara."}
               </p>
             </div>
           </button>
@@ -54,7 +60,7 @@ export function AttendanceModeSelector({
               <div className="flex-1">
                 <h3 className="font-semibold text-sm sm:text-base">Mengikuti Online</h3>
                 <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-                  Tonton video rekaman kapan saja. Cukup berinfaq (nominal bebas) untuk akses selamanya.
+                  Tonton video rekaman kapan saja. Berinfaq untuk akses video selamanya.
                 </p>
               </div>
             </button>
@@ -62,7 +68,15 @@ export function AttendanceModeSelector({
         </div>
 
         <div className="rounded-lg bg-blue-50 p-3 text-xs text-blue-800 border border-blue-100">
-          💡 <strong>Tips:</strong> Pilih offline jika kamu bisa hadir langsung. Pilih online jika ingin akses video rekaman berulang kali.
+          {isInfaqEvent ? (
+            <>
+              💡 <strong>Tips:</strong> Pilih offline jika hadir langsung (infaq uang atau doa). Pilih online untuk akses video selamanya (wajib berinfaq).
+            </>
+          ) : (
+            <>
+              💡 <strong>Tips:</strong> Pilih offline jika kamu bisa hadir langsung. Pilih online jika ingin akses video rekaman berulang kali.
+            </>
+          )}
         </div>
       </DialogContent>
     </Dialog>
