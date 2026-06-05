@@ -37,7 +37,7 @@ export default function DonorWall({ eventId }: { eventId: string }) {
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const { data, error } = await supabase.rpc("get_event_donors", { _event_id: eventId });
+      const { data, error } = await (supabase as any).rpc("get_event_donors", { _event_id: eventId });
       if (cancelled) return;
       if (!error && data) setDonors(data as Donor[]);
       setLoading(false);
