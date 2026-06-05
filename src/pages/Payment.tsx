@@ -204,7 +204,7 @@ export default function Payment() {
     setSubmitting(true);
     try {
       const amount = infaqType === "money" ? (Number(paymentForm.amount) || 0) : 0;
-      const msg = paymentForm.donorMessage?.trim() ? paymentForm.donorMessage.trim().slice(0, 500) : null;
+      const msg = infaqType === "prayer" && paymentForm.donorMessage?.trim() ? paymentForm.donorMessage.trim().slice(0, 500) : (infaqType === "money" ? (paymentForm.donorMessage?.trim() ? paymentForm.donorMessage.trim().slice(0, 500) : null) : null);
       
       const updateData = {
         payment_status: "none",
@@ -288,7 +288,10 @@ export default function Payment() {
             {!isOnline && (
               <div className="grid grid-cols-2 gap-3">
                 <button
-                  onClick={() => setInfaqType("money")}
+                  onClick={() => {
+                    setInfaqType("money");
+                    setPaymentForm(prev => ({ ...prev, amount: event.min_infaq || 5000 }));
+                  }}
                   className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${infaqType === "money" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}
                 >
                   <Coins className={`h-6 w-6 ${infaqType === "money" ? "text-primary" : "text-muted-foreground"}`} />
@@ -296,7 +299,10 @@ export default function Payment() {
                   <span className="text-[10px] text-muted-foreground">Nominal bebas</span>
                 </button>
                 <button
-                  onClick={() => setInfaqType("prayer")}
+                  onClick={() => {
+                    setInfaqType("prayer");
+                    setPaymentForm(prev => ({ ...prev, amount: 0 }));
+                  }}
                   className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${infaqType === "prayer" ? "border-rose-500 bg-rose-50" : "border-border hover:border-rose-500/50"}`}
                 >
                   <Star className={`h-6 w-6 ${infaqType === "prayer" ? "text-rose-500" : "text-muted-foreground"}`} />
@@ -338,6 +344,13 @@ export default function Payment() {
                   </div>
                 </div>
               </>
+            )}
+
+            {infaqType === "prayer" && (
+              <div className="rounded-xl bg-rose-50 p-4 border border-rose-200">
+                <p className="text-sm font-medium text-rose-900">✨ Doa Terbaik (Gratis)</p>
+                <p className="text-xs text-rose-700 mt-1">Tidak ada nominal donasi untuk pilihan ini. Cukup tulis doa terbaikmu dan kirim!</p>
+              </div>
             )}
 
             <div className="space-y-2">
