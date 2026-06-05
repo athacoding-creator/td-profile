@@ -9,6 +9,7 @@ import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
 import { MapPin, Calendar, Users, Lock, Link2, ChevronLeft, Upload, ChevronDown, ChevronUp, Info, MessageCircle, CreditCard, Landmark, Wallet, Video } from "lucide-react";
 import { YoutubeEmbed } from "@/components/YoutubeEmbed";
+import DonorWall from "@/components/DonorWall";
 import { AttendanceModeSelector } from "@/components/AttendanceModeSelector";
 import { toast } from "sonner";
 import { format } from "date-fns";
