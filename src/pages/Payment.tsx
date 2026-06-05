@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
 import { ChevronLeft, CreditCard, Landmark, Info, MessageCircle, CheckCircle2, Heart, ChevronDown, ChevronUp } from "lucide-react";
@@ -19,7 +20,7 @@ export default function Payment() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<any>(null);
-  const [paymentForm, setPaymentForm] = useState({ amount: 0, proofFile: null as File | null });
+  const [paymentForm, setPaymentForm] = useState({ amount: 0, proofFile: null as File | null, donorMessage: "" });
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
   const [settings, setSettings] = useState<any>({});
 
@@ -156,14 +157,15 @@ export default function Payment() {
         payment_status: "pending",
         amount_paid: paymentForm.amount,
         payment_proof_url: publicUrl,
-        paid_at: new Date().toISOString()
+        paid_at: new Date().toISOString(),
+        donor_message: paymentForm.donorMessage?.trim() ? paymentForm.donorMessage.trim().slice(0, 500) : null,
       };
 
       if (registration) {
-        const { error } = await supabase.from("registrations").update(updateData).eq("id", registration.id);
+        const { error } = await (supabase.from("registrations") as any).update(updateData).eq("id", registration.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("registrations").insert({
+        const { error } = await (supabase.from("registrations") as any).insert({
           ...updateData,
           event_id: event.id,
           user_id: user?.id
@@ -203,24 +205,42 @@ export default function Payment() {
     if (isOnline && user && event) {
       try {
         const amount = Number(paymentForm.amount) || 0;
+        const msg = paymentForm.donorMessage?.trim() ? paymentForm.donorMessage.trim().slice(0, 500) : null;
         if (registration) {
-          await supabase.from("registrations").update({
+          await (supabase.from("registrations") as any).update({
             payment_status: "none",
             amount_paid: amount,
             paid_at: new Date().toISOString(),
+            donor_message: msg,
           }).eq("id", registration.id);
         } else {
-          await supabase.from("registrations").insert({
+          await (supabase.from("registrations") as any).insert({
             event_id: event.id,
             user_id: user.id,
             payment_status: "none",
             amount_paid: amount,
             paid_at: new Date().toISOString(),
+            donor_message: msg,
           });
         }
         toast.success("Pendaftaran tercatat. Video akan tersedia di halaman event.");
       } catch (e: any) {
         toast.error(e?.message ?? "Gagal mencatat pendaftaran");
+      }
+    } else if (user && event && !isOnline) {
+      // Offline infaq → save donor message into registration if exists or create a new one (sukarela tracked)
+      try {
+        const amount = Number(paymentForm.amount) || 0;
+        const msg = paymentForm.donorMessage?.trim() ? paymentForm.donorMessage.trim().slice(0, 500) : null;
+        if (registration) {
+          await (supabase.from("registrations") as any).update({
+            amount_paid: amount,
+            paid_at: new Date().toISOString(),
+            donor_message: msg,
+          }).eq("id", registration.id);
+        }
+      } catch {
+        // non-blocking
       }
     }
     window.open(infaqWaUrl, "_blank", "noopener,noreferrer");
@@ -288,7 +308,7 @@ export default function Payment() {
             <div className="space-y-3">
               <Label className="text-sm font-semibold">Pilih Nominal Infaq (Rp)</Label>
               <div className="grid grid-cols-2 gap-2">
-                {[5000, 10000, 20000, 50000].map((amt) => (
+                {[50000, 20000, 10000, 5000].map((amt) => (
                   <Button
                     key={amt}
                     variant={paymentForm.amount === amt ? "default" : "outline"}
@@ -302,6 +322,19 @@ export default function Payment() {
               <p className="text-[11px] text-muted-foreground">
                 Pilih salah satu nominal di atas sebagai bentuk dukungan dakwah kami.
               </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold">Pesan / Doa Terbaikmu (Opsional)</Label>
+              <Textarea
+                value={paymentForm.donorMessage}
+                onChange={(e) => setPaymentForm({ ...paymentForm, donorMessage: e.target.value.slice(0, 500) })}
+                placeholder="Contoh: Semoga ilmunya bermanfaat dan berkah untuk semua 🤲"
+                rows={3}
+                maxLength={500}
+                className="text-sm"
+              />
+              <p className="text-[10px] text-muted-foreground text-right">{paymentForm.donorMessage.length}/500</p>
             </div>
 
             <Button onClick={handleInfaqWa} className="w-full h-12 font-bold bg-green-600 hover:bg-green-700">
@@ -408,7 +441,7 @@ export default function Payment() {
                   />
                 ) : (
                   <div className="grid grid-cols-2 gap-2">
-                    {[5000, 10000, 20000, 50000].map((amt) => (
+                    {[50000, 20000, 10000, 5000].map((amt) => (
                       <Button
                         key={amt}
                         variant={paymentForm.amount === amt ? "default" : "outline"}
@@ -420,6 +453,19 @@ export default function Payment() {
                     ))}
                   </div>
                 )}
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold">Pesan / Doa Terbaikmu (Opsional)</Label>
+                <Textarea
+                  value={paymentForm.donorMessage}
+                  onChange={(e) => setPaymentForm({ ...paymentForm, donorMessage: e.target.value.slice(0, 500) })}
+                  placeholder="Contoh: Semoga acaranya lancar & berkah 🤲"
+                  rows={3}
+                  maxLength={500}
+                  className="text-sm"
+                />
+                <p className="text-[10px] text-muted-foreground text-right">{paymentForm.donorMessage.length}/500</p>
               </div>
 
               <div className="space-y-1.5">

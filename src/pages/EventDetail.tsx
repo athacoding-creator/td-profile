@@ -9,6 +9,7 @@ import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
 import { MapPin, Calendar, Users, Lock, Link2, ChevronLeft, Upload, ChevronDown, ChevronUp, Info, MessageCircle, CreditCard, Landmark, Wallet, Video } from "lucide-react";
 import { YoutubeEmbed } from "@/components/YoutubeEmbed";
+import DonorWall from "@/components/DonorWall";
 import { AttendanceModeSelector } from "@/components/AttendanceModeSelector";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -435,6 +436,12 @@ export default function EventDetail() {
                     <Link2 className="mr-2 h-4 w-4" /> Gabung Grup
                   </Button>
                 </a>
+              )}
+
+              {(event.is_online || event.registration_type === "paid" || event.registration_type === "infaq") && (
+                <div className="pt-2">
+                  <DonorWall eventId={event.id} />
+                </div>
               )}
             </>
           ) : showPaymentForm ? (
