@@ -336,15 +336,6 @@ export default function Payment() {
                       </Button>
                     ))}
                   </div>
-                  <div className="mt-2">
-                    <Input
-                      type="number"
-                      placeholder="Nominal lainnya..."
-                      value={paymentForm.amount}
-                      onChange={(e) => setPaymentForm({ ...paymentForm, amount: Number(e.target.value) })}
-                      className="h-11"
-                    />
-                  </div>
                 </div>
               </>
             )}
