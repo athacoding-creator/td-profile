@@ -162,10 +162,10 @@ export default function Payment() {
       };
 
       if (registration) {
-        const { error } = await supabase.from("registrations").update(updateData).eq("id", registration.id);
+        const { error } = await (supabase.from("registrations") as any).update(updateData).eq("id", registration.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("registrations").insert({
+        const { error } = await (supabase.from("registrations") as any).insert({
           ...updateData,
           event_id: event.id,
           user_id: user?.id
@@ -207,14 +207,14 @@ export default function Payment() {
         const amount = Number(paymentForm.amount) || 0;
         const msg = paymentForm.donorMessage?.trim() ? paymentForm.donorMessage.trim().slice(0, 500) : null;
         if (registration) {
-          await supabase.from("registrations").update({
+          await (supabase.from("registrations") as any).update({
             payment_status: "none",
             amount_paid: amount,
             paid_at: new Date().toISOString(),
             donor_message: msg,
           }).eq("id", registration.id);
         } else {
-          await supabase.from("registrations").insert({
+          await (supabase.from("registrations") as any).insert({
             event_id: event.id,
             user_id: user.id,
             payment_status: "none",
@@ -233,7 +233,7 @@ export default function Payment() {
         const amount = Number(paymentForm.amount) || 0;
         const msg = paymentForm.donorMessage?.trim() ? paymentForm.donorMessage.trim().slice(0, 500) : null;
         if (registration) {
-          await supabase.from("registrations").update({
+          await (supabase.from("registrations") as any).update({
             amount_paid: amount,
             paid_at: new Date().toISOString(),
             donor_message: msg,
