@@ -81,14 +81,18 @@ export default function DonorWall({ eventId }: { eventId: string }) {
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <p className="font-bold text-sm truncate">{d.full_name}</p>
-                  {d.amount_paid && d.amount_paid > 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      Donasi{" "}
-                      <span className="font-bold text-primary">
-                        Rp {d.amount_paid.toLocaleString("id-ID")}
-                      </span>
-                    </p>
-                  )}
+                  <p className="text-xs text-muted-foreground">
+                    {d.amount_paid && d.amount_paid > 0 ? (
+                      <>
+                        Donasi{" "}
+                        <span className="font-bold text-primary">
+                          Rp {d.amount_paid.toLocaleString("id-ID")}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="font-medium text-rose-500">Memberikan Doa Terbaik</span>
+                    )}
+                  </p>
                 </div>
                 <span className="shrink-0 text-[10px] text-muted-foreground">{timeAgo(d.paid_at)}</span>
               </div>
