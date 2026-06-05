@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
-import { ChevronLeft, CreditCard, Landmark, Info, MessageCircle, CheckCircle2, Heart, ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronLeft, CreditCard, Info, MessageCircle, CheckCircle2, Heart, Coins, Star } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Payment() {
@@ -21,7 +21,7 @@ export default function Payment() {
   const [submitting, setSubmitting] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<any>(null);
   const [paymentForm, setPaymentForm] = useState({ amount: 0, proofFile: null as File | null, donorMessage: "" });
-  const [expandedStep, setExpandedStep] = useState<number | null>(null);
+  const [infaqType, setInfaqType] = useState<"money" | "prayer">("money");
   const [settings, setSettings] = useState<any>({});
 
   useEffect(() => {
@@ -40,12 +40,16 @@ export default function Payment() {
         return;
       }
       setEvent(eventData);
-      const onlineDefault = eventData.is_online ? (eventData.min_infaq || 5000) : 0;
+      
+      const isOnline = !!eventData.is_online;
+      // Default amount: for online, it must be >= min_infaq. For offline infaq, it can be 0 if prayer is chosen.
+      const defaultAmount = eventData.registration_type === "paid"
+        ? eventData.price
+        : (eventData.min_infaq || 5000);
+      
       setPaymentForm(prev => ({
         ...prev,
-        amount: eventData.registration_type === "paid"
-          ? eventData.price
-          : (eventData.registration_type === "infaq" ? eventData.min_infaq : onlineDefault)
+        amount: defaultAmount
       }));
 
       if (user) {
@@ -58,19 +62,20 @@ export default function Payment() {
         setRegistration(regData);
         if (regData?.amount_paid) {
           setPaymentForm(prev => ({ ...prev, amount: regData.amount_paid }));
+          if (regData.amount_paid > 0) setInfaqType("money");
+          else if (regData.donor_message) setInfaqType("prayer");
         }
       }
 
-      // Load payment method from QRIS Manager based on event category
-      if ((eventData as any).payment_method_id) {
+      // Load payment method
+      if (eventData.payment_method_id) {
         const { data: pmData } = await supabase
           .from("payment_methods")
           .select("*")
-          .eq("id", (eventData as any).payment_method_id)
+          .eq("id", eventData.payment_method_id)
           .maybeSingle();
         setPaymentMethod(pmData);
       } else {
-        // Get QRIS from qris_methods table — online events always pakai kategori infaq
         const category = eventData.is_online
           ? "infaq"
           : eventData.registration_type === "paid"
@@ -101,7 +106,6 @@ export default function Payment() {
         }
       }
 
-      // Load settings for WA
       const { data: settingsData } = await supabase
         .from("donation_settings")
         .select("key, value");
@@ -174,8 +178,6 @@ export default function Payment() {
       }
 
       toast.success("Bukti pembayaran berhasil diunggah!");
-      
-      // Redirect to WhatsApp with verification message
       const whatsappNumber = settings.admin_wa_number || "085111514040";
       const template = settings.wa_verification_template || "Halo Admin, saya sudah melakukan pembayaran untuk event {{event_title}}. Berikut bukti pembayarannya. Mohon bantuannya untuk diverifikasi. Terima kasih.";
       const whatsappMessage = template.replace("{{event_title}}", event.title);
@@ -189,65 +191,57 @@ export default function Payment() {
 
   if (loading) return <div className="container py-20 text-center text-muted-foreground">Memuat…</div>;
 
-  const isOnline = !!event?.is_online && registration?.attendance_mode === "online";
+  const isOnline = registration?.attendance_mode === "online";
   const isInfaq = event?.registration_type === "infaq" || isOnline;
   const isPaid = event?.registration_type === "paid" && !isOnline;
   const alreadyApproved = isPaid && registration?.payment_status === "approved";
 
-  const waNumber = settings.admin_wa_number || "085111514040";
-  const infaqMsg = isOnline
-    ? `Assalamu'alaikum Admin, saya sudah berinfaq Rp ${paymentForm.amount.toLocaleString("id-ID")} untuk kajian online "${event?.title}". Mohon kontennya bisa saya akses. Terima kasih.`
-    : `Assalamu'alaikum Admin, saya ingin berinfaq untuk "${event?.title}" sebesar Rp ${paymentForm.amount.toLocaleString("id-ID")}. Mohon konfirmasinya, terima kasih.`;
-  const infaqWaUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(infaqMsg)}`;
-
-  const handleInfaqWa = async () => {
-    // For online events, persist a registration so the video unlocks on return.
-    if (isOnline && user && event) {
-      try {
-        const amount = Number(paymentForm.amount) || 0;
-        const msg = paymentForm.donorMessage?.trim() ? paymentForm.donorMessage.trim().slice(0, 500) : null;
-        if (registration) {
-          await (supabase.from("registrations") as any).update({
-            payment_status: "none",
-            amount_paid: amount,
-            paid_at: new Date().toISOString(),
-            donor_message: msg,
-          }).eq("id", registration.id);
-        } else {
-          await (supabase.from("registrations") as any).insert({
-            event_id: event.id,
-            user_id: user.id,
-            payment_status: "none",
-            amount_paid: amount,
-            paid_at: new Date().toISOString(),
-            donor_message: msg,
-          });
-        }
-        toast.success("Pendaftaran tercatat. Video akan tersedia di halaman event.");
-      } catch (e: any) {
-        toast.error(e?.message ?? "Gagal mencatat pendaftaran");
-      }
-    } else if (user && event && !isOnline) {
-      // Offline infaq → save donor message into registration if exists or create a new one (sukarela tracked)
-      try {
-        const amount = Number(paymentForm.amount) || 0;
-        const msg = paymentForm.donorMessage?.trim() ? paymentForm.donorMessage.trim().slice(0, 500) : null;
-        if (registration) {
-          await (supabase.from("registrations") as any).update({
-            amount_paid: amount,
-            paid_at: new Date().toISOString(),
-            donor_message: msg,
-          }).eq("id", registration.id);
-        }
-      } catch {
-        // non-blocking
-      }
+  const handleInfaqSubmit = async () => {
+    if (infaqType === "prayer" && !paymentForm.donorMessage.trim()) {
+      return toast.error("Silakan tulis doa terbaikmu terlebih dahulu");
     }
-    window.open(infaqWaUrl, "_blank", "noopener,noreferrer");
-    if (isOnline && event) navigate(`/event/${event.id}`);
+
+    setSubmitting(true);
+    try {
+      const amount = infaqType === "money" ? (Number(paymentForm.amount) || 0) : 0;
+      const msg = paymentForm.donorMessage?.trim() ? paymentForm.donorMessage.trim().slice(0, 500) : null;
+      
+      const updateData = {
+        payment_status: "none",
+        amount_paid: amount,
+        paid_at: new Date().toISOString(),
+        donor_message: msg,
+      };
+
+      if (registration) {
+        await (supabase.from("registrations") as any).update(updateData).eq("id", registration.id);
+      } else {
+        await (supabase.from("registrations") as any).insert({
+          ...updateData,
+          event_id: event.id,
+          user_id: user?.id,
+          attendance_mode: isOnline ? "online" : "offline"
+        });
+      }
+
+      if (infaqType === "money") {
+        const waNumber = settings.admin_wa_number || "085111514040";
+        const infaqMsg = isOnline
+          ? `Assalamu'alaikum Admin, saya sudah berinfaq Rp ${amount.toLocaleString("id-ID")} untuk kajian online "${event?.title}". Mohon kontennya bisa saya akses. Terima kasih.`
+          : `Assalamu'alaikum Admin, saya ingin berinfaq untuk "${event?.title}" sebesar Rp ${amount.toLocaleString("id-ID")}. Mohon konfirmasinya, terima kasih.`;
+        window.open(`https://wa.me/${waNumber}?text=${encodeURIComponent(infaqMsg)}`, "_blank", "noopener,noreferrer");
+      }
+
+      toast.success(infaqType === "money" ? "Pendaftaran berhasil! Silakan konfirmasi via WA." : "Terima kasih atas doa terbaiknya! Pendaftaran berhasil.");
+      if (isOnline) navigate(`/event/${event.id}`);
+      else navigate("/riwayat");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Gagal memproses pendaftaran");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  // Cabang 1: Pembayaran paid sudah dikonfirmasi → tidak perlu bayar lagi
   if (alreadyApproved) {
     return (
       <div className="min-h-screen bg-background pb-32">
@@ -261,7 +255,6 @@ export default function Payment() {
             <h2 className="font-display text-xl font-bold text-green-800">Pembayaran Sudah Dikonfirmasi</h2>
             <p className="text-sm text-green-700">
               Kamu sudah terdaftar &amp; pembayaran kamu untuk <strong>{event.title}</strong> telah disetujui admin.
-              Tidak perlu bayar lagi selama event ini aktif.
             </p>
             <Button onClick={() => navigate(`/event/${id}`)} className="mt-2">Kembali ke Detail Event</Button>
           </div>
@@ -271,7 +264,6 @@ export default function Payment() {
     );
   }
 
-  // Cabang 2: Infaq → sukarela, langsung ke WA admin, tanpa upload bukti
   if (isInfaq) {
     return (
       <div className="min-h-screen bg-background pb-32">
@@ -284,162 +276,52 @@ export default function Payment() {
           <div className="space-y-5 rounded-2xl border border-border/60 bg-card p-4 sm:p-6 shadow-sm">
             <div className="border-b pb-4">
               <h2 className="font-display text-xl font-bold flex items-center gap-2">
-                <Heart className="h-5 w-5 text-rose-500" /> Berinfaq: {event.title}
+                <Heart className="h-5 w-5 text-rose-500" /> Pendaftaran: {event.title}
               </h2>
               <p className="text-xs text-muted-foreground mt-1">
-                Infaq bersifat sukarela. Tidak perlu unggah bukti — silakan kontak admin langsung via WhatsApp.
+                {isOnline 
+                  ? "Khusus pendaftaran online, silakan berinfaq untuk mengakses video kajian." 
+                  : "Silakan pilih cara Anda berkontribusi untuk event ini."}
               </p>
             </div>
 
-            {paymentMethod?.qr_url && (
-              <div className="flex flex-col items-center gap-3 rounded-xl bg-muted/30 p-4 border border-border/40">
-                <div className="flex items-center gap-2 text-xs font-semibold uppercase text-muted-foreground">
-                  <CreditCard className="h-3 w-3" /> {paymentMethod.name}
-                </div>
-                <div className="rounded-2xl border-4 border-white bg-white p-2 shadow-md">
-                  <img src={paymentMethod.qr_url} alt="QRIS Infaq" className="w-48 h-48 sm:w-64 sm:h-64 object-contain" />
-                </div>
-                <div className="flex items-center gap-2 rounded-full bg-rose-50 px-4 py-1.5 text-xs font-medium text-rose-700 border border-rose-100">
-                  <Info className="h-3 w-3" /> Scan QR di atas dengan aplikasi favoritmu.
-                </div>
+            {!isOnline && (
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => setInfaqType("money")}
+                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${infaqType === "money" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}
+                >
+                  <Coins className={`h-6 w-6 ${infaqType === "money" ? "text-primary" : "text-muted-foreground"}`} />
+                  <span className="text-sm font-bold">Infaq Uang</span>
+                </button>
+                <button
+                  onClick={() => setInfaqType("prayer")}
+                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${infaqType === "prayer" ? "border-rose-500 bg-rose-50" : "border-border hover:border-rose-500/50"}`}
+                >
+                  <Star className={`h-6 w-6 ${infaqType === "prayer" ? "text-rose-500" : "text-muted-foreground"}`} />
+                  <span className="text-sm font-bold">Doa Terbaik</span>
+                </button>
               </div>
             )}
 
-            <div className="space-y-3">
-              <Label className="text-sm font-semibold">Pilih Nominal Infaq (Rp)</Label>
-              <div className="grid grid-cols-2 gap-2">
-                {[50000, 20000, 10000, 5000].map((amt) => (
-                  <Button
-                    key={amt}
-                    variant={paymentForm.amount === amt ? "default" : "outline"}
-                    className={`h-12 text-sm font-bold ${paymentForm.amount === amt ? 'bg-accent text-white border-accent' : 'border-border'}`}
-                    onClick={() => setPaymentForm({ ...paymentForm, amount: amt })}
-                  >
-                    Rp {amt.toLocaleString("id-ID")}
-                  </Button>
-                ))}
-              </div>
-              <p className="text-[11px] text-muted-foreground">
-                Pilih salah satu nominal di atas sebagai bentuk dukungan dakwah kami.
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-sm font-semibold">Pesan / Doa Terbaikmu (Opsional)</Label>
-              <Textarea
-                value={paymentForm.donorMessage}
-                onChange={(e) => setPaymentForm({ ...paymentForm, donorMessage: e.target.value.slice(0, 500) })}
-                placeholder="Contoh: Semoga ilmunya bermanfaat dan berkah untuk semua 🤲"
-                rows={3}
-                maxLength={500}
-                className="text-sm"
-              />
-              <p className="text-[10px] text-muted-foreground text-right">{paymentForm.donorMessage.length}/500</p>
-            </div>
-
-            <Button onClick={handleInfaqWa} className="w-full h-12 font-bold bg-green-600 hover:bg-green-700">
-              <MessageCircle className="mr-2 h-4 w-4" /> {isOnline ? "Saya Sudah Infaq — Buka Video" : "Hubungi Admin via WhatsApp"}
-            </Button>
-
-            <div className="rounded-xl bg-blue-50 p-3 text-xs text-blue-800 border border-blue-100">
-              <Info className="h-3 w-3 inline mr-1" />
-              Karena infaq sukarela, admin tidak perlu memverifikasi bukti. Semua urusan langsung lewat WA.
-            </div>
-          </div>
-        </main>
-        <BottomNav />
-      </div>
-    );
-  }
-
-  const paymentSteps = [
-    { number: 1, title: `Simpan detail ${paymentMethod?.type === 'qris' ? 'QRIS' : 'pembayaran'}.`, description: "Screenshot atau simpan gambarnya." },
-    { number: 2, title: "Buka aplikasi m-banking atau e-wallet.", description: "Pilih menu bayar atau transfer." },
-    { number: 3, title: paymentMethod?.type === 'qris' ? 'Scan QR Code di atas.' : `Transfer ke ${paymentMethod?.bank_name} ${paymentMethod?.account_number}`, description: "Pastikan data sesuai." },
-    { number: 4, title: "Masukkan nominal sesuai yang tertera.", description: "Konfirmasi pembayaran." },
-    { number: 5, title: "Simpan bukti pembayaran.", description: "Screenshot hasil transaksi." },
-    { number: 6, title: "Upload bukti di bawah & konfirmasi.", description: "Selesai!" }
-  ];
-
-  return (
-    <div className="min-h-screen bg-background pb-32">
-      <Header />
-      <main className="container max-w-3xl py-4 px-3">
-        <button onClick={() => navigate(`/event/${id}`)} className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-          <ChevronLeft className="h-4 w-4" /> Kembali ke Detail Event
-        </button>
-
-        <div className="space-y-6 rounded-2xl border border-border/60 bg-card p-4 sm:p-6 shadow-sm">
-          <div className="border-b pb-4">
-            <h2 className="font-display text-xl font-bold">Pembayaran: {event.title}</h2>
-          </div>
-
-          <div className="space-y-4">
-            {paymentMethod ? (
-              <div className="flex flex-col items-center gap-4 rounded-xl bg-muted/30 p-4 border border-border/40">
-                <div className="flex items-center gap-2 text-xs font-semibold uppercase text-muted-foreground">
-                  {paymentMethod.type === 'qris' ? <CreditCard className="h-3 w-3" /> : <Landmark className="h-3 w-3" />}
-                  {paymentMethod.name}
-                </div>
-                
-                {paymentMethod.type === 'qris' && paymentMethod.qr_url && (
-                  <div className="rounded-2xl border-4 border-white bg-white p-2 shadow-md">
-                    <img src={paymentMethod.qr_url} alt="QRIS" className="w-48 h-48 sm:w-64 sm:h-64 object-contain" />
-                  </div>
-                )}
-
-                {paymentMethod.type !== 'qris' && (
-                  <div className="w-full text-center space-y-1">
-                    <p className="text-lg font-bold text-primary">{paymentMethod.bank_name}</p>
-                    <p className="text-2xl font-mono font-bold">{paymentMethod.account_number}</p>
-                    <p className="text-sm font-medium">a/n {paymentMethod.account_name}</p>
-                  </div>
-                )}
-                
-                <div className="flex items-center gap-2 rounded-full bg-amber-50 px-4 py-1.5 text-xs font-medium text-amber-700 border border-amber-100">
-                  <Info className="h-3 w-3" /> Scan/Bayar sekarang dengan aplikasi Anda.
-                </div>
-              </div>
-            ) : (
-              <div className="rounded-xl bg-destructive/10 p-4 text-center text-xs text-destructive">
-                Metode pembayaran belum dikonfigurasi.
-              </div>
-            )}
-
-            <div className="rounded-xl border border-border/40 overflow-hidden">
-              <button onClick={() => setExpandedStep(expandedStep === 1 ? null : 1)} className="w-full flex items-center justify-between p-3 bg-muted/50">
-                <div className="flex items-center gap-2">
-                  <Info className="h-4 w-4 text-accent" />
-                  <span className="text-sm font-bold">Instruksi Pembayaran</span>
-                </div>
-                {expandedStep === 1 ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-              </button>
-              {expandedStep === 1 && (
-                <div className="p-4 space-y-4 border-t">
-                  {paymentSteps.map((step) => (
-                    <div key={step.number} className="flex gap-3">
-                      <div className="flex-shrink-0 flex h-6 w-6 items-center justify-center rounded-full bg-accent text-xs font-bold text-white">{step.number}</div>
-                      <div>
-                        <p className="text-xs font-medium">{step.title}</p>
-                        <p className="text-[10px] text-muted-foreground">{step.description}</p>
-                      </div>
+            {infaqType === "money" && (
+              <>
+                {paymentMethod?.qr_url && (
+                  <div className="flex flex-col items-center gap-3 rounded-xl bg-muted/30 p-4 border border-border/40">
+                    <div className="flex items-center gap-2 text-xs font-semibold uppercase text-muted-foreground">
+                      <CreditCard className="h-3 w-3" /> {paymentMethod.name}
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                    <div className="rounded-2xl border-4 border-white bg-white p-2 shadow-md">
+                      <img src={paymentMethod.qr_url} alt="QRIS Infaq" className="w-48 h-48 sm:w-64 sm:h-64 object-contain" />
+                    </div>
+                    <div className="flex items-center gap-2 rounded-full bg-rose-50 px-4 py-1.5 text-xs font-medium text-rose-700 border border-rose-100">
+                      <Info className="h-3 w-3" /> Scan QR di atas dengan aplikasi favoritmu.
+                    </div>
+                  </div>
+                )}
 
-            <div className="space-y-4 pt-2">
-              <div className="space-y-3">
-                <Label className="text-sm font-semibold">Nominal (Rp)</Label>
-                {event.registration_type === "paid" ? (
-                  <Input
-                    type="number"
-                    value={paymentForm.amount}
-                    disabled
-                    className="h-12 bg-muted/20 font-bold"
-                  />
-                ) : (
+                <div className="space-y-3">
+                  <Label className="text-sm font-semibold">Pilih Nominal Infaq (Rp)</Label>
                   <div className="grid grid-cols-2 gap-2">
                     {[50000, 20000, 10000, 5000].map((amt) => (
                       <Button
@@ -452,38 +334,122 @@ export default function Payment() {
                       </Button>
                     ))}
                   </div>
-                )}
-              </div>
+                  <div className="mt-2">
+                    <Input
+                      type="number"
+                      placeholder="Nominal lainnya..."
+                      value={paymentForm.amount}
+                      onChange={(e) => setPaymentForm({ ...paymentForm, amount: Number(e.target.value) })}
+                      className="h-11"
+                    />
+                  </div>
+                </div>
+              </>
+            )}
 
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold">Pesan / Doa Terbaikmu (Opsional)</Label>
-                <Textarea
-                  value={paymentForm.donorMessage}
-                  onChange={(e) => setPaymentForm({ ...paymentForm, donorMessage: e.target.value.slice(0, 500) })}
-                  placeholder="Contoh: Semoga acaranya lancar & berkah 🤲"
-                  rows={3}
-                  maxLength={500}
-                  className="text-sm"
-                />
-                <p className="text-[10px] text-muted-foreground text-right">{paymentForm.donorMessage.length}/500</p>
-              </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold">
+                {infaqType === "prayer" ? "Tulis Doa Terbaikmu" : "Pesan / Doa Terbaikmu (Opsional)"}
+              </Label>
+              <Textarea
+                value={paymentForm.donorMessage}
+                onChange={(e) => setPaymentForm({ ...paymentForm, donorMessage: e.target.value.slice(0, 500) })}
+                placeholder={infaqType === "prayer" ? "Tuliskan doa terbaikmu di sini..." : "Contoh: Semoga ilmunya bermanfaat dan berkah untuk semua 🤲"}
+                rows={3}
+                maxLength={500}
+                className="text-sm"
+              />
+              <p className="text-[10px] text-muted-foreground text-right">{paymentForm.donorMessage.length}/500</p>
+            </div>
 
-              <div className="space-y-1.5">
-                <Label className="text-sm font-semibold">Upload Bukti Pembayaran</Label>
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setPaymentForm({ ...paymentForm, proofFile: e.target.files?.[0] || null })}
-                  className="h-12 py-2"
-                />
-              </div>
+            <Button 
+              onClick={handleInfaqSubmit} 
+              disabled={submitting}
+              className={`w-full h-12 font-bold ${infaqType === "money" ? "bg-green-600 hover:bg-green-700" : "bg-rose-500 hover:bg-rose-600"}`}
+            >
+              {submitting ? "Memproses..." : (infaqType === "money" ? (isOnline ? "Saya Sudah Infaq — Buka Video" : "Konfirmasi Infaq via WhatsApp") : "Kirim Doa & Daftar Sekarang")}
+            </Button>
 
-              <div className="pt-2">
-                <Button onClick={submitPayment} disabled={submitting || !paymentForm.proofFile} className="w-full h-12 font-bold bg-green-600 hover:bg-green-700">
-                  {submitting ? "Mengirim..." : <><MessageCircle className="mr-2 h-4 w-4" /> Konfirmasi & Chat Admin</>}
-                </Button>
+            <div className="rounded-xl bg-blue-50 p-3 text-xs text-blue-800 border border-blue-100">
+              <Info className="h-3 w-3 inline mr-1" />
+              {infaqType === "money" 
+                ? "Infaq Anda sangat membantu operasional dakwah kami. Terima kasih!" 
+                : "Doa yang tulus adalah hadiah yang sangat berharga. Terima kasih!"}
+            </div>
+          </div>
+        </main>
+        <BottomNav />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background pb-32">
+      <Header />
+      <main className="container max-w-3xl py-4 px-3">
+        <button onClick={() => navigate(`/event/${id}`)} className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+          <ChevronLeft className="h-4 w-4" /> Kembali ke Detail Event
+        </button>
+
+        <div className="space-y-6 rounded-2xl border border-border/60 bg-card p-4 sm:p-6 shadow-sm">
+          <div className="border-b pb-4">
+            <h2 className="font-display text-xl font-bold">Pembayaran: {event.title}</h2>
+            <p className="text-xs text-muted-foreground mt-1">
+              Silakan selesaikan pembayaran untuk mengonfirmasi pendaftaran Anda.
+            </p>
+          </div>
+
+          {paymentMethod ? (
+            <div className="flex flex-col items-center gap-4 rounded-xl bg-muted/30 p-4 border border-border/40">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase text-muted-foreground">
+                <CreditCard className="h-3 w-3" /> {paymentMethod.name}
+              </div>
+              {paymentMethod.qr_url && (
+                <div className="rounded-2xl border-4 border-white bg-white p-2 shadow-md">
+                  <img src={paymentMethod.qr_url} alt="QRIS" className="w-48 h-48 sm:w-64 sm:h-64 object-contain" />
+                </div>
+              )}
+              <div className="text-center">
+                <p className="text-2xl font-bold text-primary">Rp {event.price?.toLocaleString("id-ID")}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mt-1">Nominal Tetap</p>
               </div>
             </div>
+          ) : (
+            <div className="rounded-xl bg-destructive/10 p-4 text-center text-xs text-destructive">
+              Metode pembayaran belum dikonfigurasi.
+            </div>
+          )}
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold">Upload Bukti Pembayaran</Label>
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setPaymentForm({ ...paymentForm, proofFile: e.target.files?.[0] || null })}
+                className="text-xs sm:text-sm"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold">Pesan / Doa Terbaikmu (Opsional)</Label>
+              <Textarea
+                value={paymentForm.donorMessage}
+                onChange={(e) => setPaymentForm({ ...paymentForm, donorMessage: e.target.value.slice(0, 500) })}
+                placeholder="Tulis pesan atau doa Anda di sini..."
+                rows={3}
+                maxLength={500}
+                className="text-sm"
+              />
+            </div>
+
+            <Button
+              onClick={submitPayment}
+              disabled={submitting || !paymentForm.proofFile}
+              className="w-full h-12 font-bold shadow-lg"
+            >
+              {submitting ? "Mengirim..." : "✓ Konfirmasi Pembayaran"}
+            </Button>
           </div>
         </div>
       </main>

@@ -31,7 +31,7 @@ function timeAgo(iso: string): string {
 export default function DonorWall({ eventId }: { eventId: string }) {
   const [donors, setDonors] = useState<Donor[]>([]);
   const [loading, setLoading] = useState(true);
-  const [visible, setVisible] = useState(1);
+  const [visible, setVisible] = useState(3);
 
   useEffect(() => {
     let cancelled = false;
@@ -69,7 +69,7 @@ export default function DonorWall({ eventId }: { eventId: string }) {
 
       {donors.length === 0 ? (
         <div className="mt-4 rounded-xl bg-muted/40 p-4 text-center text-xs text-muted-foreground">
-          Jadilah yang pertama berinfaq (daftar online) &amp; meninggalkan pesan doa terbaikmu 🤲
+          Jadilah yang pertama berinfaq atau memberikan doa terbaikmu 🤲
         </div>
       ) : (
         <ul className="mt-3 space-y-2.5">
@@ -82,10 +82,16 @@ export default function DonorWall({ eventId }: { eventId: string }) {
                 <div className="min-w-0">
                   <p className="font-bold text-sm truncate">{d.full_name}</p>
                   <p className="text-xs text-muted-foreground">
-                    Donasi{" "}
-                    <span className="font-bold text-primary">
-                      Rp {(d.amount_paid ?? 0).toLocaleString("id-ID")}
-                    </span>
+                    {d.amount_paid && d.amount_paid > 0 ? (
+                      <>
+                        Donasi{" "}
+                        <span className="font-bold text-primary">
+                          Rp {d.amount_paid.toLocaleString("id-ID")}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="font-medium text-rose-500">Memberikan Doa Terbaik</span>
+                    )}
                   </p>
                 </div>
                 <span className="shrink-0 text-[10px] text-muted-foreground">{timeAgo(d.paid_at)}</span>

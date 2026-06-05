@@ -54,7 +54,7 @@ export function AttendanceModeSelector({
               <div className="flex-1">
                 <h3 className="font-semibold text-sm sm:text-base">Mengikuti Online</h3>
                 <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-                  Tonton video rekaman kapan saja. Cukup berinfaq sukarela untuk akses selamanya.
+                  Tonton video rekaman kapan saja. Cukup berinfaq (nominal bebas) untuk akses selamanya.
                 </p>
               </div>
             </button>
