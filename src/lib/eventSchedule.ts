@@ -57,7 +57,7 @@ export const computeScanWindow = (ev: EventLike): ScanWindow => {
     const [eh, em] = parseHM(ev.recurring_end_time);
     const start = new Date(now); start.setHours(sh, sm, 0, 0);
     const end = new Date(now); end.setHours(eh, em, 0, 0);
-    const scanStart = new Date(start.getTime() - 60 * 60 * 1000);
+    const scanStart = new Date(start.getTime() - 3 * 60 * 60 * 1000);
     const expired = isEventExpired(ev);
     const inDay = days.includes(now.getDay());
     if (expired) return { expired: true, scanAvailable: false, scanNotYetAvailable: false, scanStartTime: scanStart, scanEndTime: end, message: "Event berkelanjutan sudah berakhir" };
@@ -73,7 +73,7 @@ export const computeScanWindow = (ev: EventLike): ScanWindow => {
   }
   const start = new Date(ev.starts_at);
   const end = ev.ends_at ? new Date(ev.ends_at) : new Date(start.getTime() + 6 * 3600 * 1000);
-  const scanStart = new Date(start.getTime() - 60 * 60 * 1000);
+  const scanStart = new Date(start.getTime() - 3 * 60 * 60 * 1000);
   const expired = isEventExpired(ev);
   return {
     expired,
