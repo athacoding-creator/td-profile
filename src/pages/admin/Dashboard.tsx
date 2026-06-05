@@ -12,7 +12,6 @@ const groups = [
     items: [
       { to: "/admin/event", icon: CalendarDays, title: "Event", desc: "Buat & kelola event, export peserta, QR absensi", tag: "Real-time" },
       { to: "/admin/program", icon: Sparkles, title: "Program", desc: "Kategori payung event (Ngaji Asyik, AMIDA, dll)" },
-      { to: "/admin/hero", icon: ImageIcon, title: "Hero Banner", desc: "Atur tampilan slider/banner di halaman utama" },
     ],
   },
   {
