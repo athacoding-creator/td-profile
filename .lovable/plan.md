@@ -1,63 +1,63 @@
-# Perbaikan Scan QR + Halaman Download App
+## Tujuan
 
-## 1. Fix Scan QR (white screen / force close)
+Setiap event dengan mode **Daftar Online** atau **paid/infaq** akan menampilkan section **Doa Terbaik** di halaman Detail Event. Doa diambil otomatis dari library global. Tampil 1 doa dulu, ada tombol **Load More** (+3 per klik) supaya tidak ngelag. Section muncul dengan animasi slide-down saat user sudah daftar/infaq. Pilihan nominal infaq juga akan diurutkan dari paling besar ke paling kecil.
 
-### Penyebab yang ditemukan di `src/pages/ScanLanding.tsx`
-- **Race condition profil**: `useEffect` jalan saat `loading=false` tapi `profile` masih `null` (belum sempat ter-fetch). Cek `profile && !profile.is_complete` di-skip, lalu langsung memanggil `record_attendance`. Saat profil akhirnya datang dan komponen re-render, guard `ran.current` mencegah retry → layar putih.
-- **Tidak ada error boundary**: kalau `refreshProfile()` atau RPC melempar exception non-PostgrestError (mis. network drop / token refresh expired seperti log `refresh_token_not_found`), tidak ada `try/catch` → komponen crash → blank screen / force close di WebView.
-- **Tidak ada try/catch di seluruh effect** — error apapun di pertengahan flow membuat state `error` tidak ter-set.
-- **`ran.current`** mengunci proses; kalau gagal di tengah jalan, refresh memang menampilkan sukses karena attendance sudah tercatat di percobaan pertama, tapi UI yang pertama tidak pernah navigate.
+## Yang akan dibuat / diubah
 
-### Perbaikan
-1. **Tunggu profil benar-benar siap** sebelum lanjut: `if (loading || (user && !profile)) return;` — jangan jalan tanpa profil.
-2. **Bungkus seluruh async flow dengan `try/catch/finally`**. Setiap throw → `setError(friendlyMessage)`, jangan biarkan promise reject menyebabkan blank screen.
-3. **Pindahkan `await refreshProfile()` ke dalam try/catch terpisah** dan jangan blokir navigasi kalau gagal — attendance sudah berhasil, cukup navigate ke halaman sukses lalu refresh profil di background.
-4. **Reset `ran.current = false` saat error** supaya user bisa retry tanpa harus reload manual; tambah tombol "Coba lagi" yang re-trigger effect.
-5. **Tampilkan loading state yang aman** saat profil belum siap (sudah ada, tapi pastikan tidak lompat ke error).
-6. **Optional safety**: tambah `<ErrorBoundary>` ringan di `App.tsx` Suspense fallback supaya crash sub-tree tidak menampilkan white screen total.
+### 1. Tabel `prayers` (library doa global)
+- Kolom: `title`, `arabic`, `latin`, `translation`, `category` (opsional, default "umum"), `order_index`, `is_active`.
+- Akses: semua user (termasuk anon) bisa **baca**; hanya admin yang bisa kelola.
+- Seed awal: 8–10 doa populer (Doa sebelum belajar, Doa pembuka majelis, Doa penutup majelis/kafaratul majlis, Doa minta ilmu bermanfaat, Doa istiqomah, Doa untuk orang tua, Sayyidul istighfar, Doa minta husnul khotimah, dll.).
 
-### File yang diubah
-- `src/pages/ScanLanding.tsx` — rewrite effect dengan guard profil + try/catch + retry.
-- (Opsional) `src/components/ErrorBoundary.tsx` baru + dipakai membungkus `<Routes>` di `src/App.tsx`.
+### 2. Komponen baru `PrayerList`
+- Props: tidak perlu event-specific (library global).
+- Fetch sekali, cache di-state.
+- Tampil 1 doa pertama. Tombol **"Tampilkan doa lainnya"** menambah 3 doa per klik. Tombol hilang saat semua doa sudah tampil.
+- Setiap doa pakai animasi slide-down (Tailwind `animate-in slide-in-from-top-2 fade-in` atau equivalent).
+- Card doa berisi: judul, teks Arab (rtl, font besar), latin (italic), arti.
 
----
+### 3. Update `src/pages/EventDetail.tsx`
+- Munculkan `<PrayerList />` di dalam blok `{registration && (...)}` (sudah ada), hanya jika:
+  - `event.is_online && registration.attendance_mode === "online"`, **atau**
+  - `event.registration_type === "paid"`, **atau**
+  - `event.registration_type === "infaq"`.
+- Letak: setelah info status pendaftaran, sebelum tombol pembayaran/aksi lain — sehingga begitu user selesai klik daftar/infaq, doa langsung muncul slide down di halaman detail.
+- Section punya heading "🤲 Doa Terbaik untuk Sesi Ini" + subteks kecil.
 
-## 2. Halaman Download App (di Profil)
+### 4. Urutkan nominal infaq dari besar → kecil
+- Di **`src/pages/Payment.tsx`** (form infaq dan form paid-nominal): ubah array `[5000, 10000, 20000, 50000]` → `[50000, 20000, 10000, 5000]`.
+- Di **`src/pages/EventDetail.tsx`** form infaq inline (sekitar line 402): sama, ubah ke urutan desc.
+- Default `paymentForm.amount` tetap nominal terkecil (5000) supaya user sadar memilih, atau tetap mengikuti `min_infaq`. (Tidak diubah perilakunya, hanya urutan tombol.)
 
-### Lokasi
-- Tambah menu baru "Download Aplikasi" di list menu Profil (`src/pages/Profil.tsx`) dengan ikon `Download`.
-- Route baru `/profil/download` → halaman baru `src/pages/DownloadApp.tsx`.
+## Detail teknis (untuk developer)
 
-### Isi halaman (bahasa awam, banyak gambar/ikon)
-- **Tombol utama "Install Aplikasi"** (PWA install). Pakai event `beforeinstallprompt`:
-  - Simpan ke state, klik tombol → `prompt()`.
-  - Kalau browser tidak support / sudah terinstall → tampilkan instruksi manual sesuai device.
-- **Tab/Accordion 3 panduan** dengan langkah bergambar sederhana:
-  - **Android (Chrome)** — buka di Chrome → titik 3 → "Tambahkan ke layar Utama" → "Install".
-  - **iPhone / iPad (Safari)** — buka di Safari → ikon Share → "Tambahkan ke Layar Utama" → "Tambah".
-  - **Windows / Laptop (Chrome/Edge)** — ikon install di address bar → "Install".
-- **Catatan ringan**: "Aplikasi ini tetap update otomatis tanpa harus download ulang."
+```sql
+CREATE TABLE public.prayers (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  title text NOT NULL,
+  arabic text NOT NULL,
+  latin text,
+  translation text NOT NULL,
+  category text DEFAULT 'umum',
+  order_index int DEFAULT 0,
+  is_active boolean DEFAULT true,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+GRANT SELECT ON public.prayers TO anon, authenticated;
+GRANT ALL ON public.prayers TO service_role;
+ALTER TABLE public.prayers ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "anyone reads active prayers" ON public.prayers
+  FOR SELECT USING (is_active = true);
+CREATE POLICY "admin manages prayers" ON public.prayers
+  FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
+```
 
-### PWA setup (manifest-only, sesuai aturan)
-- Tambah `public/manifest.webmanifest` dengan: `name`, `short_name`, `theme_color`, `background_color`, `display: standalone`, `start_url: "/"`, `icons` (192 & 512 dari logo Teras Dakwah).
-- Tambah ikon `public/icon-192.png` & `public/icon-512.png` (pakai logo TD yang ada di Cloudinary).
-- Tambah ke `index.html` head:
-  - `<link rel="manifest" href="/manifest.webmanifest">`
-  - `<meta name="theme-color" content="#...">`
-  - `<link rel="apple-touch-icon" href="/icon-192.png">`
-- **Tidak menambahkan service worker / vite-plugin-pwa** (user tidak minta offline; sesuai aturan PWA default).
+Plus seed `INSERT` 8–10 doa.
 
-### File yang diubah / dibuat
-- **Baru**: `src/pages/DownloadApp.tsx`, `public/manifest.webmanifest`, `public/icon-192.png`, `public/icon-512.png`.
-- **Diubah**: `src/App.tsx` (route baru), `src/pages/Profil.tsx` (menu baru), `index.html` (manifest + theme tag).
+Komponen `PrayerList` pakai `useState<number>(visibleCount)` mulai dari 1, increment +3. Animasi: `key={prayer.id}` + class `animate-in slide-in-from-top-4 fade-in duration-500`.
 
----
-
-## Rangkuman
-
-| Bagian | Hasil |
-|---|---|
-| Scan QR white screen | Hilang — flow di-guard, error ditampilkan, ada tombol retry |
-| Force close | Berkurang — semua throw ditangani, tidak ada unhandled rejection |
-| Halaman Download App | Ada di Profil, ramah orang awam, tombol install PWA + panduan Android/iOS/Windows |
-| Installable di HP | Ya, lewat manifest (tanpa offline / service worker) |
+## Yang TIDAK diubah
+- Halaman Payment tidak menampilkan doa (sesuai jawaban: doa hanya di Detail Event).
+- Tidak ada admin UI untuk kelola doa di iterasi ini (library dari seed; bisa ditambah nanti via Settings admin kalau diminta).
+- Logika gating video YouTube, pembayaran, QR scan tidak disentuh.
