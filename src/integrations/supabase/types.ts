@@ -583,6 +583,7 @@ export type Database = {
           amount_paid: number | null
           attendance_mode: string | null
           created_at: string
+          donor_message: string | null
           event_id: string
           id: string
           paid_at: string | null
@@ -594,6 +595,7 @@ export type Database = {
           amount_paid?: number | null
           attendance_mode?: string | null
           created_at?: string
+          donor_message?: string | null
           event_id: string
           id?: string
           paid_at?: string | null
@@ -605,6 +607,7 @@ export type Database = {
           amount_paid?: number | null
           attendance_mode?: string | null
           created_at?: string
+          donor_message?: string | null
           event_id?: string
           id?: string
           paid_at?: string | null
@@ -695,6 +698,16 @@ export type Database = {
       find_active_event_by_program_token: {
         Args: { _token: string }
         Returns: string
+      }
+      get_event_donors: {
+        Args: { _event_id: string }
+        Returns: {
+          amount_paid: number
+          donor_message: string
+          full_name: string
+          id: string
+          paid_at: string
+        }[]
       }
       has_role:
         | {
