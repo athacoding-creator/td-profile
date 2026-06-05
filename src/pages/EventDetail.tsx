@@ -437,6 +437,12 @@ export default function EventDetail() {
                   </Button>
                 </a>
               )}
+
+              {(event.is_online || event.registration_type === "paid" || event.registration_type === "infaq") && (
+                <div className="pt-2">
+                  <DonorWall eventId={event.id} />
+                </div>
+              )}
             </>
           ) : showPaymentForm ? (
             <PaymentForm
