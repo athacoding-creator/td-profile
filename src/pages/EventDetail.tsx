@@ -324,7 +324,7 @@ export default function EventDetail() {
                       <Video className="h-4 w-4" /> Akses Video Terbuka
                     </div>
                     <p className="text-[11px] font-normal text-accent/80">
-                      Alhamdulillah, pendaftaran online berhasil. Kamu bisa menonton video ini berulang kali kapan saja.
+                      pendaftaran online berhasil. Kamu bisa menonton video ini berulang kali kapan saja.
                     </p>
                   </div>
                 ) : (

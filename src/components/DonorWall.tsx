@@ -62,14 +62,14 @@ export default function DonorWall({ eventId }: { eventId: string }) {
     <div className="rounded-2xl border border-border/40 bg-card p-4 sm:p-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="text-center mb-1">
         <h3 className="font-display text-xl sm:text-2xl font-extrabold tracking-tight">
-          #orang-orang <span className="text-rose-500">baik</span>
+          Doa <span>Terbaik</span>
         </h3>
-        <p className="text-xs text-muted-foreground mt-0.5">Berkumpul memberikan doa &amp; dukungan terbaik</p>
+        <p className="text-xs text-muted-foreground mt-0.5">Dinding doa &amp; dukungan terbaik</p>
       </div>
 
       {donors.length === 0 ? (
         <div className="mt-4 rounded-xl bg-muted/40 p-4 text-center text-xs text-muted-foreground">
-          Jadilah yang pertama berinfaq &amp; meninggalkan pesan doa terbaikmu 🤲
+          Jadilah yang pertama berinfaq (daftar online) &amp; meninggalkan pesan doa terbaikmu 🤲
         </div>
       ) : (
         <ul className="mt-3 space-y-2.5">

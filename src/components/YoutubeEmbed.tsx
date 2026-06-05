@@ -46,14 +46,6 @@ export function YoutubeEmbed({ url, title }: { url?: string | null; title?: stri
           className="absolute inset-0 h-full w-full border-0"
         />
       </div>
-      <a
-        href={`https://www.youtube.com/watch?v=${id}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="block text-center text-xs text-muted-foreground hover:text-foreground underline"
-      >
-        Buka di YouTube jika video tidak tampil
-      </a>
     </div>
   );
 }
