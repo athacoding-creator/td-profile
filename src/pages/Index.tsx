@@ -14,8 +14,9 @@ export default function Index() {
   useEffect(() => {
     supabase
       .from("events")
-      .select("id,title,venue,poster_url,gender,starts_at,ends_at,status")
+      .select("id,title,venue,poster_url,gender,starts_at,ends_at,status,is_pinned")
       .in("status", ["active", "finished"])
+      .order("is_pinned", { ascending: false })
       .order("starts_at", { ascending: false })
       .limit(6)
       .then(({ data, error }) => {
