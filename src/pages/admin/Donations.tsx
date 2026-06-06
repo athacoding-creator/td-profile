@@ -13,6 +13,26 @@ const extractStoragePath = (url: string | null): string | null => {
   return m ? decodeURIComponent(m[1]) : null;
 };
 
+// Buka WhatsApp ke nomor user dengan pesan konfirmasi/penolakan pembayaran
+const notifyUserWA = (registration: any, event: any, status: string) => {
+  const phone = registration?.profiles?.phone;
+  if (!phone) {
+    toast.message("User tidak punya nomor WhatsApp — notifikasi dilewati");
+    return;
+  }
+  const name = registration?.profiles?.full_name ?? "Kak";
+  const eventTitle = event?.title ?? "event";
+  const nominal = registration?.amount_paid
+    ? `Rp ${Number(registration.amount_paid).toLocaleString("id-ID")}`
+    : "";
+  const msg =
+    status === "approved"
+      ? `Assalamu'alaikum ${name},\n\nAlhamdulillah, pembayaran ${nominal ? nominal + " " : ""}untuk *${eventTitle}* telah kami *TERIMA* ✅\n\nPendaftaran Anda sudah aktif. Silakan tunjukkan QR code di aplikasi saat hadir. Jazakumullah khair.`
+      : `Assalamu'alaikum ${name},\n\nMohon maaf, pembayaran untuk *${eventTitle}* belum dapat kami konfirmasi dan untuk sementara kami *TOLAK* ❌\n\nMohon cek kembali bukti transfer atau hubungi admin untuk klarifikasi. Terima kasih.`;
+  const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+  window.open(url, "_blank", "noopener,noreferrer");
+};
+
 export default function DonationsPage() {
   const { registrations, events, reloadRegistrations } = useAdmin();
   const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "approved" | "rejected">("all");
@@ -225,6 +245,7 @@ function DonationTableRow({ registration, event, onChanged }: { registration: an
       }
 
       toast.success(status === "approved" ? "Pembayaran disetujui" : "Pembayaran ditolak");
+      notifyUserWA(registration, event, status);
       await onChanged();
     } finally {
       setUpdating(false);
@@ -329,6 +350,7 @@ function DonationMobileCard({ registration, event, onChanged }: { registration: 
       }
 
       toast.success(status === "approved" ? "Pembayaran disetujui" : "Pembayaran ditolak");
+      notifyUserWA(registration, event, status);
       await onChanged();
     } finally {
       setUpdating(false);
