@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAdmin } from "./AdminLayout";
@@ -8,10 +8,26 @@ import * as XLSX from "xlsx";
 import { isEventExpired } from "@/lib/eventSchedule";
 
 export default function RegistrationsPage() {
-  const { events, attendance } = useAdmin();
+  const { events, attendance, registrations } = useAdmin();
   const [eventFilter, setEventFilter] = useState<string>("");
   const [showPastEvents, setShowPastEvents] = useState(false);
   const [searchPast, setSearchPast] = useState("");
+
+  // Lookup: event_id|user_id -> { amount_paid, donor_message }
+  const regLookup = useMemo(() => {
+    const m: Record<string, { amount_paid: number | null; donor_message: string | null }> = {};
+    registrations.forEach((r: any) => {
+      m[`${r.event_id}|${r.user_id}`] = {
+        amount_paid: r.amount_paid ?? null,
+        donor_message: r.donor_message ?? null,
+      };
+    });
+    return m;
+  }, [registrations]);
+
+  const getReg = (a: any) => regLookup[`${a.event_id}|${a.user_id}`] || { amount_paid: null, donor_message: null };
+  const fmtRp = (n: number | null | undefined) =>
+    n && n > 0 ? `Rp ${Number(n).toLocaleString("id-ID")}` : "—";
 
   // Hanya tampilkan jamaah yang sudah scan QR (tercatat di attendance)
   const filtered = eventFilter
@@ -32,7 +48,9 @@ export default function RegistrationsPage() {
 
   const exportXLSX = () => {
     const ev = eventFilter ? events.find((e) => e.id === eventFilter) : null;
-    const rows = filtered.map((a, i) => ({
+    const rows = filtered.map((a, i) => {
+      const reg = getReg(a);
+      return ({
       No: i + 1,
       "Waktu Hadir": new Date(a.scanned_at).toLocaleString("id-ID"),
       Nama: a.profiles?.full_name ?? "-",
@@ -47,11 +65,15 @@ export default function RegistrationsPage() {
       Email: a.profiles?.email ?? "-",
       Event: ev?.title ?? (eventFilter ? "-" : "Semua Event"),
       "Poin Diperoleh": a.points_awarded ?? 0,
-    }));
+      Nominal: reg.amount_paid && reg.amount_paid > 0 ? Number(reg.amount_paid) : "",
+      "Pesan Doa": reg.donor_message ?? "",
+    });
+    });
     const ws = XLSX.utils.json_to_sheet(rows);
     ws["!cols"] = [
       { wch: 5 }, { wch: 22 }, { wch: 28 }, { wch: 16 },
       { wch: 12 }, { wch: 18 }, { wch: 30 }, { wch: 36 }, { wch: 14 },
+      { wch: 14 }, { wch: 40 },
     ];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Kehadiran");
