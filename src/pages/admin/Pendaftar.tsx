@@ -3,8 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAdmin } from "./AdminLayout";
 import { Section } from "./components";
-import { MessageCircle, ChevronDown, Users, X, Download } from "lucide-react";
-import * as XLSX from "xlsx";
+import { MessageCircle, ChevronDown, Users, X } from "lucide-react";
 
 export default function PendaftarPage() {
   const { events, registrations } = useAdmin();
@@ -30,35 +29,6 @@ export default function PendaftarPage() {
 
   const fmtRp = (n: number | null | undefined) =>
     n && n > 0 ? `Rp ${Number(n).toLocaleString("id-ID")}` : "—";
-
-  const exportXLSX = () => {
-    const ev = eventFilter ? eventById[eventFilter] : null;
-    const rows = filtered.map((r, i) => ({
-      No: i + 1,
-      "Tanggal Daftar": new Date(r.created_at).toLocaleString("id-ID"),
-      Nama: r.profiles?.full_name ?? "-",
-      WhatsApp: r.profiles?.phone ?? "-",
-      Gender:
-        r.profiles?.gender === "L" ? "Laki-laki" :
-        r.profiles?.gender === "P" ? "Perempuan" :
-        (r.profiles?.gender ?? "-"),
-      Kota: r.profiles?.city ?? "-",
-      Email: r.profiles?.email ?? "-",
-      Event: r.events?.title ?? "-",
-      Nominal: r.amount_paid && r.amount_paid > 0 ? Number(r.amount_paid) : "",
-      "Pesan Doa": r.donor_message ?? "",
-    }));
-    const ws = XLSX.utils.json_to_sheet(rows);
-    ws["!cols"] = [
-      { wch: 5 }, { wch: 22 }, { wch: 28 }, { wch: 16 }, { wch: 12 },
-      { wch: 18 }, { wch: 30 }, { wch: 36 }, { wch: 14 }, { wch: 40 },
-    ];
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Pendaftar");
-    const slug = (ev?.title || "semua-event").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
-    const stamp = new Date().toISOString().slice(0, 10);
-    XLSX.writeFile(wb, `pendaftar-${slug}-${stamp}.xlsx`);
-  };
 
   return (
     <>
@@ -133,9 +103,6 @@ export default function PendaftarPage() {
           <p className="text-xs text-muted-foreground">
             Menampilkan <span className="font-bold text-foreground">{filtered.length}</span> jamaah terdaftar
           </p>
-          <Button size="sm" onClick={exportXLSX} disabled={filtered.length === 0}>
-            <Download className="mr-1 h-4 w-4" /> Download Excel
-          </Button>
         </div>
 
         {/* Desktop table view */}
