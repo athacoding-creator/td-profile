@@ -185,7 +185,7 @@ export default function EventDetail() {
         toast.success("Pendaftaran berhasil! Silakan pilih infaq uang atau doa terbaik.");
         navigate(`/event/${event.id}/bayar`);
       } else if (isInfaq) {
-        toast.success("Pendaftaran berhasil! Infaq sukarela bisa dikirim via WA.");
+        toast.success("Pendaftaran berhasil!");
       } else {
         toast.success("Pendaftaran berhasil! Silakan upload bukti pembayaran.");
         navigate(`/event/${event.id}/bayar`);
