@@ -204,12 +204,15 @@ export default function RegistrationsPage() {
                 <th className="pr-3">WhatsApp</th>
                 <th className="pr-3">Gender</th>
                 <th className="pr-3">Kota</th>
+                <th className="pr-3 text-right">Nominal</th>
+                <th className="pr-3">Pesan Doa</th>
                 <th>Poin</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((a) => {
                 const phone = a.profiles?.phone || "";
+                const reg = getReg(a);
                 return (
                   <tr key={a.id} className="border-t border-border/60">
                     <td className="py-2 pr-3 text-xs text-muted-foreground whitespace-nowrap">
@@ -239,6 +242,12 @@ export default function RegistrationsPage() {
                         : (a.profiles?.gender || "—")}
                     </td>
                     <td className="pr-3">{a.profiles?.city || "—"}</td>
+                    <td className="pr-3 text-xs text-right whitespace-nowrap font-medium">
+                      {fmtRp(reg.amount_paid)}
+                    </td>
+                    <td className="pr-3 text-xs text-muted-foreground max-w-[220px] truncate" title={reg.donor_message || ""}>
+                      {reg.donor_message || "—"}
+                    </td>
                     <td className="text-xs font-medium">{a.points_awarded ?? 0}</td>
                   </tr>
                 );
@@ -251,6 +260,7 @@ export default function RegistrationsPage() {
         <div className="md:hidden space-y-2">
           {filtered.map((a) => {
             const phone = a.profiles?.phone || "";
+            const reg = getReg(a);
             return (
               <div
                 key={a.id}
@@ -277,6 +287,16 @@ export default function RegistrationsPage() {
                 ) : (
                   <p className="text-xs text-muted-foreground">—</p>
                 )}
+                {(reg.amount_paid && reg.amount_paid > 0) || reg.donor_message ? (
+                  <div className="rounded-md bg-muted/60 px-2 py-1.5 space-y-0.5">
+                    {reg.amount_paid && reg.amount_paid > 0 && (
+                      <p className="text-xs font-semibold">{fmtRp(reg.amount_paid)}</p>
+                    )}
+                    {reg.donor_message && (
+                      <p className="text-[11px] text-muted-foreground italic line-clamp-2">"{reg.donor_message}"</p>
+                    )}
+                  </div>
+                ) : null}
                 <p className="text-xs text-muted-foreground">
                   {new Date(a.scanned_at).toLocaleString("id-ID")}
                 </p>
