@@ -185,7 +185,7 @@ export default function EventDetail() {
         toast.success("Pendaftaran berhasil! Silakan pilih infaq uang atau doa terbaik.");
         navigate(`/event/${event.id}/bayar`);
       } else if (isInfaq) {
-        toast.success("Pendaftaran berhasil!");
+        toast.success("Pendaftaran berhasil! Infaq sukarela bisa dikirim via WA.");
       } else {
         toast.success("Pendaftaran berhasil! Silakan upload bukti pembayaran.");
         navigate(`/event/${event.id}/bayar`);
@@ -338,7 +338,7 @@ export default function EventDetail() {
                     {event.registration_type === "paid" && registration.payment_status === "pending" && " (Menunggu verifikasi pembayaran)"}
                     {event.registration_type === "paid" && registration.payment_status === "approved" && " (Pembayaran disetujui)"}
                     {event.registration_type === "paid" && registration.payment_status === "rejected" && " (Pembayaran ditolak)"}
-                    {event.registration_type === "infaq" && registration.attendance_mode === "offline" && " (Infaq sukarela via WA)"}
+                    {event.registration_type === "infaq" && registration.attendance_mode === "offline" && ""}
                     {event.is_online && registration.attendance_mode === "online" && !showVideoAfterInfaq && " (Belum Berinfaq)"}
                   </>
                 )}
@@ -649,7 +649,7 @@ function PaymentForm({ event, paymentMethod, paymentForm, setPaymentForm, submit
                   ))}
                   <div className="mt-4 rounded-lg bg-amber-50 p-3 border border-amber-100">
                     <p className="text-[10px] leading-relaxed text-amber-800">
-                      💡 Donasi Anda akan diverifikasi admin dalam 1x24 jam. Jika ada kendala, hubungi kami via tombol <strong>Chat WA</strong> di bawah.
+                      💡 Pembayaran Anda akan diverifikasi admin dalam 1x24 jam. Jika ada kendala, hubungi kami via tombol <strong>Chat WA</strong> di bawah.
                     </p>
                   </div>
                 </div>
