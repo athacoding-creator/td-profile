@@ -303,12 +303,12 @@ export default function Payment() {
 
             <div className="space-y-3">
               <Label className="text-sm font-semibold">Infaq Terbaikmu (Rp)</Label>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="flex flex-col gap-2">
                 {[50000, 20000, 10000, 5000].map((amt) => (
                   <Button
                     key={amt}
                     variant={paymentForm.amount === amt && infaqType === "money" ? "default" : "outline"}
-                    className={`h-12 text-sm font-bold ${paymentForm.amount === amt && infaqType === "money" ? 'bg-accent text-white border-accent' : 'border-border'}`}
+                    className={`h-12 text-sm font-bold w-full ${paymentForm.amount === amt && infaqType === "money" ? 'bg-accent text-white border-accent' : 'border-border'}`}
                     onClick={() => {
                       setInfaqType("money");
                       setPaymentForm({ ...paymentForm, amount: amt });
@@ -319,7 +319,7 @@ export default function Payment() {
                 ))}
                 <Button
                   variant={infaqType === "prayer" ? "default" : "outline"}
-                  className={`h-12 text-sm font-bold ${infaqType === "prayer" ? 'bg-rose-500 text-white border-rose-500 hover:bg-rose-600' : 'border-border hover:bg-rose-50'}`}
+                  className={`h-12 text-sm font-bold w-full ${infaqType === "prayer" ? 'bg-rose-500 text-white border-rose-500 hover:bg-rose-600' : 'border-border hover:bg-rose-50'}`}
                   onClick={() => {
                     setInfaqType("prayer");
                     setPaymentForm({ ...paymentForm, amount: 0 });
