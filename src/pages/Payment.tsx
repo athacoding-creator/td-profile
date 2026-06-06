@@ -45,7 +45,7 @@ export default function Payment() {
       // Default amount: for online, it must be >= min_infaq. For offline infaq, it can be 0 if prayer is chosen.
       const defaultAmount = eventData.registration_type === "paid"
         ? eventData.price
-        : (eventData.min_infaq || 5000);
+        : (eventData.min_infaq || 0);
       
       setPaymentForm(prev => ({
         ...prev,
