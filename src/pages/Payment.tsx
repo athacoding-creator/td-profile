@@ -276,7 +276,7 @@ export default function Payment() {
           <div className="space-y-5 rounded-2xl border border-border/60 bg-card p-4 sm:p-6 shadow-sm">
             <div className="border-b pb-4">
               <h2 className="font-display text-xl font-bold flex items-center gap-2">
-                <Heart className="h-5 w-5 text-rose-500" /> Pendaftaran: {event.title}
+                <CreditCard className="h-5 w-5 text-rose-500" /> Pendaftaran: {event.title}
               </h2>
               <p className="text-xs text-muted-foreground mt-1">
                 {isOnline 

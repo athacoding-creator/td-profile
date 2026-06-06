@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useAdmin } from "./AdminLayout";
 import {
-  CalendarDays, Sparkles, Users, Gift, ShoppingBag, Image as ImageIcon, Settings as SettingsIcon, Hand, UserCircle, ClipboardCheck, Heart, Camera, QrCode
+  CalendarDays, Sparkles, Users, Gift, ShoppingBag, Image as ImageIcon, Settings as SettingsIcon, Hand, UserCircle, ClipboardCheck, CreditCard, Camera, QrCode
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import ActivityStatsCard from "./ActivityStatsCard";
@@ -28,7 +28,7 @@ const groups = [
     items: [
       { to: "/admin/merchandise", icon: ShoppingBag, title: "Merchandise", desc: "Kelola katalog reward & stok" },
       { to: "/admin/penukaran", icon: Gift, title: "Penukaran", desc: "Verifikasi & approve penukaran poin" },
-      { to: "/admin/donasi", icon: Heart, title: "Donasi", desc: "Kelola data donasi & pembayaran" },
+      { to: "/admin/pembayaran", icon: CreditCard, title: "Pembayaran", desc: "Kelola data pembayaran" },
       { to: "/admin/qris", icon: QrCode, title: "QRIS Manager", desc: "Kelola kode QRIS untuk pembayaran" },
       { to: "/admin/pengaturan", icon: SettingsIcon, title: "Pengaturan", desc: "Bonus poin & pengaturan aplikasi" },
     ],

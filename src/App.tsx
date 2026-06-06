@@ -93,7 +93,7 @@ const App = () => (
 	                  <Route path="kehadiran" element={<AdminKehadiran />} />
 	                  <Route path="penukaran" element={<AdminRedemptions />} />
 	                  <Route path="akun" element={<AdminUsers />} />
-                  <Route path="donasi" element={<AdminDonations />} />
+                  <Route path="pembayaran" element={<AdminDonations />} />
 	<Route path="qris" element={<AdminQrisManager />} />
 	<Route path="merchandise" element={<AdminMerchandise />} />
 
