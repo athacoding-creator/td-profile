@@ -67,7 +67,7 @@ export const computeScanWindow = (ev: EventLike): ScanWindow => {
         : "—";
       return { expired: false, scanAvailable: false, scanNotYetAvailable: true, scanStartTime: scanStart, scanEndTime: end, message: `Scan tersedia setiap hari ${upcomingDay}` };
     }
-    if (now < scanStart) return { expired: false, scanAvailable: false, scanNotYetAvailable: true, scanStartTime: scanStart, scanEndTime: end };
+    // Scan is always available as long as it's the right day and not expired
     if (now > end) return { expired: false, scanAvailable: false, scanNotYetAvailable: false, scanStartTime: scanStart, scanEndTime: end, message: "Acara hari ini sudah selesai" };
     return { expired: false, scanAvailable: true, scanNotYetAvailable: false, scanStartTime: scanStart, scanEndTime: end };
   }
@@ -77,8 +77,8 @@ export const computeScanWindow = (ev: EventLike): ScanWindow => {
   const expired = isEventExpired(ev);
   return {
     expired,
-    scanAvailable: !expired && now >= scanStart && now <= end,
-    scanNotYetAvailable: !expired && now < scanStart,
+    scanAvailable: !expired, // Always available if not expired
+    scanNotYetAvailable: false, // Never "not yet" available
     scanStartTime: scanStart,
     scanEndTime: end,
   };

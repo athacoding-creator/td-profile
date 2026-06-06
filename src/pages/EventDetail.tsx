@@ -414,23 +414,19 @@ export default function EventDetail() {
 
               {/* Scan QR untuk free, infaq offline, atau paid yang sudah approved */}
               {((registration.payment_status === "none" && registration.attendance_mode === "offline") || (event.registration_type === "paid" && registration.payment_status === "approved")) && (
-                <>
-                  {scanNotYetAvailable ? (
-                    <div className="rounded-xl bg-amber-50 p-4 text-center text-xs sm:text-sm text-amber-800 border border-amber-200">
-                      {sw.message ?? `Scan QR tersedia mulai jam ${scanStartTime.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}`}
-                    </div>
-                  ) : scanAvailable ? (
+                <div className="mt-4">
+                  {scanAvailable ? (
                     <Link to={`/event/${event.id}/scan`}>
-                      <Button className="w-full bg-primary text-primary-foreground text-sm sm:text-base">
-                        📱 Scan QR Absensi
+                      <Button className="w-full h-12 font-bold shadow-lg">
+                        Scan QR Absensi
                       </Button>
                     </Link>
                   ) : (
-                    <div className="rounded-xl bg-muted p-4 text-center text-xs sm:text-sm text-muted-foreground">
-                      {sw.message ?? "Scan QR sedang tidak tersedia"}
+                    <div className="rounded-xl bg-muted p-4 text-center text-xs sm:text-sm font-medium text-muted-foreground border border-border">
+                      {sw.message ?? "Scan QR tidak tersedia saat ini"}
                     </div>
                   )}
-                </>
+                </div>
               )}
 
               {event.group_link && (

@@ -281,77 +281,56 @@ export default function Payment() {
               <p className="text-xs text-muted-foreground mt-1">
                 {isOnline 
                   ? "Khusus pendaftaran online, silakan berinfaq untuk mengakses video kajian selamanya." 
-                  : "Silakan pilih cara Anda berkontribusi untuk event ini. Infaq uang atau doa terbaik saja — tidak ada yang memaksa."}
+                  : "Infaq Anda sangat membantu operasional dakwah kami. Terima kasih! Nominal bebas sesuai kemampuan."}
               </p>
             </div>
 
-            {!isOnline && (
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => {
-                    setInfaqType("money");
-                    setPaymentForm(prev => ({ ...prev, amount: event.min_infaq || 5000 }));
-                  }}
-                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${infaqType === "money" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}
-                >
-                  <Coins className={`h-6 w-6 ${infaqType === "money" ? "text-primary" : "text-muted-foreground"}`} />
-                  <span className="text-sm font-bold">Infaq Uang</span>
-                  <span className="text-[10px] text-muted-foreground">Nominal bebas</span>
-                </button>
-                <button
+
+
+            {paymentMethod?.qr_url && (
+              <div className="flex flex-col items-center gap-3 rounded-xl bg-muted/30 p-4 border border-border/40">
+                <div className="flex items-center gap-2 text-xs font-semibold uppercase text-muted-foreground">
+                  <CreditCard className="h-3 w-3" /> {paymentMethod.name}
+                </div>
+                <div className="rounded-2xl border-4 border-white bg-white p-2 shadow-md">
+                  <img src={paymentMethod.qr_url} alt="QRIS Infaq" className="w-48 h-48 sm:w-64 sm:h-64 object-contain" />
+                </div>
+                <div className="flex items-center gap-2 rounded-full bg-rose-50 px-4 py-1.5 text-xs font-medium text-rose-700 border border-rose-100">
+                  <Info className="h-3 w-3" /> Scan QR di atas dengan aplikasi favoritmu.
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              <Label className="text-sm font-semibold">Infaq Terbaikmu (Rp)</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {[50000, 20000, 10000, 5000].map((amt) => (
+                  <Button
+                    key={amt}
+                    variant={paymentForm.amount === amt && infaqType === "money" ? "default" : "outline"}
+                    className={`h-12 text-sm font-bold ${paymentForm.amount === amt && infaqType === "money" ? 'bg-accent text-white border-accent' : 'border-border'}`}
+                    onClick={() => {
+                      setInfaqType("money");
+                      setPaymentForm({ ...paymentForm, amount: amt });
+                    }}
+                  >
+                    Rp {amt.toLocaleString("id-ID")}
+                  </Button>
+                ))}
+                <Button
+                  variant={infaqType === "prayer" ? "default" : "outline"}
+                  className={`h-12 text-sm font-bold ${infaqType === "prayer" ? 'bg-rose-500 text-white border-rose-500 hover:bg-rose-600' : 'border-border hover:bg-rose-50'}`}
                   onClick={() => {
                     setInfaqType("prayer");
-                    setPaymentForm(prev => ({ ...prev, amount: 0 }));
+                    setPaymentForm({ ...paymentForm, amount: 0 });
                   }}
-                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${infaqType === "prayer" ? "border-rose-500 bg-rose-50" : "border-border hover:border-rose-500/50"}`}
                 >
-                  <Star className={`h-6 w-6 ${infaqType === "prayer" ? "text-rose-500" : "text-muted-foreground"}`} />
-                  <span className="text-sm font-bold">Doa Terbaik</span>
-                  <span className="text-[10px] text-muted-foreground">Gratis</span>
-                </button>
+                  Doa Terbaik
+                </Button>
               </div>
-            )}
+            </div>
 
-            {infaqType === "money" && (
-              <>
-                {paymentMethod?.qr_url && (
-                  <div className="flex flex-col items-center gap-3 rounded-xl bg-muted/30 p-4 border border-border/40">
-                    <div className="flex items-center gap-2 text-xs font-semibold uppercase text-muted-foreground">
-                      <CreditCard className="h-3 w-3" /> {paymentMethod.name}
-                    </div>
-                    <div className="rounded-2xl border-4 border-white bg-white p-2 shadow-md">
-                      <img src={paymentMethod.qr_url} alt="QRIS Infaq" className="w-48 h-48 sm:w-64 sm:h-64 object-contain" />
-                    </div>
-                    <div className="flex items-center gap-2 rounded-full bg-rose-50 px-4 py-1.5 text-xs font-medium text-rose-700 border border-rose-100">
-                      <Info className="h-3 w-3" /> Scan QR di atas dengan aplikasi favoritmu.
-                    </div>
-                  </div>
-                )}
 
-                <div className="space-y-3">
-                  <Label className="text-sm font-semibold">Pilih Nominal Infaq (Rp)</Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {[50000, 20000, 10000, 5000].map((amt) => (
-                      <Button
-                        key={amt}
-                        variant={paymentForm.amount === amt ? "default" : "outline"}
-                        className={`h-12 text-sm font-bold ${paymentForm.amount === amt ? 'bg-accent text-white border-accent' : 'border-border'}`}
-                        onClick={() => setPaymentForm({ ...paymentForm, amount: amt })}
-                      >
-                        Rp {amt.toLocaleString("id-ID")}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
-
-            {infaqType === "prayer" && (
-              <div className="rounded-xl bg-rose-50 p-4 border border-rose-200">
-                <p className="text-sm font-medium text-rose-900">✨ Doa Terbaik (Gratis)</p>
-                <p className="text-xs text-rose-700 mt-1">Tidak ada nominal donasi untuk pilihan ini. Cukup tulis doa terbaikmu dan kirim!</p>
-              </div>
-            )}
 
             <div className="space-y-2">
               <Label className="text-sm font-semibold">
@@ -373,7 +352,7 @@ export default function Payment() {
               disabled={submitting}
               className={`w-full h-12 font-bold ${infaqType === "money" ? "bg-green-600 hover:bg-green-700" : "bg-rose-500 hover:bg-rose-600"}`}
             >
-              {submitting ? "Memproses..." : (infaqType === "money" ? (isOnline ? "Saya Sudah Infaq — Buka Video" : "Konfirmasi Infaq via WhatsApp") : "Kirim Doa & Daftar Sekarang")}
+              {submitting ? "Memproses..." : (infaqType === "money" ? (isOnline ? "Saya Sudah Infaq — Buka Video" : "Konfirmasi Infaq via WhatsApp") : "Kirim Doa & Scan QR Sekarang")}
             </Button>
 
             <div className="rounded-xl bg-blue-50 p-3 text-xs text-blue-800 border border-blue-100">
