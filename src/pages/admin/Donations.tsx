@@ -27,7 +27,7 @@ const notifyUserWA = (registration: any, event: any, status: string) => {
     : "";
   const msg =
     status === "approved"
-      ? `Assalamu'alaikum ${name},\n\nAlhamdulillah, pembayaran ${nominal ? nominal + " " : ""}untuk *${eventTitle}* telah kami *TERIMA* ✅\n\nPendaftaran Anda sudah aktif. Silakan tunjukkan QR code di aplikasi saat hadir. Jazakumullah khair.`
+      ? `Assalamu'alaikum ${name},\n\nJazakallah, pembayaran ${nominal ? nominal + " " : ""}untuk *${eventTitle}* telah kami *TERIMA* ✅\n\nPendaftaran Anda sudah aktif. Silakan Scan QR code untuk menunjukkan kehadiran anda. Jazakumullah khair.`
       : `Assalamu'alaikum ${name},\n\nMohon maaf, pembayaran untuk *${eventTitle}* belum dapat kami konfirmasi dan untuk sementara kami *TOLAK* ❌\n\nMohon cek kembali bukti transfer atau hubungi admin untuk klarifikasi. Terima kasih.`;
   const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
   window.open(url, "_blank", "noopener,noreferrer");
