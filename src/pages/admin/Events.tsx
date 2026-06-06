@@ -170,7 +170,7 @@ function OnlineFields({ form, setForm }: { form: any; setForm: (f: any) => void 
             className="text-sm h-9 sm:h-10"
           />
           <p className="text-xs text-muted-foreground">
-            Online Mode memungkinkan pendaftaran tetap dibuka meskipun acara sudah selesai (pendaftaran online). Event online menggunakan alur infaq wajib berbayar (nominal bebas &gt;= minimal infaq) untuk akses video & tidak memberikan poin. Sedangkan event offline kategori infaq memberikan pilihan Infaq Uang atau Doa Terbaik.
+            Online Mode memungkinkan pendaftaran tetap dibuka meskipun acara sudah selesai (pendaftaran online). Event online menggunakan alur infaq wajib berbayar untuk akses video & tidak memberikan poin.
           </p>
         </div>
       )}
@@ -188,7 +188,7 @@ function RecurringPinFields({ form, setForm }: { form: any; setForm: (f: any) =>
     <div className="md:col-span-2 space-y-3 rounded-xl border border-border/60 bg-muted/30 p-3 text-sm">
       <label className="flex items-center gap-2 text-xs sm:text-sm font-medium cursor-pointer">
         <input type="checkbox" checked={!!form.is_pinned} onChange={(e) => setForm({ ...form, is_pinned: e.target.checked })} />
-        <Pin className="h-4 w-4 text-primary" /> Sematkan event (tampil paling atas)
+        <Pin className="h-4 w-4 text-primary" /> Sematkan event (tampil paling depan)
       </label>
       <label className="flex items-center gap-2 text-xs sm:text-sm font-medium cursor-pointer">
         <input type="checkbox" checked={!!form.is_recurring} onChange={(e) => setForm({ ...form, is_recurring: e.target.checked })} />

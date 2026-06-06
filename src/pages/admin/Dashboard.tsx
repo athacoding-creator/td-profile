@@ -19,7 +19,7 @@ const groups = [
     items: [
       { to: "/admin/pendaftar", icon: Users, title: "Pendaftar", desc: "Persiapan lokasi (jumlah daftar)" },
       { to: "/admin/kehadiran", icon: ClipboardCheck, title: "Kehadiran", desc: "Data scan QR & Export Excel", tag: "Excel" },
-      { to: "/admin/scan", icon: Camera, title: "Scan QR", desc: "Scan QR untuk absensi event" },
+      { to: "/admin/scan", icon: Camera, title: "Scan QR", desc: "Scan QR untuk absensi event", tag: "Fitur Mendatang" },
       { to: "/admin/akun", icon: UserCircle, title: "Akun", desc: "Lihat data lengkap tiap akun jamaah" },
     ],
   },

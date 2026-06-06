@@ -82,11 +82,10 @@ export default function DonationsPage() {
       <div>
         <h1 className="font-display text-3xl font-bold">Daftar Pembayaran</h1>
         <p className="text-sm text-muted-foreground">
-          Verifikasi pembayaran event berbayar. Bukti dibuka di tab baru &amp; akan otomatis terhapus setelah dikonfirmasi/ditolak.
+          Verifikasi pembayaran event berbayar.
         </p>
-        <p className="text-xs text-muted-foreground mt-1">
-          ℹ️ Event <strong>Infaq</strong> tidak butuh verifikasi — donatur menghubungi admin langsung lewat WhatsApp.
-        </p>
+        <p className="text-sm text-muted-foreground mt-1">
+          otomatis terhapus setelah dikonfirmasi/ditolak.</p>
       </div>
 
       {/* Stats Grid - 3 columns on desktop, 2 on mobile */}

@@ -55,7 +55,7 @@ export default function SettingsPage() {
     <>
       <div>
         <h1 className="font-display text-3xl font-bold">Pengaturan</h1>
-        <p className="text-sm text-muted-foreground">Atur poin & konfigurasi global (realtime)</p>
+        <p className="text-sm text-muted-foreground">Atur poin & konfigurasi global</p>
       </div>
       <Section title="Pengaturan Poin">
         <div className="grid gap-4 md:grid-cols-2">
@@ -98,24 +98,9 @@ export default function SettingsPage() {
         </div>
       </Section>
 
-      <Section title="QRIS Donasi & Pembayaran">
-        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 space-y-3">
-          <div className="flex items-start gap-3">
-            <Info className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="font-semibold text-sm text-blue-900">QRIS Manager</p>
-              <p className="text-xs text-blue-800 mt-1">
-                Kelola QRIS untuk pembayaran dan infaq telah dipindahkan ke halaman khusus QRIS Manager.
-              </p>
-            </div>
-          </div>
-          <Button 
-            onClick={() => navigate('/admin/qris')}
-            className="w-full bg-blue-600 text-white hover:bg-blue-700"
-          >
-            Buka QRIS Manager →
-          </Button>
-        </div>
+      <Section title="Perhatian">
+        <h1 className="font-display text-3xl font-bold mt-1">Info Website</h1>
+        <p className="text-sm text-muted-foreground mb-4">Jika Terjadi Error Hubungi Admin atau Tim Development yg bertanggung jawab</p>
       </Section>
     </>
   );

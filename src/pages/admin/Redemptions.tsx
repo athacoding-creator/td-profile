@@ -12,7 +12,7 @@ export default function RedemptionsPage() {
     <>
       <div>
         <h1 className="font-display text-3xl font-bold">Penukaran Poin</h1>
-        <p className="text-sm text-muted-foreground">Realtime — verifikasi permintaan reward jamaah</p>
+        <p className="text-sm text-muted-foreground">verifikasi permintaan reward jamaah</p>
       </div>
       <Section title="Daftar Penukaran">
         {redemptions.length === 0 && <p className="text-sm text-muted-foreground">Belum ada penukaran.</p>}

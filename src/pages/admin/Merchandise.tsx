@@ -70,7 +70,7 @@ export default function Merchandise() {
     <>
       <div>
         <h1 className="font-display text-xl sm:text-2xl font-bold">Merchandise</h1>
-        <p className="text-xs text-muted-foreground">Atur reward yang bisa ditukar dengan poin (realtime)</p>
+        <p className="text-xs text-muted-foreground">Atur reward yang bisa ditukar dengan poin</p>
       </div>
 
       <Section title="Tambah merchandise baru">

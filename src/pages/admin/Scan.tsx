@@ -52,7 +52,7 @@ export default function ScanPage() {
     <>
       <div>
         <h1 className="font-display text-3xl font-bold">Scan QR Admin</h1>
-        <p className="text-sm text-muted-foreground">Untuk intervensi manual / mencatat kehadiran user</p>
+        <p className="text-sm text-muted-foreground">Untuk Scan QR manual kehadiran user di profil</p>
       </div>
       <Section title="Scanner">
         <div className="grid gap-4 md:grid-cols-[1fr_auto]">
