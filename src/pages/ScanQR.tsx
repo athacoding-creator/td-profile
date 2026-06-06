@@ -34,7 +34,11 @@ export default function ScanQR() {
     const startTime = new Date(event.starts_at);
     const endTime = event.ends_at ? new Date(event.ends_at) : new Date(startTime.getTime() + 6 * 60 * 60 * 1000);
 
-    // Scan is always allowed as long as the event is not finished
+    const scanStartTime = new Date(startTime.getTime() - 6 * 60 * 60 * 1000);
+
+    if (now < scanStartTime) {
+      return { allowed: false, message: "Scan belum dibuka (dibuka 6 jam sebelum acara)" };
+    }
     if (now > endTime) {
       return { allowed: false, message: "Event sudah selesai" };
     }
