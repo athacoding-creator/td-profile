@@ -350,6 +350,7 @@ function DonationMobileCard({ registration, event, onChanged }: { registration: 
       }
 
       toast.success(status === "approved" ? "Pembayaran disetujui" : "Pembayaran ditolak");
+      notifyUserWA(registration, event, status);
       await onChanged();
     } finally {
       setUpdating(false);
