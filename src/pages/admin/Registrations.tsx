@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAdmin } from "./AdminLayout";
@@ -8,10 +8,26 @@ import * as XLSX from "xlsx";
 import { isEventExpired } from "@/lib/eventSchedule";
 
 export default function RegistrationsPage() {
-  const { events, attendance } = useAdmin();
+  const { events, attendance, registrations } = useAdmin();
   const [eventFilter, setEventFilter] = useState<string>("");
   const [showPastEvents, setShowPastEvents] = useState(false);
   const [searchPast, setSearchPast] = useState("");
+
+  // Lookup: event_id|user_id -> { amount_paid, donor_message }
+  const regLookup = useMemo(() => {
+    const m: Record<string, { amount_paid: number | null; donor_message: string | null }> = {};
+    registrations.forEach((r: any) => {
+      m[`${r.event_id}|${r.user_id}`] = {
+        amount_paid: r.amount_paid ?? null,
+        donor_message: r.donor_message ?? null,
+      };
+    });
+    return m;
+  }, [registrations]);
+
+  const getReg = (a: any) => regLookup[`${a.event_id}|${a.user_id}`] || { amount_paid: null, donor_message: null };
+  const fmtRp = (n: number | null | undefined) =>
+    n && n > 0 ? `Rp ${Number(n).toLocaleString("id-ID")}` : "—";
 
   // Hanya tampilkan jamaah yang sudah scan QR (tercatat di attendance)
   const filtered = eventFilter
@@ -32,7 +48,9 @@ export default function RegistrationsPage() {
 
   const exportXLSX = () => {
     const ev = eventFilter ? events.find((e) => e.id === eventFilter) : null;
-    const rows = filtered.map((a, i) => ({
+    const rows = filtered.map((a, i) => {
+      const reg = getReg(a);
+      return ({
       No: i + 1,
       "Waktu Hadir": new Date(a.scanned_at).toLocaleString("id-ID"),
       Nama: a.profiles?.full_name ?? "-",
@@ -47,11 +65,15 @@ export default function RegistrationsPage() {
       Email: a.profiles?.email ?? "-",
       Event: ev?.title ?? (eventFilter ? "-" : "Semua Event"),
       "Poin Diperoleh": a.points_awarded ?? 0,
-    }));
+      Nominal: reg.amount_paid && reg.amount_paid > 0 ? Number(reg.amount_paid) : "",
+      "Pesan Doa": reg.donor_message ?? "",
+    });
+    });
     const ws = XLSX.utils.json_to_sheet(rows);
     ws["!cols"] = [
       { wch: 5 }, { wch: 22 }, { wch: 28 }, { wch: 16 },
       { wch: 12 }, { wch: 18 }, { wch: 30 }, { wch: 36 }, { wch: 14 },
+      { wch: 14 }, { wch: 40 },
     ];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Kehadiran");
@@ -182,12 +204,15 @@ export default function RegistrationsPage() {
                 <th className="pr-3">WhatsApp</th>
                 <th className="pr-3">Gender</th>
                 <th className="pr-3">Kota</th>
+                <th className="pr-3 text-right">Nominal</th>
+                <th className="pr-3">Pesan Doa</th>
                 <th>Poin</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((a) => {
                 const phone = a.profiles?.phone || "";
+                const reg = getReg(a);
                 return (
                   <tr key={a.id} className="border-t border-border/60">
                     <td className="py-2 pr-3 text-xs text-muted-foreground whitespace-nowrap">
@@ -217,6 +242,12 @@ export default function RegistrationsPage() {
                         : (a.profiles?.gender || "—")}
                     </td>
                     <td className="pr-3">{a.profiles?.city || "—"}</td>
+                    <td className="pr-3 text-xs text-right whitespace-nowrap font-medium">
+                      {fmtRp(reg.amount_paid)}
+                    </td>
+                    <td className="pr-3 text-xs text-muted-foreground max-w-[220px] truncate" title={reg.donor_message || ""}>
+                      {reg.donor_message || "—"}
+                    </td>
                     <td className="text-xs font-medium">{a.points_awarded ?? 0}</td>
                   </tr>
                 );
@@ -229,6 +260,7 @@ export default function RegistrationsPage() {
         <div className="md:hidden space-y-2">
           {filtered.map((a) => {
             const phone = a.profiles?.phone || "";
+            const reg = getReg(a);
             return (
               <div
                 key={a.id}
@@ -255,6 +287,16 @@ export default function RegistrationsPage() {
                 ) : (
                   <p className="text-xs text-muted-foreground">—</p>
                 )}
+                {(reg.amount_paid && reg.amount_paid > 0) || reg.donor_message ? (
+                  <div className="rounded-md bg-muted/60 px-2 py-1.5 space-y-0.5">
+                    {reg.amount_paid && reg.amount_paid > 0 && (
+                      <p className="text-xs font-semibold">{fmtRp(reg.amount_paid)}</p>
+                    )}
+                    {reg.donor_message && (
+                      <p className="text-[11px] text-muted-foreground italic line-clamp-2">"{reg.donor_message}"</p>
+                    )}
+                  </div>
+                ) : null}
                 <p className="text-xs text-muted-foreground">
                   {new Date(a.scanned_at).toLocaleString("id-ID")}
                 </p>
