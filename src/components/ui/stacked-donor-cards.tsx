@@ -43,10 +43,10 @@ export const StackedDonorCards = ({ donors, timeAgo }: StackedDonorCardsProps) =
   const visibleDonors = isExpanded ? displayDonors : displayDonors.slice(0, 3);
 
   return (
-    <div className="relative w-full py-4">
+    <div className="relative w-full py-2">
       <div className={cn(
         "mx-auto max-w-[400px] relative transition-all duration-500 ease-out",
-        isExpanded ? "min-h-[auto]" : "h-[200px]"
+        isExpanded ? "min-h-[auto]" : "h-[140px]" // Reduced height from 200px to 140px to pull button up
       )}>
         {/* Stacked Cards Container */}
         <div className="relative w-full">
@@ -61,9 +61,9 @@ export const StackedDonorCards = ({ donors, timeAgo }: StackedDonorCardsProps) =
             let opacity = 1;
 
             if (!isExpanded && index < 3) {
-              // Stack effect when collapsed
-              translateY = index * 15;
-              scale = 1 - index * 0.05;
+              // Stack effect when collapsed - slightly tighter spacing
+              translateY = index * 12; // Reduced from 15px to 12px
+              scale = 1 - index * 0.04; // Reduced from 0.05 to 0.04
               opacity = 1 - index * 0.15;
             }
 
@@ -117,32 +117,32 @@ export const StackedDonorCards = ({ donors, timeAgo }: StackedDonorCardsProps) =
           })}
         </div>
 
-        {/* Spacer for stacked layout */}
+        {/* Spacer for stacked layout - significantly reduced */}
         {!isExpanded && displayDonors.length > 0 && (
-          <div className="h-[120px]" />
+          <div className="h-[80px]" /> // Reduced from 120px to 80px
         )}
       </div>
 
-      {/* Toggle Button */}
+      {/* Toggle Button - pulled up closer */}
       {donors.length > 0 && (
         <div className={cn(
-          "flex justify-center mt-6 transition-all duration-500",
-          isExpanded && "mt-4"
+          "flex justify-center transition-all duration-500",
+          isExpanded ? "mt-2" : "mt-2" // Reduced mt-6 to mt-2
         )}>
           <button
             onClick={toggleExpand}
             className={cn(
-              "inline-flex items-center gap-2 px-6 py-2.5 bg-background border border-border rounded-full shadow-sm text-xs font-semibold transition-all duration-300 hover:bg-accent/5 hover:border-accent/30",
+              "inline-flex items-center gap-2 px-6 py-2 bg-background border border-border rounded-full shadow-sm text-[11px] font-semibold transition-all duration-300 hover:bg-accent/5 hover:border-accent/30",
               isExpanded && "bg-accent/5 border-accent/30"
             )}
           >
             <Heart className={cn(
-              "w-3.5 h-3.5 transition-all duration-300",
+              "w-3 h-3 transition-all duration-300",
               isExpanded ? "fill-rose-500 text-rose-500" : "text-rose-500"
             )} />
             <span>{isExpanded ? "Sembunyikan" : `Lihat Semua (${donors.length})`}</span>
             <ChevronDown className={cn(
-              "w-3.5 h-3.5 transition-transform duration-300",
+              "w-3 h-3 transition-transform duration-300",
               isExpanded && "rotate-180"
             )} />
           </button>

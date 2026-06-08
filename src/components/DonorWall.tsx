@@ -56,8 +56,8 @@ export default function DonorWall({ eventId }: { eventId: string }) {
   }
 
   return (
-    <div className="rounded-2xl border border-border/40 bg-card p-4 sm:p-6 animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-hidden">
-      <div className="text-center mb-6">
+    <div className="rounded-2xl border border-border/40 bg-card p-4 animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-hidden">
+      <div className="text-center mb-4">
         <h3 className="font-display text-xl sm:text-2xl font-extrabold tracking-tight">
           Dinding <span className="text-primary">Doa</span>
         </h3>
