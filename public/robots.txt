@@ -1,8 +1,25 @@
+# Robots.txt for Teras Dakwah
+# Allows search engines to crawl the site
+
 User-agent: Googlebot
 Allow: /
+Disallow: /admin/
+Disallow: /profil/
+Disallow: /poin/
+Disallow: /riwayat/
+Disallow: /event/*/bayar
+Disallow: /event/*/scan
+Disallow: /event/*/sukses
 
 User-agent: Bingbot
 Allow: /
+Disallow: /admin/
+Disallow: /profil/
+Disallow: /poin/
+Disallow: /riwayat/
+Disallow: /event/*/bayar
+Disallow: /event/*/scan
+Disallow: /event/*/sukses
 
 User-agent: Twitterbot
 Allow: /
@@ -12,3 +29,16 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /admin/
+Disallow: /profil/
+Disallow: /poin/
+Disallow: /riwayat/
+Disallow: /event/*/bayar
+Disallow: /event/*/scan
+Disallow: /event/*/sukses
+
+# Crawl delay (in seconds)
+Crawl-delay: 1
+
+# Sitemap location
+Sitemap: https://terasdakwah.com/sitemap.xml

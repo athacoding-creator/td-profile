@@ -1,6 +1,7 @@
 import { lazy, Suspense, ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
+import { HelmetProvider } from "react-helmet-async";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -62,54 +63,55 @@ const Shell = ({ children }: { children: ReactNode }) => {
 };
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <Shell>
-            <Suspense fallback={<PageFallback />}>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/forgot-password" element={<ForgotPassword />} />
-                <Route path="/onboarding" element={<RequireAuth><Onboarding /></RequireAuth>} />
-                <Route path="/event/:id" element={<EventDetail />} />
-                <Route path="/event/:id/bayar" element={<RequireAuth><Payment /></RequireAuth>} />
-                <Route path="/event/:id/scan" element={<RequireAuth><ScanQR /></RequireAuth>} />
-                <Route path="/event/:id/sukses" element={<RequireAuth><ScanSuccess /></RequireAuth>} />
-                <Route path="/scan" element={<ScanLanding />} />
-                <Route path="/poin" element={<RequireAuth><Poin /></RequireAuth>} />
-                <Route path="/riwayat" element={<RequireAuth><Riwayat /></RequireAuth>} />
-                <Route path="/event" element={<Events />} />
-                <Route path="/profil" element={<RequireAuth><Profil /></RequireAuth>} />
-                <Route path="/profil/download" element={<DownloadApp />} />
-                <Route path="/admin" element={<RequireAuth adminOnly><AdminLayout /></RequireAuth>}>
-                  <Route index element={<AdminDashboard />} />
-                  <Route path="dashboard" element={<AdminDashboard />} />
-                  <Route path="event" element={<AdminEvents />} />
-                  <Route path="program" element={<AdminPrograms />} />
-<Route path="pendaftar" element={<AdminPendaftar />} />
-	                  <Route path="kehadiran" element={<AdminKehadiran />} />
-	                  <Route path="penukaran" element={<AdminRedemptions />} />
-	                  <Route path="akun" element={<AdminUsers />} />
-                  <Route path="pembayaran" element={<AdminDonations />} />
-	<Route path="qris" element={<AdminQrisManager />} />
-	<Route path="merchandise" element={<AdminMerchandise />} />
-
-	                  <Route path="scan" element={<AdminScan />} />
-	                  <Route path="pengaturan" element={<AdminSettings />} />
-	                </Route>
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Suspense>
-          </Shell>
-        </AuthProvider>
-      </BrowserRouter>
-      <Analytics />
-    </TooltipProvider>
-  </QueryClientProvider>
+  <HelmetProvider>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthProvider>
+            <Shell>
+              <Suspense fallback={<PageFallback />}>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/onboarding" element={<RequireAuth><Onboarding /></RequireAuth>} />
+                  <Route path="/event/:id" element={<EventDetail />} />
+                  <Route path="/event/:id/bayar" element={<RequireAuth><Payment /></RequireAuth>} />
+                  <Route path="/event/:id/scan" element={<RequireAuth><ScanQR /></RequireAuth>} />
+                  <Route path="/event/:id/sukses" element={<RequireAuth><ScanSuccess /></RequireAuth>} />
+                  <Route path="/scan" element={<ScanLanding />} />
+                  <Route path="/poin" element={<RequireAuth><Poin /></RequireAuth>} />
+                  <Route path="/riwayat" element={<RequireAuth><Riwayat /></RequireAuth>} />
+                  <Route path="/event" element={<Events />} />
+                  <Route path="/profil" element={<RequireAuth><Profil /></RequireAuth>} />
+                  <Route path="/profil/download" element={<DownloadApp />} />
+                  <Route path="/admin" element={<RequireAuth adminOnly><AdminLayout /></RequireAuth>}>
+                    <Route index element={<AdminDashboard />} />
+                    <Route path="dashboard" element={<AdminDashboard />} />
+                    <Route path="event" element={<AdminEvents />} />
+                    <Route path="program" element={<AdminPrograms />} />
+                    <Route path="pendaftar" element={<AdminPendaftar />} />
+                    <Route path="kehadiran" element={<AdminKehadiran />} />
+                    <Route path="penukaran" element={<AdminRedemptions />} />
+                    <Route path="akun" element={<AdminUsers />} />
+                    <Route path="pembayaran" element={<AdminDonations />} />
+                    <Route path="qris" element={<AdminQrisManager />} />
+                    <Route path="merchandise" element={<AdminMerchandise />} />
+                    <Route path="scan" element={<AdminScan />} />
+                    <Route path="pengaturan" element={<AdminSettings />} />
+                  </Route>
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Suspense>
+            </Shell>
+          </AuthProvider>
+        </BrowserRouter>
+        <Analytics />
+      </TooltipProvider>
+    </QueryClientProvider>
+  </HelmetProvider>
 );
 
 export default App;
