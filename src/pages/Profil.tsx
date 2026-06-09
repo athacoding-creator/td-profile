@@ -27,7 +27,10 @@ import {
   KeyRound,
   Shield,
   Download,
+  Sun,
+  Moon,
 } from "lucide-react";
+import { useTheme } from "@/components/theme-provider";
 import { Link } from "react-router-dom";
 import { formatPhoneDisplay } from "@/lib/phone";
 
@@ -50,6 +53,7 @@ type View = "menu" | "edit" | "password";
 
 export default function Profil() {
   const { user, profile, refreshProfile, signOut, isAdmin } = useAuth();
+  const { theme, setTheme } = useTheme();
   const [view, setView] = useState<View>("menu");
   const [form, setForm] = useState<any>({});
   const [loading, setLoading] = useState(false);
@@ -176,19 +180,34 @@ export default function Profil() {
       <main className="container max-w-2xl py-8">
         {view === "menu" ? (
           <>
-            <div className="flex items-center gap-4">
-              {/* Avatar: inisial saja, tidak ada foto profil */}
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-2xl font-bold text-primary">
-                {initial}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                {/* Avatar: inisial saja, tidak ada foto profil */}
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-2xl font-bold text-primary">
+                  {initial}
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate font-display text-xl font-bold text-foreground">
+                    {profile?.full_name || "Pengguna"}
+                  </p>
+                  <p className="truncate text-sm text-muted-foreground">
+                    {profile?.phone ? formatPhoneDisplay(profile.phone) : ""}
+                  </p>
+                </div>
               </div>
-              <div className="min-w-0">
-                <p className="truncate font-display text-xl font-bold text-foreground">
-                  {profile?.full_name || "Pengguna"}
-                </p>
-                <p className="truncate text-sm text-muted-foreground">
-                  {profile?.phone ? formatPhoneDisplay(profile.phone) : ""}
-                </p>
-              </div>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                className="h-10 w-10 rounded-full border-accent/20 bg-background text-foreground shadow-sm hover:bg-accent/5"
+              >
+                {theme === "dark" ? (
+                  <Sun className="h-5 w-5 text-yellow-500" />
+                ) : (
+                  <Moon className="h-5 w-5 text-accent" />
+                )}
+                <span className="sr-only">Toggle theme</span>
+              </Button>
             </div>
 
             <h2 className="mt-8 flex items-center gap-2 font-display text-lg font-bold text-foreground">
