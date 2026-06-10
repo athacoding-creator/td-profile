@@ -91,10 +91,10 @@ export const StackedDonorCards = ({ donors, timeAgo }: StackedDonorCardsProps) =
                     <div className="min-w-0 flex-1">
                       <p className="font-bold text-sm text-foreground truncate">{item.full_name}</p>
                       <p className="text-xs text-muted-foreground line-clamp-1 italic">
-                        {item.donor_message 
-                          ? `"${item.donor_message}"` 
-                          : item.amount_paid && item.amount_paid > 0 
-                            ? "Memberikan Infaq" 
+                        {item.donor_message
+                          ? `"${item.donor_message}"`
+                          : typeof item.amount_paid === "number" && item.amount_paid > 0
+                            ? "Memberikan Infaq"
                             : "Memberikan Doa Terbaik"}
                       </p>
                     </div>
@@ -102,11 +102,13 @@ export const StackedDonorCards = ({ donors, timeAgo }: StackedDonorCardsProps) =
 
                   {/* Right: Amount & Time */}
                   <div className="flex flex-col items-end shrink-0 gap-0.5">
-                    {item.amount_paid && item.amount_paid > 0 && (
+                    {typeof item.amount_paid === "number" && item.amount_paid > 0 ? (
                       <span className="text-xs font-bold text-primary">
                         Rp {item.amount_paid.toLocaleString("id-ID")}
                       </span>
-                    )}
+                    ) : typeof item.amount_paid === "number" && item.amount_paid === 0 ? (
+                      <span className="text-xs font-bold text-primary">Doa Terbaik</span>
+                    ) : null}
                     <span className="text-[10px] text-muted-foreground">
                       {timeAgo(item.paid_at)}
                     </span>
