@@ -230,8 +230,8 @@ export default function Payment() {
           ? `Assalamu'alaikum Admin, saya sudah berinfaq Rp ${amount.toLocaleString("id-ID")} untuk kajian online "${event?.title}". Mohon kontennya bisa saya akses. Terima kasih.`
           : `Assalamu'alaikum Kak
 
-          Bismillah,saya ingin berinfaq untuk "${event?.title}" sebesar Rp ${amount.toLocaleString("id-ID")}.
-          
+          Bismillah, saya ingin berinfaq untuk "${event?.title}" sebesar Rp ${amount.toLocaleString("id-ID")}.
+
           Semoga Allah menjadikan infaq ini sebagai pemberat timbangan amal, pembuka pintu rezeki yang halal dan berkah, serta sebab datangnya hidayah dan keteguhan hati dalam mencintai-Nya. Aamiin. 🤲🏻`;
         window.open(`https://wa.me/${waNumber}?text=${encodeURIComponent(infaqMsg)}`, "_blank", "noopener,noreferrer");
       }
