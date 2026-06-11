@@ -124,6 +124,11 @@ export default function EventDetail() {
       toast.error("Lengkapi profil dulu di halaman Profil.");
       return navigate("/profil");
     }
+
+    if (genderMismatch) {
+      toast.error(`Maaf, event ini khusus untuk ${event.gender === "L" ? "Laki-laki" : "Perempuan"}.`);
+      return;
+    }
     
     // Jika event online mode aktif
     if (event.is_online) {
@@ -456,9 +461,9 @@ export default function EventDetail() {
           ) : (
             <Button
               onClick={handleRegisterClick}
-              disabled={submitting || (sw.expired && !event.is_online)}
+              disabled={submitting || genderMismatch || (sw.expired && !event.is_online)}
               className={`w-full text-white text-sm sm:text-base font-bold ${
-                sw.expired && !event.is_online 
+                (genderMismatch || (sw.expired && !event.is_online))
                   ? "bg-muted text-muted-foreground cursor-not-allowed" 
                   : "bg-green-600 hover:bg-green-700"
               }`}
@@ -467,9 +472,11 @@ export default function EventDetail() {
                 ? "Mendaftarkan…" 
                 : !user 
                   ? "Login untuk Daftar" 
-                  : sw.expired 
-                    ? (event.is_online ? "Daftar Online (Akses Video)" : "Pendaftaran Ditutup")
-                    : "Daftar Event"
+                  : genderMismatch
+                    ? "Gender Tidak Sesuai"
+                    : sw.expired 
+                      ? (event.is_online ? "Daftar Online (Akses Video)" : "Pendaftaran Ditutup")
+                      : "Daftar Event"
               }
             </Button>
           )}
