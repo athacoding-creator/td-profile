@@ -61,7 +61,7 @@ export function useAdminData(): AdminData {
     const { data } = await supabase
       .from("registrations")
       .select("id, created_at, event_id, user_id, payment_status, amount_paid, donor_message, payment_proof_url, paid_at, events(title, programs(name)), profiles:user_id(full_name, email, phone, gender, city)")
-      .order("created_at", { ascending: false }).limit(200);
+      .order("created_at", { ascending: false }).limit(1000);
     setRegistrations(data ?? []);
   };
   const loadAttendance = async () => {

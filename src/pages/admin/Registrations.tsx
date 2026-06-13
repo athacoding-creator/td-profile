@@ -65,7 +65,7 @@ export default function RegistrationsPage() {
       Email: a.profiles?.email ?? "-",
       Event: ev?.title ?? (eventFilter ? "-" : "Semua Event"),
       "Poin Diperoleh": a.points_awarded ?? 0,
-      Nominal: reg.amount_paid && reg.amount_paid > 0 ? Number(reg.amount_paid) : "",
+      Nominal: reg.amount_paid && reg.amount_paid > 0 ? Number(reg.amount_paid) : 0,
       "Pesan Doa": reg.donor_message ?? "",
     });
     });
