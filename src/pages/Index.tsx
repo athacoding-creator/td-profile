@@ -7,7 +7,6 @@ import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
 import SEO from "@/components/SEO";
 import { generateOrganizationSchema, generateWebsiteSchema } from "@/utils/structuredData";
-import { isEventExpired } from "@/lib/eventSchedule";
 
 
 export default function Index() {
@@ -17,7 +16,7 @@ export default function Index() {
   useEffect(() => {
     supabase
       .from("events")
-      .select("id,title,venue,poster_url,gender,starts_at,ends_at,status,is_pinned,is_recurring,recurring_days,recurring_start_time,recurring_end_time,recurring_until,is_online")
+      .select("id,title,venue,poster_url,gender,starts_at,ends_at,status,is_pinned")
       .in("status", ["active", "finished"])
       .order("is_pinned", { ascending: false })
       .order("starts_at", { ascending: false })
@@ -26,9 +25,7 @@ export default function Index() {
         if (error) {
           console.error("loadIndexEvents error", error);
         }
-        // Filter out expired events - only show active events that haven't expired
-        const filteredEvents = (data ?? []).filter((e: any) => e.status === "active" && !isEventExpired(e));
-        setEvents(filteredEvents);
+        setEvents(data ?? []);
       });
   }, []);
 
@@ -63,7 +60,8 @@ export default function Index() {
           <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6">
             {events.map((e) => {
               const locked = profile?.gender && e.gender !== "ALL" && e.gender !== profile.gender;
-              const finished = e.status === "finished" || isEventExpired(e);
+              const endTime = e.ends_at ? new Date(e.ends_at).getTime() : new Date(e.starts_at).getTime() + 6 * 3600 * 1000;
+              const finished = e.status === "finished" || Date.now() > endTime;
               return (
                 <Link
                   to={`/event/${e.id}`}
