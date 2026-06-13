@@ -5,6 +5,7 @@ import { useAdmin } from "./AdminLayout";
 import { Section } from "./components";
 import { MessageCircle, ChevronDown, Users, X, Download } from "lucide-react";
 import * as XLSX from "xlsx";
+import { isEventExpired } from "@/lib/eventSchedule";
 
 export default function PendaftarPage() {
   const { events, registrations } = useAdmin();
@@ -16,11 +17,13 @@ export default function PendaftarPage() {
   const counts: Record<string, number> = {};
   registrations.forEach((r) => { counts[r.event_id] = (counts[r.event_id] || 0) + 1; });
 
-  const activeEvents = events.filter((e) => e.status === "active");
-  const pastEvents = events.filter((e) => e.status !== "active");
-  const filteredPastEvents = pastEvents.filter((e) =>
-    e.title?.toLowerCase().includes(searchPast.toLowerCase())
-  );
+  const activeEvents = events.filter((e) => e.status === "active" && !isEventExpired(e));
+  const pastEvents = events.filter((e) => e.status !== "active" || isEventExpired(e));
+  const filteredPastEvents = pastEvents
+    .sort((a, b) => new Date(b.starts_at).getTime() - new Date(a.starts_at).getTime())
+    .filter((e) =>
+      e.title?.toLowerCase().includes(searchPast.toLowerCase())
+    );
 
   const eventById = useMemo(() => {
     const m: Record<string, any> = {};
@@ -116,11 +119,14 @@ export default function PendaftarPage() {
                   onChange={(e) => setSearchPast(e.target.value)}
                   className="h-9 text-sm rounded-lg"
                 />
-                <div className="grid gap-2 sm:gap-2.5 grid-cols-1 sm:grid-cols-2 max-h-64 overflow-y-auto pr-1">
+                <div className="grid gap-2 sm:gap-2.5 grid-cols-1 sm:grid-cols-2 max-h-96 overflow-y-auto pr-1">
                   {filteredPastEvents.map((e) => (
                     <button key={e.id} onClick={() => { setEventFilter(e.id); setShowPastEvents(false); }}
                       className={`rounded-lg border p-3 text-left transition text-sm ${eventFilter === e.id ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-border/60 hover:border-border"}`}>
-                      <p className="font-medium">{e.title}</p>
+                      <div className="flex items-center justify-between">
+                        <p className="font-medium">{e.title}</p>
+                        {isEventExpired(e) && e.status === "active" && <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground">Selesai</span>}
+                      </div>
                       <p className="text-xs text-muted-foreground mt-0.5">{counts[e.id] || 0} pendaftar</p>
                     </button>
                   ))}
