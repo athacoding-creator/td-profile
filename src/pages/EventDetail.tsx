@@ -396,22 +396,22 @@ export default function EventDetail() {
               {showVideoSection && (
                 <div className="mt-4 space-y-3">
                   {hasEpisodeVideos ? (
-                    <div className="space-y-3">
-                      <div className="rounded-xl border border-border/60 p-3">
-                        <Label className="text-xs sm:text-sm">Pilih Episode</Label>
-                        <select
-                          className="mt-2 h-9 sm:h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-                          value={selectedEpisode}
-                          onChange={(e) => setSelectedEpisode(Number(e.target.value))}
-                        >
-                          {episodeList.map((episode) => (
-                            <option key={episode.index} value={episode.index}>
-                              Episode {episode.index + 1}
-                            </option>
-                          ))}
-                        </select>
+                    <div className="space-y-4">
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        {episodeList.map((episode) => (
+                          <button
+                            key={episode.index}
+                            type="button"
+                            className={`rounded-xl border p-3 text-left text-sm font-medium transition duration-150 ${selectedEpisode === episode.index ? "border-primary bg-primary/10 text-primary" : "border-border bg-background text-foreground hover:border-primary"}`}
+                            onClick={() => setSelectedEpisode(episode.index)}
+                          >
+                            Episode {episode.index + 1}
+                          </button>
+                        ))}
                       </div>
-                      <YoutubeEmbed url={selectedEpisodeUrl} title={isEpisodeProgram ? `Episode ${selectedEpisode + 1} • ${event.title}` : event.title} />
+                      <div className="rounded-xl border border-border/60 overflow-hidden">
+                        <YoutubeEmbed url={selectedEpisodeUrl} title={isEpisodeProgram ? `Episode ${selectedEpisode + 1} • ${event.title}` : event.title} />
+                      </div>
                     </div>
                   ) : (
                     <YoutubeEmbed url={event.youtube_url} title={event.title} />
