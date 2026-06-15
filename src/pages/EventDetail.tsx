@@ -22,12 +22,14 @@ export default function EventDetail() {
   const navigate = useNavigate();
   const [event, setEvent] = useState<any>(null);
   const [registration, setRegistration] = useState<any>(null);
+  const [attendance, setAttendance] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [paymentForm, setPaymentForm] = useState({ amount: 0, proofFile: null as File | null });
   const [paymentMethod, setPaymentMethod] = useState<any>(null);
   const [showModeSelector, setShowModeSelector] = useState(false);
+  const [selectedEpisode, setSelectedEpisode] = useState<number>(0);
   const [showVideoAfterInfaq, setShowVideoAfterInfaq] = useState(() => {
     if (!id) return false;
     const stored = localStorage.getItem(`video_unlocked_${id}`);
@@ -41,10 +43,17 @@ export default function EventDetail() {
   }, [showVideoAfterInfaq, id]);
 
   useEffect(() => {
+    if (!event) return;
+    const urls = Array.isArray(event.episode_youtube_urls) ? event.episode_youtube_urls : [];
+    const firstIndex = urls.findIndex((url: string) => !!url);
+    if (firstIndex >= 0) setSelectedEpisode(firstIndex);
+  }, [event]);
+
+  useEffect(() => {
     (async () => {
       let eventData: any = null;
       const { data, error } = await supabase.from("events")
-        .select("id,title,description,venue,city,starts_at,ends_at,status,gender,event_type,poster_url,group_link,points_reward,program_id,created_at,is_pinned,is_recurring,recurring_days,recurring_start_time,recurring_end_time,recurring_until,registration_type,price,min_infaq,max_infaq,speaker,payment_method_id,is_online,youtube_url")
+        .select("id,title,description,venue,city,starts_at,ends_at,status,gender,event_type,poster_url,group_link,points_reward,program_id,created_at,is_pinned,is_recurring,recurring_days,recurring_start_time,recurring_end_time,recurring_until,registration_type,price,min_infaq,max_infaq,speaker,payment_method_id,is_online,youtube_url,episode_count,episode_youtube_urls, programs(category,name,code)")
         .eq("id", id)
         .maybeSingle();
 
@@ -112,6 +121,13 @@ export default function EventDetail() {
           .eq("user_id", user.id)
           .maybeSingle();
         setRegistration(r || null);
+        const { data: a } = await supabase
+          .from("attendance")
+          .select("*")
+          .eq("event_id", eventData.id)
+          .eq("user_id", user.id)
+          .maybeSingle();
+        setAttendance(a || null);
       }
 
       setLoading(false);
@@ -281,11 +297,24 @@ export default function EventDetail() {
       registration?.payment_status === "approved" ||
       showVideoAfterInfaq);
 
+  const episodeList = Array.isArray(event.episode_youtube_urls)
+    ? event.episode_youtube_urls.map((url: string, index: number) => ({ index, url })).filter((item) => !!item.url)
+    : [];
+  const hasEpisodeVideos = episodeList.length > 0;
+  const selectedEpisodeUrl = episodeList.find((item) => item.index === selectedEpisode)?.url ?? episodeList[0]?.url ?? null;
+  const isEpisodeProgram = event.programs?.category === "episode";
   const showVideoUnlockPrompt =
     event.is_online &&
     registration?.attendance_mode === "online" &&
     !canShowOnlineVideo &&
     event.registration_type === "paid";
+  const userHasScanned = !!attendance?.id;
+
+  const hasVideoUrl = !!event.youtube_url || hasEpisodeVideos;
+
+  const showVideoSection = event.is_online
+    ? registration?.attendance_mode === "online" && canShowOnlineVideo
+    : registration && userHasScanned && hasVideoUrl;
 
   return (
     <div className="min-h-screen bg-background pb-32">
@@ -364,9 +393,29 @@ export default function EventDetail() {
               </div>
 
               {/* Konten Video Online (Hanya jika unlocked) */}
-              {event.is_online && registration.attendance_mode === "online" && canShowOnlineVideo && (
+              {showVideoSection && (
                 <div className="mt-4 space-y-3">
-                  <YoutubeEmbed url={event.youtube_url} title={event.title} />
+                  {hasEpisodeVideos ? (
+                    <div className="space-y-3">
+                      <div className="rounded-xl border border-border/60 p-3">
+                        <Label className="text-xs sm:text-sm">Pilih Episode</Label>
+                        <select
+                          className="mt-2 h-9 sm:h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                          value={selectedEpisode}
+                          onChange={(e) => setSelectedEpisode(Number(e.target.value))}
+                        >
+                          {episodeList.map((episode) => (
+                            <option key={episode.index} value={episode.index}>
+                              Episode {episode.index + 1}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <YoutubeEmbed url={selectedEpisodeUrl} title={isEpisodeProgram ? `Episode ${selectedEpisode + 1} • ${event.title}` : event.title} />
+                    </div>
+                  ) : (
+                    <YoutubeEmbed url={event.youtube_url} title={event.title} />
+                  )}
                   {event.group_link && (
                     <a href={event.group_link} target="_blank" rel="noreferrer">
                       <Button variant="outline" className="w-full text-sm sm:text-base">

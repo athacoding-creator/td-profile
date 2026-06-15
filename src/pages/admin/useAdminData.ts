@@ -29,7 +29,7 @@ export function useAdminData(): AdminData {
   const loadEvents = async () => {
     const { data, error } = await supabase
       .from("events")
-      .select("id,title,description,venue,city,starts_at,ends_at,status,gender,event_type,poster_url,group_link,points_reward,program_id,created_by,created_at,updated_at,success_message,is_pinned,is_recurring,recurring_days,recurring_start_time,recurring_end_time,recurring_until,registration_type,price,min_infaq,max_infaq,speaker,is_online,youtube_url, programs(id, name, code)")
+      .select("id,title,description,venue,city,starts_at,ends_at,status,gender,event_type,poster_url,group_link,points_reward,program_id,created_by,created_at,updated_at,success_message,is_pinned,is_recurring,recurring_days,recurring_start_time,recurring_end_time,recurring_until,registration_type,price,min_infaq,max_infaq,speaker,is_online,youtube_url,episode_count,episode_youtube_urls, programs(id, name, code)")
       .order("status", { ascending: true }) // active < finished < archived
       .order("is_pinned", { ascending: false })
       .order("starts_at", { ascending: false });
@@ -38,7 +38,7 @@ export function useAdminData(): AdminData {
   };
   const loadPrograms = async () => {
     const { data } = await supabase.from("programs")
-      .select("id,name,code,description,gender_restriction,created_at,updated_at")
+      .select("id,name,code,description,gender_restriction,category,created_at,updated_at")
       .order("name");
     setPrograms(data ?? []);
   };

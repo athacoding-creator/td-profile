@@ -129,6 +129,8 @@ export type Database = {
           updated_at: string
           venue: string
           youtube_url: string | null
+          episode_count: number
+          episode_youtube_urls: string[]
         }
         Insert: {
           city?: string | null
@@ -163,6 +165,8 @@ export type Database = {
           updated_at?: string
           venue: string
           youtube_url?: string | null
+          episode_count?: number
+          episode_youtube_urls?: string[] | null
         }
         Update: {
           city?: string | null
@@ -197,6 +201,8 @@ export type Database = {
           updated_at?: string
           venue?: string
           youtube_url?: string | null
+          episode_count?: number
+          episode_youtube_urls?: string[] | null
         }
         Relationships: [
           {

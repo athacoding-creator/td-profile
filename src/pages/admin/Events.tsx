@@ -22,6 +22,11 @@ const localInputToISO = (v?: string | null) => {
   return isNaN(d.getTime()) ? null : d.toISOString();
 };
 
+const buildEpisodeUrls = (urls: string[] = [], count: number) => {
+  const normalized = Array.isArray(urls) ? urls : [];
+  return Array.from({ length: Math.max(0, count) }, (_, index) => normalized[index] || "");
+};
+
 const isExpired = (ev: any) => isEventExpired(ev);
 
 const toLocalInput = (iso?: string | null) => {
@@ -57,17 +62,24 @@ export default function EventsPage() {
 }
 
 function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; defaultPoints: number; onCreated: () => void }) {
-  const [form, setForm] = useState<any>({ gender: "ALL", points_reward: defaultPoints, program_id: "", is_pinned: false, is_recurring: false, recurring_days: [], registration_type: "free", price: 0, min_infaq: 0, max_infaq: 50000, is_online: false, youtube_url: "" });
+  const [form, setForm] = useState<any>({ gender: "ALL", points_reward: defaultPoints, program_id: "", is_pinned: false, is_recurring: false, recurring_days: [], registration_type: "free", price: 0, min_infaq: 0, max_infaq: 50000, is_online: false, youtube_url: "", episode_count: 0, episode_youtube_urls: [] });
   useEffect(() => { setForm((f: any) => ({ ...f, points_reward: f.points_reward ?? defaultPoints })); }, [defaultPoints]);
 
   const create = async (e: React.FormEvent) => {
     e.preventDefault();
+    const selectedProgram = programs.find((p) => p.id === form.program_id);
+    const isEpisodeProgram = selectedProgram?.category === "episode";
+
     if (form.is_recurring && (!form.recurring_days?.length || !form.recurring_start_time || !form.recurring_end_time)) {
       return toast.error("Pilih hari & jam mulai/selesai untuk event berkelanjutan");
     }
-    if (form.is_online && !form.youtube_url?.trim()) {
+    if (form.is_online && !isEpisodeProgram && !form.youtube_url?.trim()) {
       return toast.error("Event online wajib mengisi Link YouTube");
     }
+    if (isEpisodeProgram && !form.episode_count) {
+      return toast.error("Pilih jumlah episode untuk program kategori episode");
+    }
+
     const { error } = await supabase.from("events").insert({
       title: form.title, description: form.description, venue: form.venue, city: form.city,
       poster_url: form.poster_url, event_type: form.event_type, gender: form.gender,
@@ -88,10 +100,12 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
       max_infaq: form.registration_type === "infaq" ? Number(form.max_infaq ?? 50000) : 0,
       is_online: !!form.is_online,
       youtube_url: form.is_online ? (form.youtube_url || null) : null,
+      episode_count: isEpisodeProgram ? Number(form.episode_count) : 0,
+      episode_youtube_urls: isEpisodeProgram ? buildEpisodeUrls(form.episode_youtube_urls ?? [], Number(form.episode_count)) : [],
     } as any);
     if (error) return toast.error(error.message);
     toast.success("Event dibuat");
-    setForm({ gender: "ALL", points_reward: defaultPoints, program_id: "", is_pinned: false, is_recurring: false, recurring_days: [], registration_type: "free", price: 0, min_infaq: 0, max_infaq: 50000, is_online: false, youtube_url: "" });
+    setForm({ gender: "ALL", points_reward: defaultPoints, program_id: "", is_pinned: false, is_recurring: false, recurring_days: [], registration_type: "free", price: 0, min_infaq: 0, max_infaq: 50000, is_online: false, youtube_url: "", episode_count: 0, episode_youtube_urls: [] });
     onCreated();
   };
 
@@ -145,7 +159,8 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
           <Label className="text-xs sm:text-sm">Pesan Sukses (ditampilkan setelah user scan QR)</Label>
           <Textarea rows={3} placeholder="Selamat, kamu telah berhasil mendaftar! Sampai jumpa di acara 🎉" value={form.success_message ?? ""} onChange={(e) => setForm({ ...form, success_message: e.target.value })} className="text-sm" />
         </div>
-        <OnlineFields form={form} setForm={setForm} />
+        <EpisodeFields form={form} setForm={setForm} program={programs.find((p) => p.id === form.program_id)} />
+        <OnlineFields form={form} setForm={setForm} program={programs.find((p) => p.id === form.program_id)} />
         <RecurringPinFields form={form} setForm={setForm} />
         <div className="md:col-span-2"><Button type="submit" className="w-full bg-primary text-primary-foreground h-9 sm:h-10 text-sm">Buat Event</Button></div>
       </form>
@@ -153,26 +168,75 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
   );
 }
 
-function OnlineFields({ form, setForm }: { form: any; setForm: (f: any) => void }) {
+function EpisodeFields({ form, setForm, program }: { form: any; setForm: (f: any) => void; program?: any }) {
+  const isEpisodeProgram = program?.category === "episode";
+  if (!isEpisodeProgram) return null;
+
+  const updateCount = (nextCount: number) => {
+    const normalized = buildEpisodeUrls(form.episode_youtube_urls ?? [], nextCount);
+    setForm({ ...form, episode_count: nextCount, episode_youtube_urls: normalized });
+  };
+
+  return (
+    <div className="md:col-span-2 space-y-3 rounded-xl border border-border/60 bg-muted/30 p-3 text-sm">
+      <div className="grid gap-2 sm:gap-3 md:grid-cols-3">
+        <div className="space-y-1.5 md:col-span-1">
+          <Label className="text-xs sm:text-sm">Jumlah Episode</Label>
+          <Input
+            type="number"
+            min={0}
+            value={form.episode_count ?? 0}
+            onChange={(e) => updateCount(Number(e.target.value))}
+            className="text-sm h-9 sm:h-10"
+          />
+        </div>
+      </div>
+      {Array.from({ length: form.episode_count ?? 0 }, (_, index) => (
+        <div key={index} className="space-y-1.5">
+          <Label className="text-xs sm:text-sm">Link YouTube Episode {index + 1}</Label>
+          <Input
+            value={form.episode_youtube_urls?.[index] ?? ""}
+            onChange={(e) => {
+              const nextUrls = buildEpisodeUrls(form.episode_youtube_urls ?? [], form.episode_count ?? 0);
+              nextUrls[index] = e.target.value;
+              setForm({ ...form, episode_youtube_urls: nextUrls });
+            }}
+            placeholder="https://www.youtube.com/watch?v=… atau ID"
+            className="text-sm h-9 sm:h-10"
+          />
+        </div>
+      ))}
+      <p className="text-xs text-muted-foreground">
+        Kosongkan episode yang belum ada tautannya. Episode tanpa link tidak akan ditampilkan di halaman detail event.
+      </p>
+    </div>
+  );
+}
+
+function OnlineFields({ form, setForm, program }: { form: any; setForm: (f: any) => void; program?: any }) {
+  const isEpisodeProgram = program?.category === "episode";
+
   return (
     <div className="md:col-span-2 space-y-3 rounded-xl border border-border/60 bg-muted/30 p-3 text-sm">
       <label className="flex items-center gap-2 text-xs sm:text-sm font-medium cursor-pointer">
         <input type="checkbox" checked={!!form.is_online} onChange={(e) => setForm({ ...form, is_online: e.target.checked })} />
-        📺 Event Online (tampilkan video YouTube ke peserta)
+        <Camera className="h-4 w-4 text-primary" /> Event online
       </label>
-      {form.is_online && (
-        <div className="pl-6 pt-1 space-y-1.5">
+      {form.is_online && !isEpisodeProgram && (
+        <div className="space-y-1.5">
           <Label className="text-xs sm:text-sm">Link YouTube</Label>
           <Input
-            placeholder="https://www.youtube.com/watch?v=… atau ID"
             value={form.youtube_url ?? ""}
             onChange={(e) => setForm({ ...form, youtube_url: e.target.value })}
+            placeholder="https://www.youtube.com/watch?v=..."
             className="text-sm h-9 sm:h-10"
           />
-          <p className="text-xs text-muted-foreground">
-            Online Mode memungkinkan pendaftaran tetap dibuka meskipun acara sudah selesai (pendaftaran online). Event online menggunakan alur infaq wajib berbayar untuk akses video & tidak memberikan poin.
-          </p>
         </div>
+      )}
+      {form.is_online && isEpisodeProgram && (
+        <p className="text-xs text-muted-foreground">
+          Karena ini program episode, setiap episode memiliki tautan YouTube terpisah di bawah.
+        </p>
       )}
     </div>
   );
@@ -184,6 +248,7 @@ function RecurringPinFields({ form, setForm }: { form: any; setForm: (f: any) =>
     const next = cur.includes(d) ? cur.filter((x) => x !== d) : [...cur, d].sort();
     setForm({ ...form, recurring_days: next });
   };
+
   return (
     <div className="md:col-span-2 space-y-3 rounded-xl border border-border/60 bg-muted/30 p-3 text-sm">
       <label className="flex items-center gap-2 text-xs sm:text-sm font-medium cursor-pointer">
@@ -372,18 +437,24 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
       recurring_end_time: (ev.recurring_end_time ?? "").slice(0, 5),
       recurring_until: ev.recurring_until ?? "",
       is_online: !!ev.is_online,
-      youtube_url: ev.youtube_url ?? "",
-    });
+      youtube_url: ev.youtube_url ?? "",      episode_count: ev.episode_count ?? 0,
+      episode_youtube_urls: ev.episode_youtube_urls ?? [],    });
   }, [ev]);
 
   if (!ev) return null;
 
   const save = async () => {
+    const selectedProgram = programs.find((p) => p.id === form.program_id);
+    const isEpisodeProgram = selectedProgram?.category === "episode";
+
     if (form.is_recurring && (!form.recurring_days?.length || !form.recurring_start_time || !form.recurring_end_time)) {
       return toast.error("Pilih hari & jam mulai/selesai untuk event berkelanjutan");
     }
-    if (form.is_online && !form.youtube_url?.trim()) {
+    if (form.is_online && !isEpisodeProgram && !form.youtube_url?.trim()) {
       return toast.error("Event online wajib mengisi Link YouTube");
+    }
+    if (isEpisodeProgram && !form.episode_count) {
+      return toast.error("Pilih jumlah episode untuk program kategori episode");
     }
     const { error } = await supabase.from("events").update({
       title: form.title, description: form.description, venue: form.venue, city: form.city,
@@ -402,6 +473,8 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
       recurring_until: form.is_recurring ? (form.recurring_until || null) : null,
       is_online: !!form.is_online,
       youtube_url: form.is_online ? (form.youtube_url || null) : null,
+      episode_count: isEpisodeProgram ? Number(form.episode_count) : 0,
+      episode_youtube_urls: isEpisodeProgram ? buildEpisodeUrls(form.episode_youtube_urls ?? [], Number(form.episode_count)) : [],
     } as any).eq("id", ev.id);
     if (error) return toast.error(error.message);
     toast.success("Event diperbarui");
@@ -417,7 +490,16 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
           <div className="space-y-1.5"><Label>Pengisi Acara</Label><Input value={form.speaker ?? ""} onChange={(e) => setForm({ ...form, speaker: e.target.value })} /></div>
           <div className="space-y-1.5">
             <Label>Program</Label>
-            <select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.program_id ?? ""} onChange={(e) => setForm({ ...form, program_id: e.target.value })}>
+            <select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.program_id ?? ""} onChange={(e) => {
+              const programId = e.target.value;
+              const program = programs.find((p) => p.id === programId);
+              setForm({
+                ...form,
+                program_id: programId,
+                episode_count: program?.category === "episode" ? form.episode_count : 0,
+                episode_youtube_urls: program?.category === "episode" ? form.episode_youtube_urls : [],
+              });
+            }}>
               <option value="">— tanpa program —</option>
               {programs.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
@@ -451,7 +533,8 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
             <Label>Pesan Sukses (ditampilkan setelah user scan QR)</Label>
             <Textarea rows={3} placeholder="Selamat, kamu telah berhasil mendaftar! Sampai jumpa di acara 🎉" value={form.success_message ?? ""} onChange={(e) => setForm({ ...form, success_message: e.target.value })} />
           </div>
-          <OnlineFields form={form} setForm={setForm} />
+          <EpisodeFields form={form} setForm={setForm} program={programs.find((p) => p.id === form.program_id)} />
+          <OnlineFields form={form} setForm={setForm} program={programs.find((p) => p.id === form.program_id)} />
           <RecurringPinFields form={form} setForm={setForm} />
         </div>
         <DialogFooter>
