@@ -273,6 +273,20 @@ export default function EventDetail() {
   const scanNotYetAvailable = sw.scanNotYetAvailable;
   const scanStartTime = sw.scanStartTime;
 
+  const canShowOnlineVideo =
+    event.is_online &&
+    registration?.attendance_mode === "online" &&
+    (event.registration_type === "free" ||
+      event.registration_type === "infaq" ||
+      registration?.payment_status === "approved" ||
+      showVideoAfterInfaq);
+
+  const showVideoUnlockPrompt =
+    event.is_online &&
+    registration?.attendance_mode === "online" &&
+    !canShowOnlineVideo &&
+    event.registration_type === "paid";
+
   return (
     <div className="min-h-screen bg-background pb-32">
       <Header />
@@ -326,7 +340,7 @@ export default function EventDetail() {
             <>
               {/* Status terdaftar */}
               <div className="rounded-xl bg-accent/10 p-4 text-center font-semibold text-accent text-sm sm:text-base border border-accent/20">
-                {event.is_online && registration.attendance_mode === "online" && showVideoAfterInfaq ? (
+                {event.is_online && registration.attendance_mode === "online" && canShowOnlineVideo ? (
                   <div className="flex flex-col gap-1">
                     <div className="flex items-center justify-center gap-2">
                       <Video className="h-4 w-4" /> Akses Video Terbuka
@@ -344,13 +358,13 @@ export default function EventDetail() {
                     {event.registration_type === "paid" && registration.payment_status === "approved" && " (Pembayaran disetujui)"}
                     {event.registration_type === "paid" && registration.payment_status === "rejected" && " (Pembayaran ditolak)"}
                     {event.registration_type === "infaq" && registration.attendance_mode === "offline" && ""}
-                    {event.is_online && registration.attendance_mode === "online" && !showVideoAfterInfaq && " (Belum Berinfaq)"}
+                    {showVideoUnlockPrompt && " (Belum Berinfaq)"}
                   </>
                 )}
               </div>
 
               {/* Konten Video Online (Hanya jika unlocked) */}
-              {event.is_online && registration.attendance_mode === "online" && showVideoAfterInfaq && (
+              {event.is_online && registration.attendance_mode === "online" && canShowOnlineVideo && (
                 <div className="mt-4 space-y-3">
                   <YoutubeEmbed url={event.youtube_url} title={event.title} />
                   {event.group_link && (
@@ -364,7 +378,7 @@ export default function EventDetail() {
               )}
 
               {/* Tombol Buka Video (Hanya jika online mode dan belum unlocked) */}
-              {event.is_online && registration.attendance_mode === "online" && !showVideoAfterInfaq && (
+              {showVideoUnlockPrompt && (
                 <div className="space-y-3">
                   <div className="rounded-xl bg-amber-50 border border-amber-200 p-4">
                     <p className="text-[11px] sm:text-xs text-amber-700 leading-relaxed text-center">
