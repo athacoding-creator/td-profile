@@ -87,11 +87,16 @@ export default function RegistrationsPage() {
 
   return (
     <>
-      <div>
-        <h1 className="font-display text-3xl font-bold">Kehadiran</h1>
-        <p className="text-sm text-muted-foreground">
-          Jamaah yang benar-benar hadir (sudah scan QR)
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="font-display text-3xl font-bold">Kehadiran</h1>
+          <p className="text-sm text-muted-foreground">
+            Jamaah yang benar-benar hadir (sudah scan QR)
+          </p>
+        </div>
+        <Button onClick={exportXLSX} disabled={filtered.length === 0} className="w-full sm:w-auto">
+          <Download className="mr-2 h-4 w-4" /> Download Excel ({filtered.length})
+        </Button>
       </div>
 
       <Section title="Jamaah per Event">
@@ -180,10 +185,10 @@ export default function RegistrationsPage() {
             : "Semua jamaah hadir terbaru"
         }
       >
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          <Button size="sm" onClick={exportXLSX} disabled={filtered.length === 0}>
-            <Download className="mr-1 h-4 w-4" /> Download Excel ({filtered.length})
-          </Button>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs text-muted-foreground">
+            Menampilkan <span className="font-bold text-foreground">{filtered.length}</span> jamaah hadir
+          </p>
           {eventFilter && (
             <button
               onClick={() => setEventFilter("")}
