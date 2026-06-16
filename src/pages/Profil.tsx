@@ -62,6 +62,9 @@ export default function Profil() {
   const [provinces, setProvinces] = useState<Wilayah[]>([]);
   const [regencies, setRegencies] = useState<Wilayah[]>([]);
   const [districts, setDistricts] = useState<Wilayah[]>([]);
+  const [loadingProvinces, setLoadingProvinces] = useState(false);
+  const [loadingRegencies, setLoadingRegencies] = useState(false);
+  const [loadingDistricts, setLoadingDistricts] = useState(false);
 
   useEffect(() => {
     if (profile) setForm(profile);
@@ -70,24 +73,34 @@ export default function Profil() {
   // Load provinces when entering edit
   useEffect(() => {
     if (view !== "edit" || provinces.length) return;
+    setLoadingProvinces(true);
     fetch("https://www.emsifa.com/api-wilayah-indonesia/api/provinces.json")
       .then((r) => r.json())
       .then(setProvinces)
-      .catch(() => toast.error("Gagal memuat daftar provinsi"));
+      .catch(() => toast.error("Gagal memuat daftar provinsi"))
+      .finally(() => setLoadingProvinces(false));
   }, [view, provinces.length]);
 
   // Cascade: load regencies when province changes
   useEffect(() => {
     if (!form?.province_code) { setRegencies([]); return; }
+    setLoadingRegencies(true);
     fetch(`https://www.emsifa.com/api-wilayah-indonesia/api/regencies/${form.province_code}.json`)
-      .then((r) => r.json()).then(setRegencies).catch(() => setRegencies([]));
+      .then((r) => r.json())
+      .then(setRegencies)
+      .catch(() => setRegencies([]))
+      .finally(() => setLoadingRegencies(false));
   }, [form?.province_code]);
 
   // Cascade: load districts when regency changes
   useEffect(() => {
     if (!form?.regency_code) { setDistricts([]); return; }
+    setLoadingDistricts(true);
     fetch(`https://www.emsifa.com/api-wilayah-indonesia/api/districts/${form.regency_code}.json`)
-      .then((r) => r.json()).then(setDistricts).catch(() => setDistricts([]));
+      .then((r) => r.json())
+      .then(setDistricts)
+      .catch(() => setDistricts([]))
+      .finally(() => setLoadingDistricts(false));
   }, [form?.regency_code]);
 
   const save = async () => {
@@ -354,14 +367,31 @@ export default function Profil() {
                 <Select
                   value={form.province_code ?? ""}
                   onValueChange={(v) => {
+                    if (!v) return;
                     const p = provinces.find((x) => x.id === v);
-                    setForm({ ...form, province_code: v, province_name: p?.name ?? null,
-                      regency_code: null, regency_name: null, district_code: null, district_name: null });
+                    setForm({ 
+                      ...form, 
+                      province_code: v, 
+                      province_name: p?.name ?? null,
+                      regency_code: null, 
+                      regency_name: null, 
+                      district_code: null, 
+                      district_name: null 
+                    });
                   }}
+                  disabled={loadingProvinces}
                 >
-                  <SelectTrigger><SelectValue placeholder="Pilih provinsi" /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue placeholder={loadingProvinces ? "Memuat provinsi..." : "Pilih provinsi"} />
+                  </SelectTrigger>
                   <SelectContent className="max-h-72">
-                    {provinces.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                    {provinces.length > 0 ? (
+                      provinces.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)
+                    ) : (
+                      <div className="p-2 text-center text-xs text-muted-foreground">
+                        {loadingProvinces ? "Sedang mengambil data..." : "Daftar provinsi tidak tersedia"}
+                      </div>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -370,15 +400,32 @@ export default function Profil() {
                 <Select
                   value={form.regency_code ?? ""}
                   onValueChange={(v) => {
+                    if (!v) return;
                     const r = regencies.find((x) => x.id === v);
-                    setForm({ ...form, regency_code: v, regency_name: r?.name ?? null,
-                      district_code: null, district_name: null });
+                    setForm({ 
+                      ...form, 
+                      regency_code: v, 
+                      regency_name: r?.name ?? null,
+                      district_code: null, 
+                      district_name: null 
+                    });
                   }}
-                  disabled={!form.province_code}
+                  disabled={!form.province_code || loadingRegencies}
                 >
-                  <SelectTrigger><SelectValue placeholder={form.province_code ? "Pilih kabupaten/kota" : "Pilih provinsi dulu"} /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue placeholder={
+                      loadingRegencies ? "Memuat data..." : 
+                      form.province_code ? "Pilih kabupaten/kota" : "Pilih provinsi dulu"
+                    } />
+                  </SelectTrigger>
                   <SelectContent className="max-h-72">
-                    {regencies.map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
+                    {regencies.length > 0 ? (
+                      regencies.map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)
+                    ) : (
+                      <div className="p-2 text-center text-xs text-muted-foreground">
+                        {loadingRegencies ? "Sedang mengambil data..." : "Pilih provinsi terlebih dahulu"}
+                      </div>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -387,14 +434,26 @@ export default function Profil() {
                 <Select
                   value={form.district_code ?? ""}
                   onValueChange={(v) => {
+                    if (!v) return;
                     const d = districts.find((x) => x.id === v);
                     setForm({ ...form, district_code: v, district_name: d?.name ?? null });
                   }}
-                  disabled={!form.regency_code}
+                  disabled={!form.regency_code || loadingDistricts}
                 >
-                  <SelectTrigger><SelectValue placeholder={form.regency_code ? "Pilih kecamatan" : "Pilih kabupaten/kota dulu"} /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue placeholder={
+                      loadingDistricts ? "Memuat data..." :
+                      form.regency_code ? "Pilih kecamatan" : "Pilih kabupaten/kota dulu"
+                    } />
+                  </SelectTrigger>
                   <SelectContent className="max-h-72">
-                    {districts.map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+                    {districts.length > 0 ? (
+                      districts.map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)
+                    ) : (
+                      <div className="p-2 text-center text-xs text-muted-foreground">
+                        {loadingDistricts ? "Sedang mengambil data..." : "Pilih kabupaten/kota terlebih dahulu"}
+                      </div>
+                    )}
                   </SelectContent>
                 </Select>
               </div>

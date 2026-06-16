@@ -5,7 +5,8 @@ import { HelmetProvider } from "react-helmet-async";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { AuthProvider } from "@/hooks/useAuth";
+import { AuthProvider } from "./hooks/useAuth";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ThemeProvider } from "@/components/theme-provider";
 import { RequireAuth } from "@/components/RequireAuth";
 import { Analytics } from "@vercel/analytics/react";
@@ -73,7 +74,8 @@ const App = () => (
           <BrowserRouter>
             <AuthProvider>
               <Shell>
-              <Suspense fallback={<PageFallback />}>
+              <ErrorBoundary>
+                <Suspense fallback={<PageFallback />}>
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/auth" element={<Auth />} />
@@ -107,6 +109,7 @@ const App = () => (
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>
+              </ErrorBoundary>
               </Shell>
             </AuthProvider>
           </BrowserRouter>
