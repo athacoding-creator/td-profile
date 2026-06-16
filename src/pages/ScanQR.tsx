@@ -18,6 +18,10 @@ export default function ScanQR() {
   const [now, setNow] = useState(new Date());
   const scannerRef = useRef<Html5Qrcode | null>(null);
 
+  const goToSuccess = (successEventId: string) => {
+    window.location.replace(`/event/${successEventId}/sukses`);
+  };
+
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
@@ -56,7 +60,7 @@ export default function ScanQR() {
       return;
     }
     await refreshProfile();
-    navigate(`/event/${evid ?? event.id}/sukses`);
+    goToSuccess(evid ?? event.id);
   };
 
   const start = async () => {

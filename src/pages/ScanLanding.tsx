@@ -29,6 +29,10 @@ export default function ScanLanding() {
   const eventId = params.get("e");
   const programId = params.get("p");
 
+  const goToSuccess = (successEventId: string) => {
+    window.location.replace(`/event/${successEventId}/sukses`);
+  };
+
   const retry = useCallback(() => {
     ran.current = false;
     setError(null);
@@ -100,15 +104,15 @@ export default function ScanLanding() {
         if (rpcErr) {
           if (rpcErr.code === "23505" || /duplicate/i.test(rpcErr.message)) {
             toast.info("Kamu sudah absen sebelumnya");
-            navigate(`/event/${evid ?? evId}/sukses`, { replace: true });
+            goToSuccess(evid ?? evId!);
             return;
           }
           setError(rpcErr.message || "Gagal mencatat kehadiran.");
           ran.current = false;
           return;
         }
-        // Navigasi dulu — refresh profil di background, jangan blokir UI
-        navigate(`/event/${evid ?? evId}/sukses`, { replace: true });
+        // Hard redirect supaya app dimuat ulang setelah scan sukses.
+        goToSuccess(evid ?? evId!);
         refreshProfile().catch(() => {});
       } catch (e: any) {
         console.error("[ScanLanding] error:", e);
