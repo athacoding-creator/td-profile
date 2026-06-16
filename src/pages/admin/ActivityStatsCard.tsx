@@ -134,21 +134,28 @@ export default function ActivityStatsCard({
   const [showProgramPicker, setShowProgramPicker] = useState(false);
   const [searchProgram, setSearchProgram] = useState("");
 
+  // ── Event filter state ────────────────────────────────────────────────
+  const [selectedEventId, setSelectedEventId] = useState<string>("");
+  const [showEventPicker, setShowEventPicker] = useState(false);
+  const [searchEvent, setSearchEvent] = useState("");
+
   // Get events for selected program
   const eventsForProgram = useMemo(() => {
     if (!selectedProgramId) return events;
     return events.filter((e) => e.program_id === selectedProgramId);
   }, [events, selectedProgramId]);
 
-  // Filter attendance & redemptions by selected program
+  // Filter attendance & redemptions by selected program / event
   const filteredAttendance = useMemo(
     () => {
       if (!Array.isArray(attendance)) return [];
-      return selectedProgramId 
+      const programFiltered = selectedProgramId
         ? attendance.filter((a) => a && eventsForProgram.some((e) => e && e.id === a.event_id))
         : attendance;
+      if (!selectedEventId) return programFiltered;
+      return programFiltered.filter((a) => a && a.event_id === selectedEventId);
     },
-    [attendance, selectedProgramId, eventsForProgram],
+    [attendance, selectedProgramId, eventsForProgram, selectedEventId],
   );
   const filteredRedemptions = useMemo(
     () => {
@@ -157,15 +164,40 @@ export default function ActivityStatsCard({
     },
     [redemptions, selectedProgramId],
   );
+
+  const selectedEvent = useMemo(() => {
+    if (!selectedEventId) return null;
+    return events.find((e) => e && e.id === selectedEventId) ?? null;
+  }, [events, selectedEventId]);
   const filteredRegistrations = useMemo(
     () => {
       if (!Array.isArray(registrations)) return [];
-      return selectedProgramId
+      const programFiltered = selectedProgramId
         ? registrations.filter((r) => r && eventsForProgram.some((e) => e && e.id === r.event_id))
         : registrations;
+      if (!selectedEventId) return programFiltered;
+      return programFiltered.filter((r) => r && r.event_id === selectedEventId);
     },
-    [registrations, selectedProgramId, eventsForProgram],
+    [registrations, selectedProgramId, eventsForProgram, selectedEventId],
   );
+
+  const filteredEvents = useMemo(() => {
+    const list = selectedProgramId ? eventsForProgram : events;
+    return Array.isArray(list) ? list : [];
+  }, [events, eventsForProgram, selectedProgramId]);
+
+  const visibleEvents = useMemo(() => {
+    return filteredEvents.filter((e) => e?.title?.toLowerCase().includes(searchEvent.toLowerCase()));
+  }, [filteredEvents, searchEvent]);
+
+  const totalRegistrations = filteredRegistrations.length;
+  const totalAttendance = filteredAttendance.length;
+  const totalCollected = useMemo(() => {
+    return filteredRegistrations.reduce((sum, r) => {
+      const amount = Number(r?.amount_paid ?? 0);
+      return sum + (Number.isFinite(amount) ? amount : 0);
+    }, 0);
+  }, [filteredRegistrations]);
 
   const weekly = useMemo(() => buildWeekly(filteredAttendance, filteredRedemptions), [filteredAttendance, filteredRedemptions]);
   const daily = useMemo(() => buildDaily(filteredAttendance, filteredRedemptions), [filteredAttendance, filteredRedemptions]);
@@ -205,6 +237,7 @@ export default function ActivityStatsCard({
     p.code?.toLowerCase().includes(searchProgram.toLowerCase())),
   ) : [];
   const selectedProgram = (selectedProgramId && Array.isArray(programs)) ? programs.find((p) => p && p.id === selectedProgramId) : null;
+  const isEventSelected = !!selectedEventId;
 
   // ── Chart data: if program selected → show per-program breakdown (weekly/daily)
   //               if no program → show ranking (bar/donut) or all-time line
@@ -225,7 +258,7 @@ export default function ActivityStatsCard({
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-          <div className="inline-flex rounded-xl bg-muted p-1">
+          <div className="w-full flex justify-between rounded-xl bg-muted p-1 sm:w-auto sm:inline-flex sm:justify-normal">
             {tabs.map((t) => {
               const Icon = t.icon;
               const active = kind === t.key;
@@ -233,7 +266,7 @@ export default function ActivityStatsCard({
                 <button
                   key={t.key}
                   onClick={() => setKind(t.key)}
-                  className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-xs font-semibold transition ${
+                  className={`flex-1 sm:flex-none inline-flex items-center justify-center sm:justify-normal gap-1.5 rounded-lg px-2.5 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-xs font-semibold transition ${
                     active ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
@@ -253,7 +286,11 @@ export default function ActivityStatsCard({
               weekly,
               daily,
               totals,
-              eventTitle: selectedProgram?.name,
+              eventTitle: selectedEventId 
+                ? selectedEvent?.title 
+                : (selectedProgramId ? selectedProgram?.name : undefined),
+              isEventFiltered: !!selectedEventId,
+              isProgramFiltered: !!selectedProgramId,
             })}
             className="gap-1.5 text-[11px] sm:text-xs h-7 sm:h-8"
           >
@@ -262,25 +299,25 @@ export default function ActivityStatsCard({
         </div>
       </div>
 
-      {/* ── Program Picker ──────────────────────────────────────────────── */}
-      <div className="mt-3 sm:mt-4">
+      {/* ── Program & Event Pickers ────────────────────────────────────── */}
+      <div className="mt-3 sm:mt-4 grid grid-cols-2 gap-2 sm:gap-3">
         <div className="relative">
           <button
             onClick={() => setShowProgramPicker(!showProgramPicker)}
-            className={`inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-xs font-medium transition ${
+            className={`w-full inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-xl border px-2.5 sm:px-3 py-1.5 text-xs font-medium transition ${
               isProgramSelected
                 ? "border-primary bg-primary/5 text-primary"
                 : "border-border/60 bg-muted/40 text-muted-foreground hover:text-foreground hover:border-border"
             }`}
           >
-            <span className="max-w-[180px] truncate">
+            <span className="truncate text-[11px] sm:text-xs">
               {isProgramSelected ? selectedProgram?.name : "Semua Program"}
             </span>
-            <ChevronDown className={`h-3.5 w-3.5 shrink-0 transition ${showProgramPicker ? "rotate-180" : ""}`} />
+            <ChevronDown className={`h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0 transition ${showProgramPicker ? "rotate-180" : ""}`} />
           </button>
           {isProgramSelected && (
             <button
-              onClick={() => { setSelectedProgramId(""); setShowProgramPicker(false); }}
+              onClick={() => { setSelectedProgramId(""); setSelectedEventId(""); setShowProgramPicker(false); }}
               className="ml-1.5 inline-flex items-center justify-center rounded-full bg-muted/60 p-0.5 text-muted-foreground hover:text-foreground transition"
               title="Reset ke Semua Program"
             >
@@ -289,7 +326,7 @@ export default function ActivityStatsCard({
           )}
 
           {showProgramPicker && (
-            <div className="absolute left-0 top-full z-20 mt-1.5 w-72 sm:w-80 rounded-2xl border border-border bg-card shadow-lg">
+            <div className="absolute left-0 top-full z-20 mt-1.5 w-full min-w-[16rem] rounded-2xl border border-border bg-card shadow-lg sm:w-96">
               <div className="p-3 border-b border-border/60">
                 <Input
                   placeholder="Cari program..."
@@ -300,9 +337,8 @@ export default function ActivityStatsCard({
                 />
               </div>
               <div className="max-h-64 overflow-y-auto p-2 space-y-1">
-                {/* Semua Program option */}
                 <button
-                  onClick={() => { setSelectedProgramId(""); setShowProgramPicker(false); setSearchProgram(""); }}
+                  onClick={() => { setSelectedProgramId(""); setSelectedEventId(""); setShowProgramPicker(false); setSearchProgram(""); }}
                   className={`w-full rounded-lg px-3 py-2 text-left text-xs transition ${
                     !isProgramSelected ? "bg-primary/10 text-primary font-semibold" : "hover:bg-muted/60 text-foreground"
                   }`}
@@ -311,7 +347,6 @@ export default function ActivityStatsCard({
                   <span className="ml-1 text-muted-foreground">({attendance.length} peserta hadir)</span>
                 </button>
 
-                {/* Filtered programs */}
                 {filteredPrograms.length === 0 && (
                   <p className="text-center text-xs text-muted-foreground py-4">Program tidak ditemukan</p>
                 )}
@@ -325,7 +360,7 @@ export default function ActivityStatsCard({
                   return (
                     <button
                       key={p.id}
-                      onClick={() => { setSelectedProgramId(p.id); setShowProgramPicker(false); setSearchProgram(""); }}
+                      onClick={() => { setSelectedProgramId(p.id); setSelectedEventId(""); setShowProgramPicker(false); setSearchProgram(""); }}
                       className={`w-full rounded-lg px-3 py-2 text-left text-xs transition ${
                         selectedProgramId === p.id
                           ? "bg-primary/10 text-primary font-semibold"
@@ -345,10 +380,93 @@ export default function ActivityStatsCard({
             </div>
           )}
         </div>
+
+        <div className="relative w-full">
+          <button
+            onClick={() => {
+              if (!showEventPicker) setSearchEvent("");
+              setShowEventPicker(!showEventPicker);
+            }}
+            className={`w-full inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-xl border px-2.5 sm:px-3 py-1.5 text-xs font-medium transition ${
+              isEventSelected
+                ? "border-primary bg-primary/5 text-primary"
+                : "border-border/60 bg-muted/40 text-muted-foreground hover:text-foreground hover:border-border"
+            }`}
+          >
+            <span className="truncate text-[11px] sm:text-xs">
+              {isEventSelected ? selectedEvent?.title : "Semua Event"}
+            </span>
+            <ChevronDown className={`h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0 transition ${showEventPicker ? "rotate-180" : ""}`} />
+          </button>
+          {isEventSelected && (
+            <button
+              onClick={() => { setSelectedEventId(""); setShowEventPicker(false); }}
+              className="ml-1.5 inline-flex items-center justify-center rounded-full bg-muted/60 p-0.5 text-muted-foreground hover:text-foreground transition"
+              title="Reset ke Semua Event"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          )}
+
+          {showEventPicker && (
+            <div className="absolute left-0 top-full z-20 mt-1.5 w-full min-w-[18rem] rounded-2xl border border-border bg-card shadow-lg sm:w-80">
+              <div className="p-3 border-b border-border/60">
+                <Input
+                  placeholder="Cari event..."
+                  value={searchEvent}
+                  onChange={(e) => setSearchEvent(e.target.value)}
+                  className="h-8 text-xs"
+                />
+              </div>
+              <div className="max-h-64 overflow-y-auto p-2 space-y-1">
+                <button
+                  onClick={() => { setSelectedEventId(""); setShowEventPicker(false); setSearchEvent(""); }}
+                  className={`w-full rounded-lg px-3 py-2 text-left text-xs transition ${
+                    !isEventSelected ? "bg-primary/10 text-primary font-semibold" : "hover:bg-muted/60 text-foreground"
+                  }`}
+                >
+                  <span className="font-medium">Semua Event</span>
+                  <span className="ml-1 text-muted-foreground">({filteredEvents.length} event)</span>
+                </button>
+
+                {visibleEvents.length === 0 && (
+                  <p className="text-center text-xs text-muted-foreground py-4">Event tidak ditemukan</p>
+                )}
+                {visibleEvents.map((e) => {
+                  if (!e) return null;
+                  return (
+                    <button
+                      key={e.id}
+                      onClick={() => { setSelectedEventId(e.id); setShowEventPicker(false); setSearchEvent(""); }}
+                      className={`w-full rounded-lg px-3 py-2 text-left text-xs transition ${
+                        selectedEventId === e.id
+                          ? "bg-primary/10 text-primary font-semibold"
+                          : "hover:bg-muted/60 text-foreground"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-medium line-clamp-1">{e.title}</span>
+                      </div>
+                      <div className="text-muted-foreground mt-0.5">
+                        {e.programs?.code || "—"} · {attendance.filter((a) => a?.event_id === e.id).length} hadir
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-3 lg:grid-cols-3">
+        <StatCard label="Total Pendaftar" value={totalRegistrations} />
+        <StatCard label="Total Kehadiran" value={totalAttendance} />
+        <StatCard label="Total Nominal Terkumpul" value={totalCollected} isCurrency />
       </div>
 
       {/* ── Legend totals ─────────────────────────────────────────────── */}
-      <div className="mt-3 flex flex-wrap gap-2 sm:gap-3">
+      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
         {isProgramSelected ? (
           <>
             <Legendy color={COLORS.male} label="Laki-laki" value={totals.male} />
@@ -452,6 +570,17 @@ export default function ActivityStatsCard({
           Menampilkan {rankingBarData.length} program teratas berdasarkan jumlah peserta yang hadir
         </p>
       )}
+    </div>
+  );
+}
+
+function StatCard({ label, value, isCurrency = false }: { label: string; value: number; isCurrency?: boolean }) {
+  return (
+    <div className="rounded-2xl border border-border/60 bg-muted/40 p-4">
+      <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{label}</p>
+      <p className="mt-3 text-2xl font-semibold text-foreground">
+        {isCurrency ? `Rp ${value.toLocaleString("id-ID")}` : value.toLocaleString("id-ID")}
+      </p>
     </div>
   );
 }

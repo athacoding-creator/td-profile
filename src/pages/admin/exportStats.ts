@@ -23,16 +23,19 @@ export function exportStatsXLSX(opts: {
   weekly: { label: string; male: number; female: number; reward: number }[];
   daily: { label: string; male: number; female: number; reward: number }[];
   totals: { male: number; female: number; reward: number };
-  eventTitle?: string; // optional: name of selected event for filename & context
+  eventTitle?: string; // optional: name of selected event/program for filename & context
+  isEventFiltered?: boolean; // true if filtered by event
+  isProgramFiltered?: boolean; // true if filtered by program
 }) {
-  const { attendance, redemptions, registrations, logins, weekly, daily, totals, eventTitle } = opts;
+  const { attendance, redemptions, registrations, logins, weekly, daily, totals, eventTitle, isEventFiltered, isProgramFiltered } = opts;
   const wb = XLSX.utils.book_new();
   const isFiltered = !!eventTitle;
 
   /* ── 1. Ringkasan ──────────────────────────────────────────────── */
   const summaryRows: Row[] = [];
   if (isFiltered) {
-    summaryRows.push({ Metrik: "Event", Total: eventTitle });
+    const filterType = isEventFiltered ? "Event" : "Program";
+    summaryRows.push({ Metrik: filterType, Total: eventTitle });
   }
   summaryRows.push(
     { Metrik: "Jamaah Hadir (Laki-laki)", Total: totals.male },
@@ -46,7 +49,7 @@ export function exportStatsXLSX(opts: {
       { Metrik: "Total Login Tercatat", Total: logins.length },
     );
   } else {
-    summaryRows.push({ Metrik: "Total Pendaftar Event Ini", Total: registrations.length });
+    summaryRows.push({ Metrik: "Total Pendaftar (Terpilih)", Total: registrations.length });
   }
   const wsSummary = XLSX.utils.json_to_sheet(summaryRows);
   setCols(wsSummary, [36, 12]);
@@ -108,8 +111,8 @@ export function exportStatsXLSX(opts: {
   setCols(wsRegistrations, [5, 22, 28, 30, 12, 18, 36, 22]);
   XLSX.utils.book_append_sheet(wb, wsRegistrations, "Detail Pendaftar");
 
-  /* ── 6. Detail Penukaran (only when not filtered by event) ─────── */
-  if (!isFiltered) {
+  /* ── 6. Detail Penukaran (only when not filtered by event or program) ─────── */
+  if (!isFiltered && !isProgramFiltered) {
     const wsRedemptions = XLSX.utils.json_to_sheet(
       redemptions.map((r, i) => ({
         No: i + 1,
