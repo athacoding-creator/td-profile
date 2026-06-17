@@ -24,7 +24,7 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(0);
-  const ITEMS_PER_PAGE = 1000;
+  const ITEMS_PER_PAGE = 100;
   const { user: me } = useAuth();
 
   const load = async () => {
