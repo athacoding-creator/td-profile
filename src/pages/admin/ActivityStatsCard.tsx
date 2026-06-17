@@ -184,6 +184,8 @@ export default function ActivityStatsCard({
     return filteredEvents.filter((e) => e?.title?.toLowerCase().includes(searchEvent.toLowerCase()));
   }, [filteredEvents, searchEvent]);
 
+  const totalRegistrations = filteredRegistrations.length;
+  const totalAttendance = filteredAttendance.length;
   const totalCollected = useMemo(() => {
     return filteredRegistrations.reduce((sum, r) => {
       const amount = Number(r?.amount_paid ?? 0);
@@ -470,19 +472,10 @@ export default function ActivityStatsCard({
         </div>
       </div>
 
-      <div className={`mt-4 grid gap-3 ${isRegistrationMode ? "sm:grid-cols-2 lg:grid-cols-3" : "sm:grid-cols-2"}`}>
-        {isRegistrationMode ? (
-          <>
-            <StatCard label="Total Pendaftar" value={activeStats.total} />
-            <StatCard label="Total Laki-laki" value={activeStats.male} />
-            <StatCard label="Total Perempuan" value={activeStats.female} />
-          </>
-        ) : (
-          <>
-            <StatCard label="Total Kehadiran" value={activeStats.total} />
-            <StatCard label="Total Nominal Terkumpul" value={totalCollected} isCurrency />
-          </>
-        )}
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <StatCard label="Total Pendaftar" value={totalRegistrations} />
+        <StatCard label="Total Kehadiran" value={totalAttendance} />
+        <StatCard label="Total Nominal Terkumpul" value={totalCollected} isCurrency />
       </div>
 
       {/* ── Legend totals ─────────────────────────────────────────────── */}
