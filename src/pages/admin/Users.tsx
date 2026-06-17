@@ -27,7 +27,7 @@ export default function UsersPage() {
   const load = async () => {
     setLoading(true);
     const [{ data }, { data: roles }] = await Promise.all([
-      supabase.from("profiles").select("*").order("created_at", { ascending: false }),
+      supabase.from("profiles").select("*").order("created_at", { ascending: false }).limit(100000),
       supabase.from("user_roles").select("user_id, role").eq("role", "admin"),
     ]);
     setProfiles(data ?? []);
