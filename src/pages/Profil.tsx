@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import provincesData from "@/data/provinces.json";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Header } from "@/components/Header";
@@ -73,34 +74,70 @@ export default function Profil() {
   // Load provinces when entering edit
   useEffect(() => {
     if (view !== "edit" || provinces.length) return;
-    setLoadingProvinces(true);
-    fetch("https://www.emsifa.com/api-wilayah-indonesia/api/provinces.json")
-      .then((r) => r.json())
-      .then(setProvinces)
-      .catch(() => toast.error("Gagal memuat daftar provinsi"))
-      .finally(() => setLoadingProvinces(false));
+    // Use local cached data for provinces to prevent crash and improve performance
+    setProvinces(provincesData as Wilayah[]);
   }, [view, provinces.length]);
 
   // Cascade: load regencies when province changes
   useEffect(() => {
-    if (!form?.province_code) { setRegencies([]); return; }
+    let active = true;
+    if (!form?.province_code) { 
+      setRegencies([]); 
+      return; 
+    }
+    
     setLoadingRegencies(true);
     fetch(`https://www.emsifa.com/api-wilayah-indonesia/api/regencies/${form.province_code}.json`)
-      .then((r) => r.json())
-      .then(setRegencies)
-      .catch(() => setRegencies([]))
-      .finally(() => setLoadingRegencies(false));
+      .then((r) => {
+        if (!r.ok) throw new Error("Gagal mengambil data kabupaten");
+        return r.json();
+      })
+      .then((data) => {
+        if (active) setRegencies(data);
+      })
+      .catch((err) => {
+        console.error(err);
+        if (active) {
+          setRegencies([]);
+          toast.error("Gagal memuat daftar kabupaten/kota");
+        }
+      })
+      .finally(() => {
+        if (active) setLoadingRegencies(false);
+      });
+      
+    return () => { active = false; };
   }, [form?.province_code]);
 
   // Cascade: load districts when regency changes
   useEffect(() => {
-    if (!form?.regency_code) { setDistricts([]); return; }
+    let active = true;
+    if (!form?.regency_code) { 
+      setDistricts([]); 
+      return; 
+    }
+    
     setLoadingDistricts(true);
     fetch(`https://www.emsifa.com/api-wilayah-indonesia/api/districts/${form.regency_code}.json`)
-      .then((r) => r.json())
-      .then(setDistricts)
-      .catch(() => setDistricts([]))
-      .finally(() => setLoadingDistricts(false));
+      .then((r) => {
+        if (!r.ok) throw new Error("Gagal mengambil data kecamatan");
+        return r.json();
+      })
+      .then((data) => {
+        if (active) setDistricts(data);
+      })
+      .catch((err) => {
+        console.error(err);
+        if (active) {
+          setDistricts([]);
+          toast.error("Gagal memuat daftar kecamatan");
+        }
+      })
+      .finally(() => {
+        if (active) setLoadingDistricts(false);
+      });
+      
+    return () => { active = false; };
   }, [form?.regency_code]);
 
   const save = async () => {
