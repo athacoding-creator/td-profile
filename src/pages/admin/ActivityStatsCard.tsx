@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { exportStatsXLSX } from "./exportStats";
 
 type ChartKind = "bar" | "donut" | "line";
+type StatMode = "pendaftar" | "kehadiran";
 
 const COLORS = {
   male: "hsl(var(--chart-male))",
@@ -26,7 +27,29 @@ function weekStart(d: Date) {
 }
 const fmtDM = (d: Date) => `${d.getDate()}/${d.getMonth() + 1}`;
 
-function buildWeekly(attendance: any[] = [], redemptions: any[] = []) {
+function getGender(value: any) {
+  const gender = value?.profiles?.gender;
+  if (gender === "MALE" || gender === "male" || gender === "L") return "male";
+  if (gender === "FEMALE" || gender === "female" || gender === "P") return "female";
+  return null;
+}
+
+function buildRegistrationStats(records: any[] = []) {
+  const stats = { male: 0, female: 0, total: 0 };
+  if (!Array.isArray(records)) return stats;
+
+  for (const record of records) {
+    if (!record) continue;
+    stats.total++;
+    const gender = getGender(record);
+    if (gender === "male") stats.male++;
+    if (gender === "female") stats.female++;
+  }
+
+  return stats;
+}
+
+function buildWeekly(records: any[] = [], redemptions: any[] = [], dateField = "scanned_at") {
   const now = new Date();
   const thisWeek = weekStart(now);
   const buckets: { key: string; label: string; male: number; female: number; reward: number }[] = [];
@@ -41,13 +64,13 @@ function buildWeekly(attendance: any[] = [], redemptions: any[] = []) {
   }
   const idx = new Map(buckets.map((b, i) => [b.key, i]));
   const k = (d: Date) => { const w = weekStart(d); return `${w.getFullYear()}-${w.getMonth()}-${w.getDate()}`; };
-  if (Array.isArray(attendance)) {
-    for (const a of attendance) {
-      if (!a || !a.scanned_at) continue;
-      const i = idx.get(k(new Date(a.scanned_at))); if (i === undefined) continue;
-      const g = a.profiles?.gender;
-      if (g === "MALE" || g === "male" || g === "L") buckets[i].male++;
-      else if (g === "FEMALE" || g === "female" || g === "P") buckets[i].female++;
+  if (Array.isArray(records)) {
+    for (const a of records) {
+      if (!a || !a[dateField]) continue;
+      const i = idx.get(k(new Date(a[dateField]))); if (i === undefined) continue;
+      const gender = getGender(a);
+      if (gender === "male") buckets[i].male++;
+      else if (gender === "female") buckets[i].female++;
     }
   }
   if (Array.isArray(redemptions)) {
@@ -60,7 +83,7 @@ function buildWeekly(attendance: any[] = [], redemptions: any[] = []) {
   return buckets;
 }
 
-function buildDaily(attendance: any[] = [], redemptions: any[] = []) {
+function buildDaily(records: any[] = [], redemptions: any[] = [], dateField = "scanned_at") {
   const now = new Date();
   const buckets: { key: string; label: string; male: number; female: number; reward: number }[] = [];
   for (let i = 29; i >= 0; i--) {
@@ -73,14 +96,14 @@ function buildDaily(attendance: any[] = [], redemptions: any[] = []) {
   }
   const idx = new Map(buckets.map((b, i) => [b.key, i]));
   const k = (d: Date) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-  if (Array.isArray(attendance)) {
-    for (const a of attendance) {
-      if (!a || !a.scanned_at) continue;
-      const d = new Date(a.scanned_at);
+  if (Array.isArray(records)) {
+    for (const a of records) {
+      if (!a || !a[dateField]) continue;
+      const d = new Date(a[dateField]);
       const i = idx.get(k(d)); if (i === undefined) continue;
-      const g = a.profiles?.gender;
-      if (g === "MALE" || g === "male" || g === "L") buckets[i].male++;
-      else if (g === "FEMALE" || g === "female" || g === "P") buckets[i].female++;
+      const gender = getGender(a);
+      if (gender === "male") buckets[i].male++;
+      else if (gender === "female") buckets[i].female++;
     }
   }
   if (Array.isArray(redemptions)) {
@@ -94,40 +117,11 @@ function buildDaily(attendance: any[] = [], redemptions: any[] = []) {
   return buckets;
 }
 
-/** Build per-program attendance ranking data (only counting who attended) */
-function buildProgramRanking(attendance: any[] = [], events: any[] = [], programs: any[] = []) {
-  if (!Array.isArray(attendance) || !Array.isArray(events) || !Array.isArray(programs)) return [];
-  
-  const counts: Record<string, { total: number }> = {};
-  for (const p of programs) {
-    if (p && p.id) counts[p.id] = { total: 0 };
-  }
-  // Count attendance by program (through events)
-  for (const a of attendance) {
-    if (!a || !a.event_id) continue;
-    const event = events.find((e) => e && e.id === a.event_id);
-    if (!event || !event.program_id) continue;
-    const pid = event.program_id;
-    if (!counts[pid]) counts[pid] = { total: 0 };
-    counts[pid].total++;
-  }
-  return programs
-    .filter(p => p && p.id)
-    .map((p) => ({
-      id: p.id,
-      label: p.name?.length > 22 ? p.name.slice(0, 22) + "…" : (p.name ?? "—"),
-      fullTitle: p.name ?? "—",
-      code: p.code ?? "—",
-      total: counts[p.id]?.total ?? 0,
-    }))
-    .filter((p) => p.total > 0)
-    .sort((a, b) => b.total - a.total);
-}
-
 export default function ActivityStatsCard({
   attendance, redemptions, registrations, logins, events, programs = [],
 }: { attendance: any[]; redemptions: any[]; registrations: any[]; logins: any[]; events: any[]; programs?: any[] }) {
   const [kind, setKind] = useState<ChartKind>("bar");
+  const [statMode, setStatMode] = useState<StatMode>("pendaftar");
 
   // ── Program filter state ──────────────────────────────────────────────
   const [selectedProgramId, setSelectedProgramId] = useState<string>("");
@@ -190,8 +184,6 @@ export default function ActivityStatsCard({
     return filteredEvents.filter((e) => e?.title?.toLowerCase().includes(searchEvent.toLowerCase()));
   }, [filteredEvents, searchEvent]);
 
-  const totalRegistrations = filteredRegistrations.length;
-  const totalAttendance = filteredAttendance.length;
   const totalCollected = useMemo(() => {
     return filteredRegistrations.reduce((sum, r) => {
       const amount = Number(r?.amount_paid ?? 0);
@@ -199,31 +191,28 @@ export default function ActivityStatsCard({
     }, 0);
   }, [filteredRegistrations]);
 
-  const weekly = useMemo(() => buildWeekly(filteredAttendance, filteredRedemptions), [filteredAttendance, filteredRedemptions]);
-  const daily = useMemo(() => buildDaily(filteredAttendance, filteredRedemptions), [filteredAttendance, filteredRedemptions]);
-  const programRanking = useMemo(() => buildProgramRanking(attendance, events, programs), [attendance, events, programs]);
+  const isRegistrationMode = statMode === "pendaftar";
+  const registrationStats = useMemo(() => buildRegistrationStats(filteredRegistrations), [filteredRegistrations]);
+  const attendanceStats = useMemo(() => buildRegistrationStats(filteredAttendance), [filteredAttendance]);
+  const activeStats = isRegistrationMode ? registrationStats : attendanceStats;
+
+  const weeklyRegistrations = useMemo(() => buildWeekly(filteredRegistrations, [], "created_at"), [filteredRegistrations]);
+  const dailyRegistrations = useMemo(() => buildDaily(filteredRegistrations, [], "created_at"), [filteredRegistrations]);
+  const weeklyAttendance = useMemo(() => buildWeekly(filteredAttendance, filteredRedemptions), [filteredAttendance, filteredRedemptions]);
+  const dailyAttendance = useMemo(() => buildDaily(filteredAttendance, filteredRedemptions), [filteredAttendance, filteredRedemptions]);
+  const weekly = isRegistrationMode ? weeklyRegistrations : weeklyAttendance;
+  const daily = isRegistrationMode ? dailyRegistrations : dailyAttendance;
 
   const totals = useMemo(() => {
-    const t = { male: 0, female: 0, reward: 0 };
-    for (const b of weekly) { t.male += b.male; t.female += b.female; t.reward += b.reward; }
-    return t;
-  }, [weekly]);
+    const reward = isRegistrationMode ? 0 : weekly.reduce((sum, b) => sum + b.reward, 0);
+    return { male: activeStats.male, female: activeStats.female, reward };
+  }, [activeStats, isRegistrationMode, weekly]);
 
   const donutData = [
     { name: "Laki-laki", value: totals.male, fill: COLORS.male },
     { name: "Perempuan", value: totals.female, fill: COLORS.female },
-    { name: "Reward", value: totals.reward, fill: COLORS.reward },
+    ...(!isRegistrationMode ? [{ name: "Reward", value: totals.reward, fill: COLORS.reward }] : []),
   ];
-
-  // Donut for program ranking mode: top programs by total registrations
-  const programDonutData = useMemo(
-    () => programRanking.slice(0, 8).map((p, i) => ({
-      name: p.label,
-      value: p.total,
-      fill: `hsl(${(i * 42) % 360}, 65%, 55%)`,
-    })),
-    [programRanking],
-  );
 
   const tabs: { key: ChartKind; label: string; icon: any }[] = [
     { key: "bar", label: "Bar", icon: BarChart3 },
@@ -239,12 +228,16 @@ export default function ActivityStatsCard({
   const selectedProgram = (selectedProgramId && Array.isArray(programs)) ? programs.find((p) => p && p.id === selectedProgramId) : null;
   const isEventSelected = !!selectedEventId;
 
-  // ── Chart data: if program selected → show per-program breakdown (weekly/daily)
-  //               if no program → show ranking (bar/donut) or all-time line
+  // ── Chart data: filters stay synced while the selected mode changes the dataset.
   const isProgramSelected = !!selectedProgramId;
 
-  // For "Semua Program" bar/donut: show program ranking
-  const rankingBarData = programRanking.slice(0, 15);
+  const activeLabel = isRegistrationMode ? "pendaftar" : "peserta hadir";
+  const selectedProgramCaption = selectedProgram?.name ?? "Program terpilih";
+  const scopeLabel = isEventSelected
+    ? `Event: ${selectedEvent?.title ?? "-"}`
+    : isProgramSelected
+      ? `Program: ${selectedProgramCaption}`
+      : "Semua program & event";
 
   return (
     <div className="rounded-2xl bg-card p-4 sm:p-5 md:p-6" style={{ boxShadow: "var(--shadow-card)" }}>
@@ -252,12 +245,29 @@ export default function ActivityStatsCard({
         <div>
           <h2 className="font-display text-base sm:text-lg font-bold">Statistik Aktivitas</h2>
           <p className="text-xs text-muted-foreground">
-            {isProgramSelected
-              ? `Program: ${selectedProgram?.name ?? "—"}`
-              : "Ringkasan jamaah hadir & reward yang ditukar"}
+            {scopeLabel} - ringkasan {activeLabel} berdasarkan gender
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+          <div className="w-full flex justify-between rounded-xl bg-muted p-1 sm:w-auto sm:inline-flex sm:justify-normal">
+            {[
+              { key: "pendaftar" as const, label: "Pendaftar" },
+              { key: "kehadiran" as const, label: "Kehadiran" },
+            ].map((mode) => {
+              const active = statMode === mode.key;
+              return (
+                <button
+                  key={mode.key}
+                  onClick={() => setStatMode(mode.key)}
+                  className={`flex-1 sm:flex-none inline-flex items-center justify-center rounded-lg px-2.5 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-xs font-semibold transition ${
+                    active ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {mode.label}
+                </button>
+              );
+            })}
+          </div>
           <div className="w-full flex justify-between rounded-xl bg-muted p-1 sm:w-auto sm:inline-flex sm:justify-normal">
             {tabs.map((t) => {
               const Icon = t.icon;
@@ -344,7 +354,7 @@ export default function ActivityStatsCard({
                   }`}
                 >
                   <span className="font-medium">Semua Program</span>
-                  <span className="ml-1 text-muted-foreground">({attendance.length} peserta hadir)</span>
+                  <span className="ml-1 text-muted-foreground">({(isRegistrationMode ? registrations : attendance).length} {activeLabel})</span>
                 </button>
 
                 {filteredPrograms.length === 0 && (
@@ -352,7 +362,8 @@ export default function ActivityStatsCard({
                 )}
                 {filteredPrograms.map((p) => {
                   if (!p) return null;
-                  const count = (Array.isArray(attendance) && Array.isArray(events)) ? attendance.filter((a) => {
+                  const source = isRegistrationMode ? registrations : attendance;
+                  const count = (Array.isArray(source) && Array.isArray(events)) ? source.filter((a) => {
                     if (!a) return false;
                     const event = events.find((e) => e && e.id === a.event_id);
                     return event?.program_id === p.id;
@@ -371,7 +382,7 @@ export default function ActivityStatsCard({
                         <span className="font-medium line-clamp-1">{p.name}</span>
                       </div>
                       <div className="text-muted-foreground mt-0.5">
-                        {p.code} · {count} hadir
+                        {p.code} · {count} {activeLabel}
                       </div>
                     </button>
                   );
@@ -448,7 +459,7 @@ export default function ActivityStatsCard({
                         <span className="font-medium line-clamp-1">{e.title}</span>
                       </div>
                       <div className="text-muted-foreground mt-0.5">
-                        {e.programs?.code || "—"} · {attendance.filter((a) => a?.event_id === e.id).length} hadir
+                        {e.programs?.code || "—"} · {(isRegistrationMode ? registrations : attendance).filter((a) => a?.event_id === e.id).length} {activeLabel}
                       </div>
                     </button>
                   );
@@ -459,15 +470,24 @@ export default function ActivityStatsCard({
         </div>
       </div>
 
-      <div className="mt-4 grid gap-3 lg:grid-cols-3">
-        <StatCard label="Total Pendaftar" value={totalRegistrations} />
-        <StatCard label="Total Kehadiran" value={totalAttendance} />
-        <StatCard label="Total Nominal Terkumpul" value={totalCollected} isCurrency />
+      <div className={`mt-4 grid gap-3 ${isRegistrationMode ? "sm:grid-cols-2 lg:grid-cols-3" : "sm:grid-cols-2"}`}>
+        {isRegistrationMode ? (
+          <>
+            <StatCard label="Total Pendaftar" value={activeStats.total} />
+            <StatCard label="Total Laki-laki" value={activeStats.male} />
+            <StatCard label="Total Perempuan" value={activeStats.female} />
+          </>
+        ) : (
+          <>
+            <StatCard label="Total Kehadiran" value={activeStats.total} />
+            <StatCard label="Total Nominal Terkumpul" value={totalCollected} isCurrency />
+          </>
+        )}
       </div>
 
       {/* ── Legend totals ─────────────────────────────────────────────── */}
       <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-        {isProgramSelected ? (
+        {isRegistrationMode || isProgramSelected ? (
           <>
             <Legendy color={COLORS.male} label="Laki-laki" value={totals.male} />
             <Legendy color={COLORS.female} label="Perempuan" value={totals.female} />
@@ -494,15 +514,15 @@ export default function ActivityStatsCard({
               <Legend wrapperStyle={{ fontSize: 11 }} />
               <Bar dataKey="male" name="Laki-laki" fill={COLORS.male} radius={[6, 6, 0, 0]} />
               <Bar dataKey="female" name="Perempuan" fill={COLORS.female} radius={[6, 6, 0, 0]} />
-              <Bar dataKey="reward" name="Reward" fill={COLORS.reward} radius={[6, 6, 0, 0]} />
+              {!isRegistrationMode && <Bar dataKey="reward" name="Reward" fill={COLORS.reward} radius={[6, 6, 0, 0]} />}
             </BarChart>
           ) : !isProgramSelected && kind === "donut" ? (
-            /* ── SEMUA PROGRAM: Donut ranking ─────────────────────────── */
+            /* ── SEMUA PROGRAM: Donut gender breakdown ─────────────────── */
             <PieChart>
               <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 12, fontSize: 12 }} />
               <Legend wrapperStyle={{ fontSize: 10 }} />
-              <Pie data={programDonutData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={45} outerRadius={80} paddingAngle={2}>
-                {programDonutData.map((d, i) => <Cell key={i} fill={d.fill} />)}
+              <Pie data={donutData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={45} outerRadius={80} paddingAngle={2}>
+                {donutData.map((d, i) => <Cell key={i} fill={d.fill} />)}
               </Pie>
             </PieChart>
           ) : !isProgramSelected && kind === "line" ? (
@@ -515,7 +535,7 @@ export default function ActivityStatsCard({
               <Legend wrapperStyle={{ fontSize: 11 }} />
               <Line type="monotone" dataKey="male" name="Laki-laki" stroke={COLORS.male} strokeWidth={2.5} dot={false} />
               <Line type="monotone" dataKey="female" name="Perempuan" stroke={COLORS.female} strokeWidth={2.5} dot={false} />
-              <Line type="monotone" dataKey="reward" name="Reward" stroke={COLORS.reward} strokeWidth={2.5} dot={false} />
+              {!isRegistrationMode && <Line type="monotone" dataKey="reward" name="Reward" stroke={COLORS.reward} strokeWidth={2.5} dot={false} />}
             </LineChart>
           ) : isProgramSelected && kind === "bar" ? (
             /* ── PROGRAM TERPILIH: Bar weekly ─────────────────────────── */
@@ -564,10 +584,10 @@ export default function ActivityStatsCard({
         </ResponsiveContainer>
       </div>
 
-      {/* ── Program ranking note ────────────────────────────────────────── */}
-      {!isProgramSelected && kind === "bar" && rankingBarData.length > 0 && (
+      {/* ── Chart note ──────────────────────────────────────────────────── */}
+      {!isProgramSelected && kind === "bar" && activeStats.total > 0 && (
         <p className="mt-2 text-center text-[10px] text-muted-foreground">
-          Menampilkan {rankingBarData.length} program teratas berdasarkan jumlah peserta yang hadir
+          Menampilkan tren mingguan {activeLabel} berdasarkan gender
         </p>
       )}
     </div>
@@ -576,9 +596,9 @@ export default function ActivityStatsCard({
 
 function StatCard({ label, value, isCurrency = false }: { label: string; value: number; isCurrency?: boolean }) {
   return (
-    <div className="rounded-2xl border border-border/60 bg-muted/40 p-4">
-      <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{label}</p>
-      <p className="mt-3 text-2xl font-semibold text-foreground">
+    <div className="min-w-0 rounded-2xl border border-border/60 bg-muted/40 p-4 sm:p-5">
+      <p className="truncate text-[10px] uppercase tracking-[0.18em] text-muted-foreground sm:text-[11px]">{label}</p>
+      <p className="mt-3 break-words text-xl font-semibold text-foreground sm:text-2xl">
         {isCurrency ? `Rp ${value.toLocaleString("id-ID")}` : value.toLocaleString("id-ID")}
       </p>
     </div>
