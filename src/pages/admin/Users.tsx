@@ -22,18 +22,67 @@ export default function UsersPage() {
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [totalCount, setTotalCount] = useState(0);
+  const [currentPage, setCurrentPage] = useState(0);
+  const ITEMS_PER_PAGE = 1000;
   const { user: me } = useAuth();
 
   const load = async () => {
     setLoading(true);
-    const [{ data }, { data: roles }] = await Promise.all([
-      supabase.from("profiles").select("*").order("created_at", { ascending: false }).limit(100000),
+    setCurrentPage(0);
+    
+    const [{ count, error: countErr }, { data: roles }] = await Promise.all([
+      supabase.from("profiles").select("id", { count: "exact", head: true }),
       supabase.from("user_roles").select("user_id, role").eq("role", "admin"),
     ]);
+
+    if (countErr) {
+      toast.error(countErr.message || "Gagal mengambil jumlah akun");
+      setLoading(false);
+      return;
+    }
+
+    const total = typeof count === "number" ? count : 0;
+    setTotalCount(total);
+
+    // Fetch first page
+    const from = 0;
+    const to = Math.min(ITEMS_PER_PAGE - 1, total - 1);
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .range(from, to);
+    
+    if (error) {
+      toast.error(error.message || "Gagal memuat akun");
+      setLoading(false);
+      return;
+    }
+
     setProfiles(data ?? []);
-    // Note: while we use user_roles table for listing, 
-    // the source of truth for the current user's session is now the has_role RPC.
     setAdminIds(new Set((roles ?? []).map((r: any) => r.user_id)));
+    setLoading(false);
+  };
+
+  const loadPage = async (page: number) => {
+    setLoading(true);
+    setCurrentPage(page);
+    const from = page * ITEMS_PER_PAGE;
+    const to = Math.min((page + 1) * ITEMS_PER_PAGE - 1, totalCount - 1);
+    
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .range(from, to);
+    
+    if (error) {
+      toast.error(error.message || "Gagal memuat akun");
+      setLoading(false);
+      return;
+    }
+    setProfiles(data ?? []);
     setLoading(false);
   };
 
@@ -82,16 +131,23 @@ export default function UsersPage() {
         <p className="text-sm text-muted-foreground">Lihat data lengkap setiap akun jamaah</p>
       </div>
 
-      <Section title={`Daftar Akun (${filtered.length})`}>
-        <div className="mb-3 flex items-center gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Cari nama, WA, kota…"
-              className="pl-9 text-sm"
-            />
+      <Section title={`Daftar Akun (Total: ${totalCount})`}>
+        <div className="mb-3 flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Cari nama, WA, kota…"
+                className="pl-9 text-sm"
+              />
+            </div>
+          </div>
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>
+              Halaman {currentPage + 1} • Menampilkan {profiles.length} dari {totalCount} akun
+            </span>
           </div>
         </div>
         {/* Desktop table view */}
@@ -189,6 +245,31 @@ export default function UsersPage() {
             <div className="py-4 text-center text-sm text-muted-foreground">Tidak ada akun</div>
           )}
         </div>
+
+        {/* Pagination Controls */}
+        {!loading && totalCount > ITEMS_PER_PAGE && (
+          <div className="mt-6 flex items-center justify-between gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => loadPage(currentPage - 1)}
+              disabled={currentPage === 0}
+            >
+              Sebelumnya
+            </Button>
+            <span className="text-xs text-muted-foreground">
+              Halaman {currentPage + 1} dari {Math.ceil(totalCount / ITEMS_PER_PAGE)}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => loadPage(currentPage + 1)}
+              disabled={currentPage >= Math.ceil(totalCount / ITEMS_PER_PAGE) - 1}
+            >
+              Selanjutnya
+            </Button>
+          </div>
+        )}
       </Section>
 
       <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
