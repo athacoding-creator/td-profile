@@ -50,26 +50,113 @@ export function useAdminData(): AdminData {
       setSettings(s);
     }
   };
+
+  /**
+   * Load all redemptions without limit
+   * Uses pagination internally to fetch all data efficiently
+   */
   const loadRedemptions = async () => {
-    const { data } = await supabase
-      .from("redemptions")
-      .select("id, status, cost_points, created_at, user_id, reward_id, rewards(name), profiles:user_id(full_name, email, phone)")
-      .order("created_at", { ascending: false }).limit(100);
-    setRedemptions(data ?? []);
+    let allData: any[] = [];
+    let page = 0;
+    const pageSize = 500;
+    let hasMore = true;
+
+    while (hasMore) {
+      const { data, error } = await supabase
+        .from("redemptions")
+        .select("id, status, cost_points, created_at, user_id, reward_id, rewards(name), profiles:user_id(full_name, email, phone)")
+        .order("created_at", { ascending: false })
+        .range(page * pageSize, (page + 1) * pageSize - 1);
+
+      if (error) {
+        console.error("loadRedemptions error:", error);
+        break;
+      }
+
+      if (!data || data.length === 0) {
+        hasMore = false;
+      } else {
+        allData = allData.concat(data);
+        page++;
+        if (data.length < pageSize) {
+          hasMore = false;
+        }
+      }
+    }
+
+    setRedemptions(allData);
   };
+
+  /**
+   * Load all registrations without limit
+   * Uses pagination internally to fetch all data efficiently
+   */
   const loadRegistrations = async () => {
-    const { data } = await supabase
-      .from("registrations")
-      .select("id, created_at, event_id, user_id, payment_status, amount_paid, donor_message, payment_proof_url, paid_at, events(title, programs(name), registration_type), profiles:user_id(full_name, email, phone, gender, city)")
-      .order("created_at", { ascending: false }).limit(1000);
-    setRegistrations(data ?? []);
+    let allData: any[] = [];
+    let page = 0;
+    const pageSize = 500;
+    let hasMore = true;
+
+    while (hasMore) {
+      const { data, error } = await supabase
+        .from("registrations")
+        .select("id, created_at, event_id, user_id, payment_status, amount_paid, donor_message, payment_proof_url, paid_at, events(title, programs(name), registration_type), profiles:user_id(full_name, email, phone, gender, city)")
+        .order("created_at", { ascending: false })
+        .range(page * pageSize, (page + 1) * pageSize - 1);
+
+      if (error) {
+        console.error("loadRegistrations error:", error);
+        break;
+      }
+
+      if (!data || data.length === 0) {
+        hasMore = false;
+      } else {
+        allData = allData.concat(data);
+        page++;
+        if (data.length < pageSize) {
+          hasMore = false;
+        }
+      }
+    }
+
+    setRegistrations(allData);
   };
+
+  /**
+   * Load all attendance records without limit
+   * Uses pagination internally to fetch all data efficiently
+   */
   const loadAttendance = async () => {
-    const { data } = await supabase
-      .from("attendance")
-      .select("id, scanned_at, event_id, user_id, points_awarded, profiles:user_id(full_name, gender, phone, city, email)")
-      .order("scanned_at", { ascending: false }).limit(1000);
-    setAttendance(data ?? []);
+    let allData: any[] = [];
+    let page = 0;
+    const pageSize = 500;
+    let hasMore = true;
+
+    while (hasMore) {
+      const { data, error } = await supabase
+        .from("attendance")
+        .select("id, scanned_at, event_id, user_id, points_awarded, profiles:user_id(full_name, gender, phone, city, email)")
+        .order("scanned_at", { ascending: false })
+        .range(page * pageSize, (page + 1) * pageSize - 1);
+
+      if (error) {
+        console.error("loadAttendance error:", error);
+        break;
+      }
+
+      if (!data || data.length === 0) {
+        hasMore = false;
+      } else {
+        allData = allData.concat(data);
+        page++;
+        if (data.length < pageSize) {
+          hasMore = false;
+        }
+      }
+    }
+
+    setAttendance(allData);
   };
 
   const reloadAll = async () => {
