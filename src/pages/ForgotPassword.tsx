@@ -27,6 +27,7 @@ export default function ForgotPassword() {
       });
       if (error) throw error;
       setDone(true);
+      toast.success("Permintaan diproses");
     } catch (err: any) {
       toast.error(err.message || "Gagal memproses permintaan");
     } finally {
@@ -40,12 +41,12 @@ export default function ForgotPassword() {
       <main className="container max-w-md py-12">
         <h1 className="font-display text-3xl font-bold text-foreground">Lupa password</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Masukkan nomor WhatsApp akun Anda. Password baru akan dikirim via WhatsApp.
+          Masukkan nomor WhatsApp akun Anda. Jika nomor terdaftar, password baru akan dikirim via WhatsApp.
         </p>
         {done ? (
           <div className="mt-8 space-y-4">
             <div className="rounded-lg border border-border bg-muted/40 p-4 text-sm text-foreground">
-              fitur reset password ini masih dalam tahap percobaan, jika Anda mengalami kendala silakan hubungi admin.
+              Permintaan diproses. Jika nomor terdaftar, password baru akan dikirim via WhatsApp.
             </div>
             <Link to="/auth" className="block text-center text-sm text-muted-foreground hover:underline">
               ← Kembali ke Masuk

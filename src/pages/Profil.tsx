@@ -58,7 +58,7 @@ export default function Profil() {
   const [view, setView] = useState<View>("menu");
   const [form, setForm] = useState<any>({});
   const [loading, setLoading] = useState(false);
-  const [pw, setPw] = useState({ oldPw: "", newPw: "", confirmPw: "" });
+  const [pw, setPw] = useState({ newPw: "", confirmPw: "" });
   const [pwLoading, setPwLoading] = useState(false);
   const [provinces, setProvinces] = useState<Wilayah[]>([]);
   const [regencies, setRegencies] = useState<Wilayah[]>([]);
@@ -180,27 +180,19 @@ export default function Profil() {
   };
 
   const changePassword = async () => {
-    if (!user || !profile) return;
+    if (!user) return;
     if (pw.newPw.length < 6) return toast.error("Password baru minimal 6 karakter");
     if (pw.newPw !== pw.confirmPw) return toast.error("Konfirmasi password tidak cocok");
     setPwLoading(true);
-    // Re-verify old password by attempting sign-in
-    // Use .app instead of .local to match the login logic
-    const synthEmail = `${profile.phone}@wa.tdprofile.app`;
-    const { error: verifyErr } = await supabase.auth.signInWithPassword({
-      email: synthEmail,
-      password: pw.oldPw,
-    });
-    if (verifyErr) {
+    try {
+      const { error } = await supabase.auth.updateUser({ password: pw.newPw });
+      if (error) return toast.error(error.message);
+      toast.success("Password berhasil diubah");
+      setPw({ newPw: "", confirmPw: "" });
+      setView("menu");
+    } finally {
       setPwLoading(false);
-      return toast.error("Password lama salah atau terjadi kesalahan verifikasi");
     }
-    const { error } = await supabase.auth.updateUser({ password: pw.newPw });
-    setPwLoading(false);
-    if (error) return toast.error(error.message);
-    toast.success("Password berhasil diubah");
-    setPw({ oldPw: "", newPw: "", confirmPw: "" });
-    setView("menu");
   };
 
   const initial = (profile?.full_name || profile?.email || "?")
@@ -339,10 +331,6 @@ export default function Profil() {
             </button>
             <h1 className="font-display text-2xl font-bold">Ubah password</h1>
             <div className="mt-6 space-y-4">
-              <div className="space-y-1.5">
-                <Label>Password lama</Label>
-                <Input type="password" value={pw.oldPw} onChange={(e) => setPw({ ...pw, oldPw: e.target.value })} />
-              </div>
               <div className="space-y-1.5">
                 <Label>Password baru</Label>
                 <Input type="password" value={pw.newPw} onChange={(e) => setPw({ ...pw, newPw: e.target.value })} minLength={6} />

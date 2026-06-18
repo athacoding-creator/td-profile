@@ -33,20 +33,26 @@ function randomPassword(len = 10): string {
 // Returns { ok, error? }. While no gateway is configured, returns ok: false
 // so caller stores the message in `password_resets` for manual delivery.
 async function sendWhatsApp(phone: string, message: string): Promise<{ ok: boolean; error?: string }> {
-  // --- FONNTE (Enabled with provided token) ---
-  const token = Deno.env.get("FONNTE_TOKEN") || "So5A8ywWy5oeU5GwnANy";
-  if (token) {
-    const res = await fetch("https://api.fonnte.com/send", {
-      method: "POST",
-      headers: { Authorization: token, "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({ target: phone, message }),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (res.ok && data?.status !== false) return { ok: true };
-    return { ok: false, error: JSON.stringify(data) };
+  const token = Deno.env.get("FONNTE_TOKEN");
+  if (!token) {
+    return { ok: false, error: "WhatsApp gateway not configured" };
   }
 
-  return { ok: false, error: "WhatsApp gateway not configured" };
+  const res = await fetch("https://api.fonnte.com/send", {
+    method: "POST",
+    headers: { Authorization: token, "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ target: phone, message }),
+  });
+  const text = await res.text();
+  let data: Record<string, unknown> = {};
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    data = { response: text };
+  }
+
+  if (res.ok && data?.status !== false) return { ok: true };
+  return { ok: false, error: JSON.stringify(data) };
 }
 
 Deno.serve(async (req) => {
