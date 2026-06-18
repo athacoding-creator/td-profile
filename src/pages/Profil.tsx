@@ -185,14 +185,15 @@ export default function Profil() {
     if (pw.newPw !== pw.confirmPw) return toast.error("Konfirmasi password tidak cocok");
     setPwLoading(true);
     // Re-verify old password by attempting sign-in
-    const synthEmail = `${profile.phone}@wa.tdprofile.local`;
+    // Use .app instead of .local to match the login logic
+    const synthEmail = `${profile.phone}@wa.tdprofile.app`;
     const { error: verifyErr } = await supabase.auth.signInWithPassword({
       email: synthEmail,
       password: pw.oldPw,
     });
     if (verifyErr) {
       setPwLoading(false);
-      return toast.error("Password lama salah");
+      return toast.error("Password lama salah atau terjadi kesalahan verifikasi");
     }
     const { error } = await supabase.auth.updateUser({ password: pw.newPw });
     setPwLoading(false);
