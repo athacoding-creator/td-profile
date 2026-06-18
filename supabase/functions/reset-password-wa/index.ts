@@ -55,12 +55,29 @@ async function sendWhatsApp(phone: string, message: string): Promise<{ ok: boole
   return { ok: false, error: JSON.stringify(data) };
 }
 
+async function findAuthUserByEmail(admin: ReturnType<typeof createClient>, email: string) {
+  const perPage = 1000;
+  for (let page = 1; page <= 10; page += 1) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage });
+    if (error) {
+      console.error("reset-password-wa list users error", error);
+      return null;
+    }
+
+    const user = data.users.find((u) => u.email?.toLowerCase() === email.toLowerCase());
+    if (user) return user;
+    if (data.users.length < perPage) return null;
+  }
+  return null;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
     const body = await req.json().catch(() => ({}));
     const phone = normalizePhone(body?.phone ?? "");
+    console.log("reset-password-wa request", { phone });
     if (!isValidPhone(phone)) {
       return new Response(JSON.stringify({ error: "Nomor tidak valid" }), {
         status: 400,
@@ -80,29 +97,49 @@ Deno.serve(async (req) => {
       .eq("phone", phone)
       .maybeSingle();
 
+    let targetUserId = profile?.id ?? null;
+    let targetName = profile?.full_name ?? null;
+    if (!targetUserId) {
+      const authUser = await findAuthUserByEmail(admin, `${phone}@wa.tdprofile.app`);
+      if (authUser) {
+        targetUserId = authUser.id;
+        targetName =
+          (authUser.user_metadata?.full_name as string | undefined) ??
+          (authUser.user_metadata?.name as string | undefined) ??
+          null;
+      }
+    }
+
     // Anti-enumeration: always return success even if not found
-    if (!profile) {
+    if (!targetUserId) {
+      console.log("reset-password-wa profile not found", { phone });
       return new Response(JSON.stringify({ ok: true }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    console.log("reset-password-wa user found", { phone, user_id: targetUserId });
 
     const newPassword = randomPassword(10);
-    const { error: updErr } = await admin.auth.admin.updateUserById(profile.id, {
+    const { error: updErr } = await admin.auth.admin.updateUserById(targetUserId, {
       password: newPassword,
     });
     if (updErr) throw updErr;
 
     const message =
-      `Halo ${profile.full_name || "Sahabat"},\n\n` +
+      `Halo ${targetName || "Sahabat"},\n\n` +
       `Password baru akun Teras Dakwah Anda: *${newPassword}*\n\n` +
       `fitur reset password ini masih dalam tahap percobaan, jika Anda mengalami kendala silakan hubungi admin.`;
 
     const delivery = await sendWhatsApp(phone, message);
+    console.log("reset-password-wa delivery", {
+      phone,
+      delivered: delivery.ok,
+      error: delivery.error ?? null,
+    });
 
     await admin.from("password_resets").insert({
-      user_id: profile.id,
+      user_id: targetUserId,
       phone,
       message,
       delivered: delivery.ok,
