@@ -564,7 +564,7 @@ async function convertToWebP(file: File): Promise<Blob> {
 function PaymentForm({ event, paymentMethod, paymentForm, setPaymentForm, submitting, onSubmit, onCancel }: any) {
   const isPaid = event.registration_type === "paid";
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
-  const whatsappNumber = "085111514040";
+  const whatsappNumber = event.registration_type === "paid" ? "082136031995" : "085171577665";
   const whatsappMessage = `Halo, saya sudah mengunggah bukti pembayaran untuk event "${event.title}". Nominal: Rp ${paymentForm.amount.toLocaleString("id-ID")}. Mohon diverifikasi. Terima kasih.`;
 
   const paymentSteps = [

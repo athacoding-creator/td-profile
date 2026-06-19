@@ -20,7 +20,8 @@ export default function SettingsPage() {
 
   const [waSettings, setWaSettings] = useState({
     wa_verification_template: "",
-    admin_wa_number: ""
+    admin_wa_number_paid: "",
+    admin_wa_number_infaq: ""
   });
 
   useEffect(() => {
@@ -42,7 +43,8 @@ export default function SettingsPage() {
     
     const { error: err2 } = await supabase.from("donation_settings").upsert([
       { key: "wa_verification_template", value: waSettings.wa_verification_template },
-      { key: "admin_wa_number", value: waSettings.admin_wa_number },
+      { key: "admin_wa_number_paid", value: waSettings.admin_wa_number_paid },
+      { key: "admin_wa_number_infaq", value: waSettings.admin_wa_number_infaq },
     ], { onConflict: "key" });
 
     if (err1 || err2) return toast.error(err1?.message || err2?.message);
@@ -77,12 +79,23 @@ export default function SettingsPage() {
 
       <Section title="Template Chat WA Verifikasi">
         <div className="space-y-4">
-          <div className="space-y-1.5">
-            <Label>Nomor WA Admin (dengan kode negara, misal: 628123...)</Label>
-            <Input 
-              value={waSettings.admin_wa_number}
-              onChange={(e) => setWaSettings({ ...waSettings, admin_wa_number: e.target.value })} 
-            />
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label>Nomor WA Admin (Paid)</Label>
+              <Input 
+                value={waSettings.admin_wa_number_paid}
+                placeholder="6282136031995"
+                onChange={(e) => setWaSettings({ ...waSettings, admin_wa_number_paid: e.target.value })} 
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Nomor WA Admin (Infaq/Free)</Label>
+              <Input 
+                value={waSettings.admin_wa_number_infaq}
+                placeholder="6285171577665"
+                onChange={(e) => setWaSettings({ ...waSettings, admin_wa_number_infaq: e.target.value })} 
+              />
+            </div>
           </div>
           <div className="space-y-1.5">
             <Label>Template Pesan (Gunakan {"{{event_title}}"} untuk judul event)</Label>

@@ -178,7 +178,9 @@ export default function Payment() {
       }
 
       toast.success("Bukti pembayaran berhasil diunggah!");
-      const whatsappNumber = settings.admin_wa_number || "085111514040";
+      const whatsappNumber = event.registration_type === "paid" 
+        ? (settings.admin_wa_number_paid || "082136031995")
+        : (settings.admin_wa_number_infaq || "085171577665");
       const template = settings.wa_verification_template || "Halo Admin, saya sudah melakukan pembayaran untuk event {{event_title}}. Berikut bukti pembayarannya. Mohon bantuannya untuk diverifikasi. Terima kasih.";
       const whatsappMessage = template.replace("{{event_title}}", event.title);
       window.location.href = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
@@ -225,7 +227,9 @@ export default function Payment() {
       }
 
       if (infaqType === "money") {
-        const waNumber = settings.admin_wa_number || "085111514040";
+        const waNumber = event.registration_type === "paid" 
+          ? (settings.admin_wa_number_paid || "082136031995")
+          : (settings.admin_wa_number_infaq || "085171577665");
         const infaqMsg = isOnline
           ? `Assalamu'alaikum Admin, saya sudah berinfaq Rp ${amount.toLocaleString("id-ID")} untuk kajian online "${event?.title}". Mohon kontennya bisa saya akses. Terima kasih.`
           : `Assalamu'alaikum Kak
