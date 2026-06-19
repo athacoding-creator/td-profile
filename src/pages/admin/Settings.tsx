@@ -84,7 +84,7 @@ export default function SettingsPage() {
               <Label>Nomor WA Admin (Paid)</Label>
               <Input 
                 value={waSettings.admin_wa_number_paid}
-                placeholder="6282136031995"
+                placeholder="+6282136031995"
                 onChange={(e) => setWaSettings({ ...waSettings, admin_wa_number_paid: e.target.value })} 
               />
             </div>
@@ -92,7 +92,7 @@ export default function SettingsPage() {
               <Label>Nomor WA Admin (Infaq/Free)</Label>
               <Input 
                 value={waSettings.admin_wa_number_infaq}
-                placeholder="6285171577665"
+                placeholder="+6285171577665"
                 onChange={(e) => setWaSettings({ ...waSettings, admin_wa_number_infaq: e.target.value })} 
               />
             </div>
