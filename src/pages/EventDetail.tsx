@@ -454,7 +454,7 @@ export default function EventDetail() {
               )}
 
               {/* Scan QR untuk free, infaq offline, atau paid yang sudah approved */}
-              {!event.is_online && ((registration.payment_status === "none") || (event.registration_type === "paid" && registration.payment_status === "approved")) && (
+              {((registration.payment_status === "none") || (event.registration_type === "paid" && registration.payment_status === "approved")) && (
                 <div className="mt-4">
                   {scanAvailable ? (
                     <Link to={`/event/${event.id}/scan`}>
