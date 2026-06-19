@@ -10,7 +10,6 @@ import { BottomNav } from "@/components/BottomNav";
 import { MapPin, Calendar, Users, Lock, Link2, ChevronLeft, Upload, ChevronDown, ChevronUp, Info, MessageCircle, CreditCard, Landmark, Wallet, Video } from "lucide-react";
 import { YoutubeEmbed } from "@/components/YoutubeEmbed";
 import DonorWall from "@/components/DonorWall";
-import { AttendanceModeSelector } from "@/components/AttendanceModeSelector";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
@@ -28,7 +27,6 @@ export default function EventDetail() {
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [paymentForm, setPaymentForm] = useState({ amount: 0, proofFile: null as File | null });
   const [paymentMethod, setPaymentMethod] = useState<any>(null);
-  const [showModeSelector, setShowModeSelector] = useState(false);
   const [selectedEpisode, setSelectedEpisode] = useState<number>(0);
   const [showVideoAfterInfaq, setShowVideoAfterInfaq] = useState(() => {
     if (!id) return false;
@@ -145,34 +143,20 @@ export default function EventDetail() {
       toast.error(`Maaf, event ini khusus untuk ${event.gender === "L" ? "Laki-laki" : "Perempuan"}.`);
       return;
     }
-    
-    // Jika event online mode aktif
-    if (event.is_online) {
-      // Jika sudah lewat jadwal (expired), HANYA boleh daftar online
-      if (sw.expired) {
-        register("online");
-      } else {
-        // Jika belum expired, user bisa pilih offline atau online
-        setShowModeSelector(true);
-      }
-    } else {
-      // Jika online mode TIDAK aktif (offline only)
-      // Cek apakah event sudah expired
-      if (sw.expired) {
-        toast.error("Pendaftaran sudah ditutup karena acara sudah selesai.");
-        return;
-      }
-      // Jika belum expired, daftar offline
-      register("offline");
+
+    if (sw.expired && !event.is_online) {
+      toast.error("Pendaftaran sudah ditutup karena acara sudah selesai.");
+      return;
     }
+
+    register();
   };
 
-  const register = async (mode: "online" | "offline" = "offline") => {
+  const register = async () => {
     setSubmitting(true);
     try {
-      const isInfaq = event.registration_type === "infaq" || mode === "online";
-      const isPaid = event.registration_type === "paid" && mode === "offline";
-      // Infaq sukarela: pendaftaran langsung "none" (tidak perlu verifikasi). amount_paid = min_infaq agar lulus trigger.
+      const isInfaq = event.registration_type === "infaq";
+      const isPaid = event.registration_type === "paid";
       const payment_status = event.registration_type === "free" ? "none" : isInfaq ? "none" : "pending";
       const amount_paid = isPaid ? event.price : isInfaq ? (event.min_infaq || 0) : 0;
 
@@ -181,7 +165,7 @@ export default function EventDetail() {
         user_id: user.id,
         payment_status,
         amount_paid,
-        attendance_mode: mode
+        attendance_mode: "offline"
       });
       setSubmitting(false);
       if (error) throw error;
@@ -191,22 +175,14 @@ export default function EventDetail() {
         user_id: user.id,
         payment_status,
         amount_paid,
-        attendance_mode: mode
+        attendance_mode: "offline"
       });
-      setShowModeSelector(false);
 
-      if (event.registration_type === "free" && mode === "offline") {
-        toast.success("Pendaftaran offline berhasil!");
-      } else if (isInfaq && mode === "online") {
-        toast.success("Pendaftaran online berhasil! Silakan berinfaq untuk akses video.");
-        navigate(`/event/${event.id}/bayar`);
-      } else if (event.registration_type === "free") {
-        toast.success("Pendaftaran berhasil!");
-      } else if (isInfaq && mode === "offline") {
-        toast.success("Pendaftaran berhasil! Silakan pilih infaq uang atau doa terbaik.");
-        navigate(`/event/${event.id}/bayar`);
+      if (event.registration_type === "free") {
+        toast.success(event.is_online ? "Pendaftaran berhasil! Akses video tersedia di halaman event." : "Pendaftaran offline berhasil!");
       } else if (isInfaq) {
-        toast.success("Pendaftaran berhasil! Infaq sukarela bisa dikirim via WA.");
+        toast.success(event.is_online ? "Pendaftaran berhasil! Silakan berinfaq untuk membuka akses video." : "Pendaftaran berhasil! Silakan pilih infaq uang atau doa terbaik.");
+        navigate(`/event/${event.id}/bayar`);
       } else {
         toast.success("Pendaftaran berhasil! Silakan upload bukti pembayaran.");
         navigate(`/event/${event.id}/bayar`);
@@ -291,7 +267,6 @@ export default function EventDetail() {
 
   const canShowOnlineVideo =
     event.is_online &&
-    registration?.attendance_mode === "online" &&
     (event.registration_type === "free" ||
       event.registration_type === "infaq" ||
       registration?.payment_status === "approved" ||
@@ -305,15 +280,15 @@ export default function EventDetail() {
   const isEpisodeProgram = event.programs?.category === "episode";
   const showVideoUnlockPrompt =
     event.is_online &&
-    registration?.attendance_mode === "online" &&
+    registration &&
     !canShowOnlineVideo &&
-    event.registration_type === "paid";
+    event.registration_type === "infaq";
   const userHasScanned = !!attendance?.id;
 
   const hasVideoUrl = !!event.youtube_url || hasEpisodeVideos;
 
   const showVideoSection = event.is_online
-    ? registration?.attendance_mode === "online" && canShowOnlineVideo
+    ? registration && canShowOnlineVideo
     : registration && userHasScanned && hasVideoUrl;
 
   return (
@@ -369,24 +344,22 @@ export default function EventDetail() {
             <>
               {/* Status terdaftar */}
               <div className="rounded-xl bg-accent/10 p-4 text-center font-semibold text-accent text-sm sm:text-base border border-accent/20">
-                {event.is_online && registration.attendance_mode === "online" && canShowOnlineVideo ? (
+                {event.is_online && canShowOnlineVideo ? (
                   <div className="flex flex-col gap-1">
                     <div className="flex items-center justify-center gap-2">
                       <Video className="h-4 w-4" /> Akses Video Terbuka
                     </div>
                     <p className="text-[11px] font-normal text-accent/80">
-                      pendaftaran online berhasil. Kamu bisa menonton video ini berulang kali kapan saja.
+                      Kamu bisa menonton video ini berulang kali kapan saja.
                     </p>
                   </div>
                 ) : (
                   <>
                     ✓ Kamu sudah terdaftar
-                    {registration.attendance_mode === "online" && " (Online)"}
-                    {registration.attendance_mode === "offline" && " (Offline)"}
+                    {event.is_online && " (Akses video)"}
                     {event.registration_type === "paid" && registration.payment_status === "pending" && " (Menunggu verifikasi pembayaran)"}
                     {event.registration_type === "paid" && registration.payment_status === "approved" && " (Pembayaran disetujui)"}
                     {event.registration_type === "paid" && registration.payment_status === "rejected" && " (Pembayaran ditolak)"}
-                    {event.registration_type === "infaq" && registration.attendance_mode === "offline" && ""}
                     {showVideoUnlockPrompt && " (Belum Berinfaq)"}
                   </>
                 )}
@@ -457,7 +430,7 @@ export default function EventDetail() {
               )}
 
               {/* Tombol bayar HANYA untuk event paid yang belum disetujui (Offline) */}
-              {event.registration_type === "paid" && registration.attendance_mode === "offline" && (registration.payment_status === "pending" || registration.payment_status === "rejected") && (
+              {event.registration_type === "paid" && (registration.payment_status === "pending" || registration.payment_status === "rejected") && (
                 <Button
                   onClick={() => navigate(`/event/${event.id}/bayar`)}
                   className={`w-full text-white text-sm sm:text-base ${
@@ -471,7 +444,7 @@ export default function EventDetail() {
               )}
 
               {/* Infaq sukarela: tombol opsional ke halaman berinfaq via WA (Offline) */}
-              {event.registration_type === "infaq" && registration.attendance_mode === "offline" && (
+              {event.registration_type === "infaq" && (
                 <Button
                   onClick={() => navigate(`/event/${event.id}/bayar`)}
                   className="w-full bg-rose-500 hover:bg-rose-600 text-white text-sm sm:text-base"
@@ -481,7 +454,7 @@ export default function EventDetail() {
               )}
 
               {/* Scan QR untuk free, infaq offline, atau paid yang sudah approved */}
-              {((registration.payment_status === "none" && registration.attendance_mode === "offline") || (event.registration_type === "paid" && registration.payment_status === "approved")) && (
+              {!event.is_online && ((registration.payment_status === "none") || (event.registration_type === "paid" && registration.payment_status === "approved")) && (
                 <div className="mt-4">
                   {scanAvailable ? (
                     <Link to={`/event/${event.id}/scan`}>
@@ -546,16 +519,6 @@ export default function EventDetail() {
         </div>
 
         {/* Mode Selector Modal */}
-        <AttendanceModeSelector
-          open={showModeSelector}
-          onSelect={(mode) => {
-            register(mode);
-          }}
-          eventTitle={event.title}
-          isOnlineEvent={event.is_online}
-          isInfaqEvent={event.registration_type === "infaq"}
-          registrationType={event.registration_type}
-        />
       </main>
       <BottomNav />
     </div>

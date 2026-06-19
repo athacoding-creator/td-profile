@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,12 +15,28 @@ import { formatPhoneDisplay } from "@/lib/phone";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 
-type Profile = any;
+type Profile = Database["public"]["Tables"]["profiles"]["Row"];
+
+const buildSearchFilter = (value: string) => {
+  const term = value.trim().replace(/[%,()]/g, " ");
+  if (!term) return "";
+
+  const pattern = `%${term}%`;
+  return [
+    "full_name",
+    "phone",
+    "email",
+    "city",
+    "regency_name",
+    "province_name",
+  ].map((column) => `${column}.ilike.${pattern}`).join(",");
+};
 
 export default function UsersPage() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [adminIds, setAdminIds] = useState<Set<string>>(new Set());
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [selected, setSelected] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
@@ -27,74 +44,56 @@ export default function UsersPage() {
   const ITEMS_PER_PAGE = 100;
   const { user: me } = useAuth();
 
-  const load = async () => {
+  const loadUsers = useCallback(async (page: number, search: string) => {
     setLoading(true);
-    setCurrentPage(0);
+    setCurrentPage(page);
     
-    const [{ count, error: countErr }, { data: roles }] = await Promise.all([
-      supabase.from("profiles").select("id", { count: "exact", head: true }),
+    const from = page * ITEMS_PER_PAGE;
+    const to = (page + 1) * ITEMS_PER_PAGE - 1;
+    const searchFilter = buildSearchFilter(search);
+    let profilesQuery = supabase
+      .from("profiles")
+      .select("*", { count: "exact" })
+      .order("created_at", { ascending: false })
+      .range(from, to);
+
+    if (searchFilter) {
+      profilesQuery = profilesQuery.or(searchFilter);
+    }
+
+    const [{ data, count, error }, { data: roles }] = await Promise.all([
+      profilesQuery,
       supabase.from("user_roles").select("user_id, role").eq("role", "admin"),
     ]);
 
-    if (countErr) {
-      toast.error(countErr.message || "Gagal mengambil jumlah akun");
-      setLoading(false);
-      return;
-    }
-
-    const total = typeof count === "number" ? count : 0;
-    setTotalCount(total);
-
-    // Fetch first page
-    const from = 0;
-    const to = Math.min(ITEMS_PER_PAGE - 1, total - 1);
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .range(from, to);
-    
     if (error) {
       toast.error(error.message || "Gagal memuat akun");
       setLoading(false);
       return;
     }
 
+    setTotalCount(typeof count === "number" ? count : 0);
     setProfiles(data ?? []);
-    setAdminIds(new Set((roles ?? []).map((r: any) => r.user_id)));
+    setAdminIds(new Set((roles ?? []).map((r) => r.user_id)));
     setLoading(false);
-  };
-
-  const loadPage = async (page: number) => {
-    setLoading(true);
-    setCurrentPage(page);
-    const from = page * ITEMS_PER_PAGE;
-    const to = Math.min((page + 1) * ITEMS_PER_PAGE - 1, totalCount - 1);
-    
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .range(from, to);
-    
-    if (error) {
-      toast.error(error.message || "Gagal memuat akun");
-      setLoading(false);
-      return;
-    }
-    setProfiles(data ?? []);
-    setLoading(false);
-  };
+  }, []);
 
   useEffect(() => {
-    load();
+    loadUsers(0, debouncedQuery);
     const ch = supabase
       .channel("admin-users")
-      .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, load)
-      .on("postgres_changes", { event: "*", schema: "public", table: "user_roles" }, load)
+      .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => loadUsers(0, debouncedQuery))
+      .on("postgres_changes", { event: "*", schema: "public", table: "user_roles" }, () => loadUsers(0, debouncedQuery))
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, []);
+  }, [debouncedQuery, loadUsers]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedQuery(query.trim());
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [query]);
 
   const toggleAdmin = async (uid: string, makeAdmin: boolean) => {
     if (uid === me?.id && !makeAdmin) {
@@ -111,18 +110,11 @@ export default function UsersPage() {
       if (error) return toast.error(error.message);
       toast.success("Admin dicabut");
     }
-    load();
+    loadUsers(currentPage, debouncedQuery);
   };
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return profiles;
-    return profiles.filter((p) =>
-      [p.full_name, p.phone, p.email, p.city, p.regency_name, p.province_name]
-        .filter(Boolean)
-        .some((v: string) => v.toLowerCase().includes(q))
-    );
-  }, [profiles, query]);
+  const totalPages = Math.max(1, Math.ceil(totalCount / ITEMS_PER_PAGE));
+  const isSearching = debouncedQuery.length > 0;
 
   return (
     <>
@@ -131,7 +123,7 @@ export default function UsersPage() {
         <p className="text-sm text-muted-foreground">Lihat data lengkap setiap akun jamaah</p>
       </div>
 
-      <Section title={`Daftar Akun (Total: ${totalCount})`}>
+      <Section title={`Daftar Akun (${isSearching ? "Hasil: " : "Total: "}${totalCount})`}>
         <div className="mb-3 flex flex-col gap-3">
           <div className="flex items-center justify-between gap-2">
             <div className="relative flex-1">
@@ -167,7 +159,7 @@ export default function UsersPage() {
             </thead>
             <tbody>
               {loading && <tr><td colSpan={8} className="py-4 text-center text-muted-foreground">Memuat…</td></tr>}
-              {!loading && filtered.map((p) => (
+              {!loading && profiles.map((p) => (
                 <tr key={p.id} className="border-t border-border/60">
                   <td className="py-2">{p.full_name || "—"}</td>
                   <td>
@@ -203,8 +195,8 @@ export default function UsersPage() {
                   </td>
                 </tr>
               ))}
-              {!loading && filtered.length === 0 && (
-                <tr><td colSpan={8} className="py-4 text-center text-muted-foreground">Tidak ada akun</td></tr>
+              {!loading && profiles.length === 0 && (
+                <tr><td colSpan={8} className="py-4 text-center text-muted-foreground">{isSearching ? "Akun tidak ditemukan" : "Tidak ada akun"}</td></tr>
               )}
             </tbody>
           </table>
@@ -212,7 +204,7 @@ export default function UsersPage() {
         {/* Mobile card view */}
         <div className="md:hidden space-y-2">
           {loading && <div className="py-4 text-center text-sm text-muted-foreground">Memuat…</div>}
-          {!loading && filtered.map((p) => (
+          {!loading && profiles.map((p) => (
             <div key={p.id} className="rounded-lg border border-border/60 bg-muted/30 p-3 space-y-2.5">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex gap-2.5 flex-1 min-w-0">
@@ -241,8 +233,8 @@ export default function UsersPage() {
               <Button size="sm" variant="outline" onClick={() => setSelected(p)} className="w-full h-8 text-[11px]">Detail</Button>
             </div>
           ))}
-          {!loading && filtered.length === 0 && (
-            <div className="py-4 text-center text-sm text-muted-foreground">Tidak ada akun</div>
+          {!loading && profiles.length === 0 && (
+            <div className="py-4 text-center text-sm text-muted-foreground">{isSearching ? "Akun tidak ditemukan" : "Tidak ada akun"}</div>
           )}
         </div>
 
@@ -252,19 +244,19 @@ export default function UsersPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => loadPage(currentPage - 1)}
+              onClick={() => loadUsers(currentPage - 1, debouncedQuery)}
               disabled={currentPage === 0}
             >
               Sebelumnya
             </Button>
             <span className="text-xs text-muted-foreground">
-              Halaman {currentPage + 1} dari {Math.ceil(totalCount / ITEMS_PER_PAGE)}
+              Halaman {currentPage + 1} dari {totalPages}
             </span>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => loadPage(currentPage + 1)}
-              disabled={currentPage >= Math.ceil(totalCount / ITEMS_PER_PAGE) - 1}
+              onClick={() => loadUsers(currentPage + 1, debouncedQuery)}
+              disabled={currentPage >= totalPages - 1}
             >
               Selanjutnya
             </Button>

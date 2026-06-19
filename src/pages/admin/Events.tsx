@@ -220,7 +220,7 @@ function OnlineFields({ form, setForm, program }: { form: any; setForm: (f: any)
     <div className="md:col-span-2 space-y-3 rounded-xl border border-border/60 bg-muted/30 p-3 text-sm">
       <label className="flex items-center gap-2 text-xs sm:text-sm font-medium cursor-pointer">
         <input type="checkbox" checked={!!form.is_online} onChange={(e) => setForm({ ...form, is_online: e.target.checked })} />
-        <Camera className="h-4 w-4 text-primary" /> Event online
+        <Camera className="h-4 w-4 text-primary" /> Akses Link YouTube Langsung (Tanpa Scan QR)
       </label>
       {form.is_online && !isEpisodeProgram && (
         <div className="space-y-1.5">
