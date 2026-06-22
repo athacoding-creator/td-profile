@@ -193,7 +193,14 @@ export default function Payment() {
 
   if (loading) return <div className="container py-20 text-center text-muted-foreground">Memuat…</div>;
 
-  const isOnline = registration?.attendance_mode === "online";
+  // Check if event is expired to determine if it should be treated as online access
+  const isExpired = event ? (
+    event.is_recurring 
+      ? (event.recurring_until ? new Date(event.recurring_until + "T23:59:59").getTime() < Date.now() : false)
+      : (new Date(event.ends_at || new Date(new Date(event.starts_at).getTime() + 6 * 3600 * 1000)).getTime() < Date.now())
+  ) : false;
+
+  const isOnline = registration?.attendance_mode === "online" || (isExpired && !event?.is_online);
   const isInfaq = event?.registration_type === "infaq" || isOnline;
   const isPaid = event?.registration_type === "paid" && !isOnline;
   const alreadyApproved = isPaid && registration?.payment_status === "approved";
@@ -222,7 +229,7 @@ export default function Payment() {
           ...updateData,
           event_id: event.id,
           user_id: user?.id,
-          attendance_mode: isOnline ? "online" : "offline"
+          attendance_mode: (isOnline || isExpired) ? "online" : "offline"
         });
       }
 

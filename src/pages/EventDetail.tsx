@@ -144,9 +144,9 @@ export default function EventDetail() {
       return;
     }
 
+    // Allow registration even if expired to access video
     if (sw.expired && !event.is_online) {
-      toast.error("Pendaftaran sudah ditutup karena acara sudah selesai.");
-      return;
+      // Proceed to register
     }
 
     register();
@@ -287,9 +287,11 @@ export default function EventDetail() {
 
   const hasVideoUrl = !!event.youtube_url || hasEpisodeVideos;
 
-  const showVideoSection = event.is_online
-    ? registration && canShowOnlineVideo
-    : registration && userHasScanned && hasVideoUrl;
+  const showVideoSection = registration && hasVideoUrl && (
+    event.is_online 
+      ? canShowOnlineVideo 
+      : (userHasScanned || (sw.expired && (registration.payment_status === 'none' || registration.payment_status === 'approved')))
+  );
 
   return (
     <div className="min-h-screen bg-background pb-32">
@@ -344,7 +346,7 @@ export default function EventDetail() {
             <>
               {/* Status terdaftar */}
               <div className="rounded-xl bg-accent/10 p-4 text-center font-semibold text-accent text-sm sm:text-base border border-accent/20">
-                {event.is_online && canShowOnlineVideo ? (
+                {(event.is_online ? canShowOnlineVideo : (sw.expired && (registration.payment_status === 'none' || registration.payment_status === 'approved'))) ? (
                   <div className="flex flex-col gap-1">
                     <div className="flex items-center justify-center gap-2">
                       <Video className="h-4 w-4" /> Akses Video Terbuka
@@ -454,7 +456,7 @@ export default function EventDetail() {
               )}
 
               {/* Scan QR untuk free, infaq offline, atau paid yang sudah approved */}
-              {((registration.payment_status === "none") || (event.registration_type === "paid" && registration.payment_status === "approved")) && (
+              {((registration.payment_status === "none") || (event.registration_type === "paid" && registration.payment_status === "approved")) && !sw.expired && (
                 <div className="mt-4">
                   {scanAvailable ? (
                     <Link to={`/event/${event.id}/scan`}>
@@ -497,9 +499,9 @@ export default function EventDetail() {
           ) : (
             <Button
               onClick={handleRegisterClick}
-              disabled={submitting || genderMismatch || (sw.expired && !event.is_online)}
+              disabled={submitting || genderMismatch}
               className={`w-full text-white text-sm sm:text-base font-bold ${
-                (genderMismatch || (sw.expired && !event.is_online))
+                genderMismatch
                   ? "bg-muted text-muted-foreground cursor-not-allowed" 
                   : "bg-green-600 hover:bg-green-700"
               }`}
@@ -511,7 +513,7 @@ export default function EventDetail() {
                   : genderMismatch
                     ? "Gender Tidak Sesuai"
                     : sw.expired 
-                      ? (event.is_online ? "Daftar Online (Akses Video)" : "Pendaftaran Ditutup")
+                      ? "Buka Akses Video"
                       : "Daftar Event"
               }
             </Button>
