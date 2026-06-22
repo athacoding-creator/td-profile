@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { MapPin, Lock, CheckCircle2 } from "lucide-react";
+import { MapPin, Lock, CheckCircle2, Search, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Header } from "@/components/Header";
@@ -28,6 +29,8 @@ type Ev = {
 export default function Events() {
   const { profile } = useAuth();
   const [events, setEvents] = useState<Ev[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterGender, setFilterGender] = useState<string>("ALL");
 
   useEffect(() => {
     supabase
@@ -45,13 +48,24 @@ export default function Events() {
       });
   }, []);
 
-  const upcoming = events
+  // Filter events based on search query and gender
+  const filteredEvents = events.filter((e) => {
+    const matchesSearch = searchQuery === "" || 
+      e.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      e.venue.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesGender = filterGender === "ALL" || e.gender === "ALL" || e.gender === filterGender;
+    
+    return matchesSearch && matchesGender;
+  });
+
+  const upcoming = filteredEvents
     .filter((e) => e.status === "active" && !isEventExpired(e))
     .sort((a, b) => {
       if (!!b.is_pinned !== !!a.is_pinned) return b.is_pinned ? 1 : -1;
       return new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime();
     });
-  const finished = events.filter((e) => e.status === "finished" || isEventExpired(e));
+  const finished = filteredEvents.filter((e) => e.status === "finished" || isEventExpired(e));
 
   const Card = ({ e, isFinished }: { e: Ev; isFinished: boolean }) => {
     const locked = profile?.gender && e.gender !== "ALL" && e.gender !== profile.gender;
@@ -107,6 +121,52 @@ export default function Events() {
       <main className="container py-6">
         <h1 className="font-display text-2xl font-bold text-foreground">Event</h1>
         <p className="text-sm text-muted-foreground">Semua event mendatang dan yang telah selesai.</p>
+
+        {/* Search and Filter Section */}
+        <section className="mt-6 space-y-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+            <Input
+              type="text"
+              placeholder="Cari event berdasarkan nama atau lokasi..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-8"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            )}
+          </div>
+
+          {/* Gender Filter */}
+          <div className="flex gap-2 flex-wrap">
+            {["ALL", "MALE", "FEMALE"].map((gender) => (
+              <button
+                key={gender}
+                onClick={() => setFilterGender(gender)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  filterGender === gender
+                    ? "bg-accent text-accent-foreground"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                }`}
+              >
+                {gender === "ALL" ? "Semua" : gender === "MALE" ? "Pria" : "Wanita"}
+              </button>
+            ))}
+          </div>
+
+          {/* Search Results Info */}
+          {searchQuery && (
+            <p className="text-sm text-muted-foreground">
+              Ditemukan {upcoming.length + finished.length} event untuk "{searchQuery}"
+            </p>
+          )}
+        </section>
 
         <section className="mt-6">
           <h2 className="font-display text-lg font-semibold text-foreground">Event Mendatang</h2>
