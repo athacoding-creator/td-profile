@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
 import { isEventExpired, isRecurring } from "@/lib/eventSchedule";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Ev = {
   id: string;
@@ -29,10 +30,12 @@ type Ev = {
 export default function Events() {
   const { profile } = useAuth();
   const [events, setEvents] = useState<Ev[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterGender, setFilterGender] = useState<string>("ALL");
 
   useEffect(() => {
+    setLoading(true);
     supabase
       .from("events")
       .select("id,title,venue,poster_url,gender,starts_at,ends_at,status,is_pinned,is_recurring,recurring_days,recurring_start_time,recurring_end_time,recurring_until,is_online")
@@ -45,6 +48,7 @@ export default function Events() {
           console.error("loadEvents error", error);
         }
         setEvents((data ?? []) as Ev[]);
+        setLoading(false);
       });
   }, []);
 
@@ -154,9 +158,23 @@ export default function Events() {
         <section className="mt-6">
           <h2 className="font-display text-lg font-semibold text-foreground">Event Mendatang</h2>
           <div className="mt-3 grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6">
-            {upcoming.map((e) => <Card key={e.id} e={e} isFinished={false} />)}
-            {!upcoming.length && (
-              <p className="col-span-full py-8 text-center text-sm text-muted-foreground">Belum ada event mendatang.</p>
+            {loading ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="space-y-3">
+                  <Skeleton className="aspect-[3/4] w-full rounded-2xl" />
+                  <div className="space-y-2 px-1">
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-3 w-1/2" />
+                  </div>
+                </div>
+              ))
+            ) : (
+              <>
+                {upcoming.map((e) => <Card key={e.id} e={e} isFinished={false} />)}
+                {!upcoming.length && (
+                  <p className="col-span-full py-8 text-center text-sm text-muted-foreground">Belum ada event mendatang.</p>
+                )}
+              </>
             )}
           </div>
         </section>
@@ -164,9 +182,23 @@ export default function Events() {
         <section className="mt-10">
           <h2 className="font-display text-lg font-semibold text-foreground">Event Selesai</h2>
           <div className="mt-3 grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6">
-            {finished.map((e) => <Card key={e.id} e={e} isFinished={true} />)}
-            {!finished.length && (
-              <p className="col-span-full py-8 text-center text-sm text-muted-foreground">Belum ada event selesai.</p>
+            {loading ? (
+              Array.from({ length: 2 }).map((_, i) => (
+                <div key={i} className="space-y-3">
+                  <Skeleton className="aspect-[3/4] w-full rounded-2xl" />
+                  <div className="space-y-2 px-1">
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-3 w-1/2" />
+                  </div>
+                </div>
+              ))
+            ) : (
+              <>
+                {finished.map((e) => <Card key={e.id} e={e} isFinished={true} />)}
+                {!finished.length && (
+                  <p className="col-span-full py-8 text-center text-sm text-muted-foreground">Belum ada event selesai.</p>
+                )}
+              </>
             )}
           </div>
         </section>

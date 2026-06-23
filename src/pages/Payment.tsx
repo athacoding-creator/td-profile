@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
 import { ChevronLeft, CreditCard, Info, MessageCircle, CheckCircle2, Heart, Coins, Star, Download, Smartphone, Wallet, Check } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
 export default function Payment() {
@@ -212,7 +213,31 @@ export default function Payment() {
     }
   };
 
-  if (loading) return <div className="container py-20 text-center text-muted-foreground">Memuat…</div>;
+  if (loading) return (
+    <div className="min-h-screen bg-background pb-32">
+      <Header />
+      <main className="container max-w-3xl py-4 px-3">
+        <Skeleton className="mb-4 h-6 w-32 rounded" />
+        <div className="space-y-6 rounded-2xl border border-border/60 bg-card p-4 sm:p-6 shadow-sm">
+          <div className="border-b pb-4">
+            <Skeleton className="h-6 w-1/2 rounded" />
+            <Skeleton className="mt-2 h-4 w-3/4 rounded" />
+          </div>
+          <div className="flex flex-col items-center gap-4">
+            <Skeleton className="h-4 w-1/3 rounded" />
+            <Skeleton className="h-64 w-64 rounded-2xl" />
+            <Skeleton className="h-10 w-48 rounded" />
+          </div>
+          <div className="space-y-3">
+            <Skeleton className="h-4 w-1/4 rounded" />
+            <Skeleton className="h-12 w-full rounded-lg" />
+            <Skeleton className="h-12 w-full rounded-lg" />
+          </div>
+        </div>
+      </main>
+      <BottomNav />
+    </div>
+  );
 
   // Check if event is expired to determine if it should be treated as online access
   const isExpired = event ? (

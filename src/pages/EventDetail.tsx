@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
 import { MapPin, Calendar, Users, Lock, Link2, ChevronLeft, Upload, ChevronDown, ChevronUp, Info, MessageCircle, CreditCard, Landmark, Wallet, Video } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { YoutubeEmbed } from "@/components/YoutubeEmbed";
 import DonorWall from "@/components/DonorWall";
 import { toast } from "sonner";
@@ -252,7 +253,27 @@ export default function EventDetail() {
     }
   };
 
-  if (loading) return <div className="container py-20 text-center text-muted-foreground">Memuat…</div>;
+  if (loading) return (
+    <div className="min-h-screen bg-background pb-32">
+      <Header />
+      <main className="container max-w-3xl py-4 sm:py-8 px-3 sm:px-4">
+        <Skeleton className="mb-4 h-6 w-32 rounded" />
+        <Skeleton className="w-full rounded-2xl" style={{ aspectRatio: "3/4" }} />
+        <Skeleton className="mt-6 h-8 w-3/4 rounded" />
+        <Skeleton className="mt-2 h-5 w-1/2 rounded" />
+        <div className="mt-4 space-y-3">
+          <Skeleton className="h-4 w-full rounded" />
+          <Skeleton className="h-4 w-5/6 rounded" />
+          <Skeleton className="h-4 w-4/5 rounded" />
+        </div>
+        <div className="mt-6 space-y-2">
+          <Skeleton className="h-12 w-full rounded-lg" />
+          <Skeleton className="h-12 w-full rounded-lg" />
+        </div>
+      </main>
+      <BottomNav />
+    </div>
+  );
   if (!event) return <div className="container py-20 text-center">Event tidak ditemukan</div>;
 
   const genderMismatch =
