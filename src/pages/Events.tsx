@@ -128,7 +128,7 @@ export default function Events() {
             <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
             <Input
               type="text"
-              placeholder="Cari event berdasarkan nama atau lokasi..."
+              placeholder="Cari event..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 pr-8"
