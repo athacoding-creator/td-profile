@@ -341,10 +341,6 @@ export default function Payment() {
                   <Download className="h-4 w-4" /> Simpan / Download QR
                 </Button>
 
-                <div className="flex items-center gap-2 rounded-full bg-rose-50 px-4 py-1.5 text-xs font-medium text-rose-700 border border-rose-100">
-                  <Info className="h-3 w-3" /> Scan QR di atas dengan aplikasi favoritmu.
-                </div>
-
                 {/* Tutorial Pembayaran */}
                 <div className="w-full mt-2 space-y-3 bg-white/50 rounded-xl p-4 border border-border/40">
                   <p className="text-xs font-bold flex items-center gap-2 text-foreground">
@@ -423,12 +419,6 @@ export default function Payment() {
               {submitting ? "Memproses..." : (infaqType === "money" ? (isOnline ? "Saya Sudah Infaq — Buka Video" : "Konfirmasi Infaq via WhatsApp") : "Kirim Doa & Scan QR Sekarang")}
             </Button>
 
-            <div className="rounded-xl bg-blue-50 p-3 text-xs text-blue-800 border border-blue-100">
-              <Info className="h-3 w-3 inline mr-1" />
-              {infaqType === "money" 
-                ? "Infaq Anda sangat membantu operasional dakwah kami. Terima kasih! Nominal bebas sesuai kemampuan." 
-                : "Doa yang tulus adalah hadiah yang sangat berharga. Terima kasih telah mendukung kami dengan doa terbaik!"}
-            </div>
           </div>
         </main>
         <BottomNav />
