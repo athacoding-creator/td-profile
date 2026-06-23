@@ -445,6 +445,28 @@ export default function EventDetail() {
                 </Button>
               )}
 
+              {/* Scan QR untuk free, infaq offline, atau paid yang sudah approved */}
+              {((registration.payment_status === "none") || (event.registration_type === "paid" && registration.payment_status === "approved")) && !sw.expired && (
+                <div className="mt-4 space-y-2">
+                  {scanAvailable ? (
+                    <>
+                      <Link to={`/event/${event.id}/scan`}>
+                        <Button className="w-full h-12 font-bold shadow-lg">
+                          Scan QR Absensi
+                        </Button>
+                      </Link>
+                      <p className="text-center text-xs sm:text-sm text-muted-foreground">
+                        (untuk menonton online link ada dibawah)
+                      </p>
+                    </>
+                  ) : (
+                    <div className="rounded-xl bg-muted p-4 text-center text-xs sm:text-sm font-medium text-muted-foreground border border-border">
+                      {sw.message ?? "Scan QR tidak tersedia saat ini"}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Infaq sukarela: tombol opsional ke halaman berinfaq via WA (Offline) */}
               {event.registration_type === "infaq" && (
                 <Button
@@ -453,23 +475,6 @@ export default function EventDetail() {
                 >
                   💝 Berinfaq via WhatsApp (Sukarela)
                 </Button>
-              )}
-
-              {/* Scan QR untuk free, infaq offline, atau paid yang sudah approved */}
-              {((registration.payment_status === "none") || (event.registration_type === "paid" && registration.payment_status === "approved")) && !sw.expired && (
-                <div className="mt-4">
-                  {scanAvailable ? (
-                    <Link to={`/event/${event.id}/scan`}>
-                      <Button className="w-full h-12 font-bold shadow-lg">
-                        Scan QR Absensi
-                      </Button>
-                    </Link>
-                  ) : (
-                    <div className="rounded-xl bg-muted p-4 text-center text-xs sm:text-sm font-medium text-muted-foreground border border-border">
-                      {sw.message ?? "Scan QR tidak tersedia saat ini"}
-                    </div>
-                  )}
-                </div>
               )}
 
               {event.group_link && (
