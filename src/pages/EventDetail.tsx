@@ -328,7 +328,7 @@ export default function EventDetail() {
             <Users className="h-4 w-4 text-accent" />
             {event.gender === "ALL" ? "Umum (L & P)" : event.gender === "L" ? "Khusus Laki-laki" : "Khusus Perempuan"}
           </div>
-          {event.registration_type !== "free" && (
+              {event.registration_type !== "free" && (
             <div className="flex items-center gap-2 pt-2 text-accent font-semibold">
               {event.registration_type === "paid" 
                 ? `💰 Wajib Bayar: Rp ${event.price.toLocaleString("id-ID")}`
@@ -337,6 +337,29 @@ export default function EventDetail() {
             </div>
           )}
         </div>
+
+        {/* Scan QR diletakkan di sini sesuai permintaan user (di atas deskripsi) */}
+        {registration && ((registration.payment_status === "none") || (event.registration_type === "paid" && registration.payment_status === "approved")) && !sw.expired && (
+          <div className="mt-4 space-y-2">
+            {scanAvailable ? (
+              <>
+                <Link to={`/event/${event.id}/scan`}>
+                  <Button className="w-full h-12 font-bold shadow-lg">
+                    Scan QR Absensi
+                  </Button>
+                </Link>
+                <p className="text-center text-xs sm:text-sm text-muted-foreground">
+                  (untuk menonton online link ada dibawah)
+                </p>
+              </>
+            ) : (
+              <div className="rounded-xl bg-muted p-4 text-center text-xs sm:text-sm font-medium text-muted-foreground border border-border">
+                {sw.message ?? "Scan QR tidak tersedia saat ini"}
+              </div>
+            )}
+          </div>
+        )}
+
         {event.description && (
           <p className="mt-6 whitespace-pre-line text-foreground/80 text-sm">{event.description}</p>
         )}
@@ -443,28 +466,6 @@ export default function EventDetail() {
                 >
                   {registration.payment_status === "rejected" ? "Kirim Ulang Bukti Pembayaran" : "Upload Bukti Pembayaran"}
                 </Button>
-              )}
-
-              {/* Scan QR untuk free, infaq offline, atau paid yang sudah approved */}
-              {((registration.payment_status === "none") || (event.registration_type === "paid" && registration.payment_status === "approved")) && !sw.expired && (
-                <div className="mt-4 space-y-2">
-                  {scanAvailable ? (
-                    <>
-                      <Link to={`/event/${event.id}/scan`}>
-                        <Button className="w-full h-12 font-bold shadow-lg">
-                          Scan QR Absensi
-                        </Button>
-                      </Link>
-                      <p className="text-center text-xs sm:text-sm text-muted-foreground">
-                        (untuk menonton online link ada dibawah)
-                      </p>
-                    </>
-                  ) : (
-                    <div className="rounded-xl bg-muted p-4 text-center text-xs sm:text-sm font-medium text-muted-foreground border border-border">
-                      {sw.message ?? "Scan QR tidak tersedia saat ini"}
-                    </div>
-                  )}
-                </div>
               )}
 
               {/* Infaq sukarela: tombol opsional ke halaman berinfaq via WA (Offline) */}
