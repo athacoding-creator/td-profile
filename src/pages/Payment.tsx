@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
-import { ChevronLeft, CreditCard, Info, MessageCircle, CheckCircle2, Heart, Coins, Star } from "lucide-react";
+import { ChevronLeft, CreditCard, Info, MessageCircle, CheckCircle2, Heart, Coins, Star, Download, Smartphone, Wallet, Check } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Payment() {
@@ -138,6 +138,27 @@ export default function Payment() {
       };
       reader.readAsDataURL(file);
     });
+  };
+
+  const downloadQR = async (url: string, name: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = `${name}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.appendChild(link);
+      link.remove();
+      window.URL.revokeObjectURL(blobUrl);
+      toast.success("QR Code berhasil diunduh");
+    } catch (error) {
+      console.error("Download error:", error);
+      // Fallback if fetch fails (e.g. CORS)
+      window.open(url, "_blank");
+    }
   };
 
   const submitPayment = async () => {
@@ -307,11 +328,43 @@ export default function Payment() {
                 <div className="flex items-center gap-2 text-xs font-semibold uppercase text-muted-foreground">
                   <CreditCard className="h-3 w-3" /> {paymentMethod.name}
                 </div>
-                <div className="rounded-2xl border-4 border-white bg-white p-2 shadow-md">
+                <div className="rounded-2xl border-4 border-white bg-white p-2 shadow-md relative group">
                   <img src={paymentMethod.qr_url} alt="QRIS Infaq" className="w-48 h-48 sm:w-64 sm:h-64 object-contain" />
                 </div>
+                
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex items-center gap-2 text-xs h-9 border-rose-200 text-rose-700 hover:bg-rose-50"
+                  onClick={() => downloadQR(paymentMethod.qr_url, `QRIS_Infaq_${event.title}`)}
+                >
+                  <Download className="h-4 w-4" /> Simpan / Download QR
+                </Button>
+
                 <div className="flex items-center gap-2 rounded-full bg-rose-50 px-4 py-1.5 text-xs font-medium text-rose-700 border border-rose-100">
                   <Info className="h-3 w-3" /> Scan QR di atas dengan aplikasi favoritmu.
+                </div>
+
+                {/* Tutorial Pembayaran */}
+                <div className="w-full mt-2 space-y-3 bg-white/50 rounded-xl p-4 border border-border/40">
+                  <p className="text-xs font-bold flex items-center gap-2 text-foreground">
+                    <Smartphone className="h-4 w-4 text-accent" /> Cara Pembayaran QRIS:
+                  </p>
+                  <div className="space-y-3">
+                    {[
+                      { step: 1, text: "Simpan/Download gambar QR Code di atas.", icon: <Download className="h-3 w-3" /> },
+                      { step: 2, text: "Buka aplikasi Mobile Banking atau E-Wallet (GoPay, OVO, Dana, dll).", icon: <Wallet className="h-3 w-3" /> },
+                      { step: 3, text: "Pilih menu 'Scan' atau 'Bayar', lalu klik ikon 'Galeri' untuk memilih gambar QR yang tadi di-download.", icon: <Check className="h-3 w-3" /> },
+                      { step: 4, text: "Masukkan nominal, konfirmasi nama 'TERAS DAKWAH', dan selesaikan pembayaran.", icon: <CheckCircle2 className="h-3 w-3" /> }
+                    ].map((item) => (
+                      <div key={item.step} className="flex gap-3 items-start">
+                        <div className="flex-shrink-0 w-5 h-5 rounded-full bg-accent/10 text-accent flex items-center justify-center text-[10px] font-bold mt-0.5">
+                          {item.step}
+                        </div>
+                        <p className="text-[11px] leading-relaxed text-muted-foreground">{item.text}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
@@ -405,9 +458,42 @@ export default function Payment() {
                 <CreditCard className="h-3 w-3" /> {paymentMethod.name}
               </div>
               {paymentMethod.qr_url && (
-                <div className="rounded-2xl border-4 border-white bg-white p-2 shadow-md">
-                  <img src={paymentMethod.qr_url} alt="QRIS" className="w-48 h-48 sm:w-64 sm:h-64 object-contain" />
-                </div>
+                <>
+                  <div className="rounded-2xl border-4 border-white bg-white p-2 shadow-md">
+                    <img src={paymentMethod.qr_url} alt="QRIS" className="w-48 h-48 sm:w-64 sm:h-64 object-contain" />
+                  </div>
+                  
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex items-center gap-2 text-xs h-9 border-primary/20 text-primary hover:bg-primary/5"
+                    onClick={() => downloadQR(paymentMethod.qr_url, `QRIS_Bayar_${event.title}`)}
+                  >
+                    <Download className="h-4 w-4" /> Simpan / Download QR
+                  </Button>
+
+                  {/* Tutorial Pembayaran */}
+                  <div className="w-full mt-2 space-y-3 bg-white/50 rounded-xl p-4 border border-border/40">
+                    <p className="text-xs font-bold flex items-center gap-2 text-foreground">
+                      <Smartphone className="h-4 w-4 text-accent" /> Cara Pembayaran QRIS:
+                    </p>
+                    <div className="space-y-3">
+                      {[
+                        { step: 1, text: "Simpan/Download gambar QR Code di atas.", icon: <Download className="h-3 w-3" /> },
+                        { step: 2, text: "Buka aplikasi Mobile Banking atau E-Wallet (GoPay, OVO, Dana, dll).", icon: <Wallet className="h-3 w-3" /> },
+                        { step: 3, text: "Pilih menu 'Scan' atau 'Bayar', lalu klik ikon 'Galeri' untuk memilih gambar QR yang tadi di-download.", icon: <Check className="h-3 w-3" /> },
+                        { step: 4, text: "Masukkan nominal, konfirmasi nama 'TERAS DAKWAH', dan selesaikan pembayaran.", icon: <CheckCircle2 className="h-3 w-3" /> }
+                      ].map((item) => (
+                        <div key={item.step} className="flex gap-3 items-start">
+                          <div className="flex-shrink-0 w-5 h-5 rounded-full bg-accent/10 text-accent flex items-center justify-center text-[10px] font-bold mt-0.5">
+                            {item.step}
+                          </div>
+                          <p className="text-[11px] leading-relaxed text-muted-foreground">{item.text}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
               )}
               <div className="text-center">
                 <p className="text-2xl font-bold text-primary">Rp {event.price?.toLocaleString("id-ID")}</p>
