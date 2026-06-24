@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { MapPin, Lock, CheckCircle2 } from "lucide-react";
+import { MapPin, Lock, CheckCircle2, UserCircle, CreditCard as CreditCardIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Header } from "@/components/Header";
@@ -120,8 +120,29 @@ export default function Index() {
           </div>
         </section>
 
-        <footer className="container mt-12 flex flex-col items-center gap-3 border-t border-border/60 pt-4 pb-1">
-          <p className="text-xs text-muted-foreground">© 2014 Teras Dakwah</p>
+        <footer className="container mt-12 flex flex-col items-center gap-4 border-t border-border/60 pt-6 pb-2">
+          <p className="text-sm font-medium text-foreground">© 2014 Teras Dakwah</p>
+          
+          <div className="flex items-center gap-8">
+            <a 
+              href="https://profile.terasdakwah.com" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-sm font-semibold text-foreground hover:text-accent transition-colors"
+            >
+              <UserCircle className="h-5 w-5" />
+              Profile
+            </a>
+            <a 
+              href="https://sedekah.terasdakwah.com" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-sm font-semibold text-foreground hover:text-accent transition-colors"
+            >
+              <CreditCardIcon className="h-5 w-5" />
+              Sedekah
+            </a>
+          </div>
         </footer>
 
         <BottomNav />
