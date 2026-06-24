@@ -120,29 +120,29 @@ export default function Index() {
           </div>
         </section>
 
-        <footer className="container mt-12 flex flex-col items-center gap-4 border-t border-border/60 pt-6 pb-2">
-          <p className="text-sm font-medium text-foreground">© 2014 Teras Dakwah</p>
-          
-          <div className="flex items-center gap-8">
+        <footer className="container mt-12 flex flex-col items-center gap-6 border-t border-border/60 pt-6 pb-3">
+          <div className="flex items-center gap-12">
             <a 
               href="https://profile.terasdakwah.com" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="flex items-center gap-2 text-sm font-semibold text-foreground hover:text-accent transition-colors"
+              className="flex items-center gap-2 text-xs font-semibold text-foreground hover:text-accent transition-colors"
             >
-              <UserCircle className="h-5 w-5" />
+              <UserCircle className="h-4 w-4" />
               Profile
             </a>
             <a 
               href="https://sedekah.terasdakwah.com" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="flex items-center gap-2 text-sm font-semibold text-foreground hover:text-accent transition-colors"
+              className="flex items-center gap-2 text-xs font-semibold text-foreground hover:text-accent transition-colors"
             >
-              <CreditCardIcon className="h-5 w-5" />
+              <CreditCardIcon className="h-4 w-4" />
               Sedekah
             </a>
           </div>
+          
+          <p className="text-xs text-muted-foreground">© 2014 Teras Dakwah</p>
         </footer>
 
         <BottomNav />
