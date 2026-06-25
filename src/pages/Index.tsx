@@ -137,6 +137,7 @@ export default function Index() {
               rel="noopener noreferrer"
               className="flex items-center gap-2 text-xs font-semibold text-foreground hover:text-accent transition-colors"
             >
+              <CreditCardIcon className="h-4 w-4" />
               Sedekah
             </a>
           </div>
