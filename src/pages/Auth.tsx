@@ -78,7 +78,7 @@ export default function Auth() {
     setLoading(true);
     try {
       const email = phoneToEmail(normalized);
-      if (mode === "signup") {
+        if (mode === "signup") {
         if (!name.trim()) {
           toast.error("Nama wajib diisi");
           setLoading(false);
@@ -99,7 +99,9 @@ export default function Auth() {
           throw error;
         }
         toast.success("Akun dibuat!");
-        navigate(consumeRedirect("/onboarding"));
+        // Set flag to show profile completion popup
+        sessionStorage.setItem("showProfileCompletionPopup", "true");
+        navigate(consumeRedirect("/profil"));
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) {
@@ -109,6 +111,7 @@ export default function Auth() {
           throw error;
         }
         navigate(consumeRedirect("/"));
+      }
       }
     } catch (err: any) {
       toast.error(err.message);

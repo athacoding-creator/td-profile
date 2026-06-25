@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { MapPin, Lock, CheckCircle2, Search, X } from "lucide-react";
+import { MapPin, Lock, CheckCircle2, Search, X, AlertTriangle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -33,6 +33,23 @@ export default function Events() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterGender, setFilterGender] = useState<string>("ALL");
+  const [showIncompletePopup, setShowIncompletePopup] = useState(false);
+
+  useEffect(() => {
+    // Show popup if profile is not complete
+    if (profile && !profile.is_complete) {
+      // Check if we've already shown it in this session to avoid being annoying
+      const hasShown = sessionStorage.getItem("hasShownIncompletePopup");
+      if (!hasShown) {
+        setShowIncompletePopup(true);
+      }
+    }
+  }, [profile]);
+
+  const handleClosePopup = () => {
+    setShowIncompletePopup(false);
+    sessionStorage.setItem("hasShownIncompletePopup", "true");
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -122,6 +139,44 @@ export default function Events() {
   return (
     <div className="min-h-screen bg-background pb-24">
       <Header />
+      
+      {/* Incomplete Profile Popup */}
+      {showIncompletePopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-sm rounded-2xl bg-card p-6 shadow-lg">
+            <div className="mb-4 flex items-center justify-center">
+              <div className="rounded-full bg-yellow-500/20 p-3">
+                <AlertTriangle className="h-6 w-6 text-yellow-600" />
+              </div>
+            </div>
+            <h2 className="mb-2 text-center text-lg font-bold text-foreground">
+              Profil Belum Lengkap
+            </h2>
+            <p className="mb-6 text-center text-sm text-muted-foreground">
+              Profil Anda belum lengkap. Lengkapi data diri Anda sekarang untuk mendapatkan akses penuh.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={handleClosePopup}
+                className="flex-1 rounded-lg border border-border bg-background px-4 py-2.5 text-sm font-medium text-foreground transition hover:bg-muted"
+              >
+                Nanti
+              </button>
+              <Link
+                to="/profil"
+                onClick={() => {
+                  sessionStorage.setItem("showProfileCompletionPopup", "true");
+                  handleClosePopup();
+                }}
+                className="flex-1 rounded-lg bg-accent px-4 py-2.5 text-center text-sm font-medium text-accent-foreground transition hover:bg-accent/90"
+              >
+                Lengkapi Data
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <main className="container py-6">
         <h1 className="font-display text-2xl font-bold text-foreground">Event</h1>
         <p className="text-sm text-muted-foreground">Semua event mendatang dan yang telah selesai.</p>

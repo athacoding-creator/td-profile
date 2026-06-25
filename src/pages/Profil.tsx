@@ -62,6 +62,7 @@ function ProfilContent() {
   const [loading, setLoading] = useState(false);
   const [pw, setPw] = useState({ newPw: "", confirmPw: "" });
   const [pwLoading, setPwLoading] = useState(false);
+  const [showProfileCompletionPopup, setShowProfileCompletionPopup] = useState(false);
   
   const [provinces, setProvinces] = useState<Wilayah[]>([]);
   const [regencies, setRegencies] = useState<Wilayah[]>([]);
@@ -71,6 +72,14 @@ function ProfilContent() {
 
   useEffect(() => {
     if (profile) setForm(profile);
+    // Check if we should show the profile completion popup
+    const shouldShow = sessionStorage.getItem("showProfileCompletionPopup");
+    if (shouldShow === "true") {
+      setShowProfileCompletionPopup(true);
+      sessionStorage.removeItem("showProfileCompletionPopup");
+      // Auto-navigate to edit view
+      setView("edit");
+    }
   }, [profile]);
 
   // Lazy load regional data when entering edit mode
@@ -79,6 +88,10 @@ function ProfilContent() {
       loadRegionalData();
     }
   }, [view]);
+
+  const handleProfileCompletionClose = () => {
+    setShowProfileCompletionPopup(false);
+  };
 
   const loadRegionalData = async () => {
     setIsDataLoading(true);
@@ -205,6 +218,43 @@ function ProfilContent() {
   return (
     <div className="min-h-screen bg-background pb-24">
       <Header />
+      
+      {/* Profile Completion Popup */}
+      {showProfileCompletionPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-sm rounded-2xl bg-card p-6 shadow-lg">
+            <div className="mb-4 flex items-center justify-center">
+              <div className="rounded-full bg-accent/20 p-3">
+                <AlertTriangle className="h-6 w-6 text-accent" />
+              </div>
+            </div>
+            <h2 className="mb-2 text-center text-lg font-bold text-foreground">
+              Lengkapi Data Diri Anda
+            </h2>
+            <p className="mb-6 text-center text-sm text-muted-foreground">
+              Lengkapi profil Anda untuk mendapatkan akses penuh ke semua fitur dan bonus poin.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={handleProfileCompletionClose}
+                className="flex-1 rounded-lg border border-border bg-background px-4 py-2.5 text-sm font-medium text-foreground transition hover:bg-muted"
+              >
+                Nanti
+              </button>
+              <button
+                onClick={() => {
+                  handleProfileCompletionClose();
+                  setView("edit");
+                }}
+                className="flex-1 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-accent-foreground transition hover:bg-accent/90"
+              >
+                Lengkapi Sekarang
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <main className="container max-w-2xl py-8 min-h-screen">
         {view === "menu" ? (
           <>
