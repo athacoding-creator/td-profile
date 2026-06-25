@@ -63,9 +63,6 @@ function ProfilContent() {
   const [loading, setLoading] = useState(false);
   const [pw, setPw] = useState({ newPw: "", confirmPw: "" });
   const [pwLoading, setPwLoading] = useState(false);
-  const [provinces, setProvinces] = useState<Wilayah[]>([]);
-  const [regencies, setRegencies] = useState<Wilayah[]>([]);
-  const [districts, setDistricts] = useState<Wilayah[]>([]);
   const [dataError, setDataError] = useState<string | null>(null);
   const [shouldThrowError, setShouldThrowError] = useState(false);
 
@@ -80,11 +77,10 @@ function ProfilContent() {
       if (!Array.isArray(provincesData)) {
         throw new Error("Data provinsi tidak valid");
       }
-      return provincesData;
+      return provincesData as Wilayah[];
     } catch (e) {
       console.error("Error parsing provinces:", e);
       setDataError("Gagal memuat data provinsi");
-      // Trigger Error Boundary after a short delay to ensure state updates
       setTimeout(() => setShouldThrowError(true), 100);
       return [];
     }
@@ -95,7 +91,7 @@ function ProfilContent() {
       if (!Array.isArray(regenciesData)) {
         throw new Error("Data kabupaten/kota tidak valid");
       }
-      return regenciesData;
+      return regenciesData as Wilayah[];
     } catch (e) {
       console.error("Error parsing regencies:", e);
       setDataError("Gagal memuat data kabupaten/kota");
@@ -109,7 +105,7 @@ function ProfilContent() {
       if (!Array.isArray(districtsData)) {
         throw new Error("Data kecamatan tidak valid");
       }
-      return districtsData;
+      return districtsData as Wilayah[];
     } catch (e) {
       console.error("Error parsing districts:", e);
       setDataError("Gagal memuat data kecamatan");
@@ -122,66 +118,29 @@ function ProfilContent() {
     if (profile) setForm(profile);
   }, [profile]);
 
-  // Load provinces when entering edit
-  useEffect(() => {
-    if (view !== "edit" || provinces.length) return;
-    try {
-      if (!Array.isArray(parsedProvinces) || parsedProvinces.length === 0) {
-        throw new Error("Data provinsi kosong atau tidak valid");
-      }
-      setProvinces(parsedProvinces as Wilayah[]);
-      setDataError(null);
-    } catch (e) {
-      console.error("Error loading provinces:", e);
-      const errorMsg = "Gagal memuat data provinsi";
-      setDataError(errorMsg);
-      toast.error(errorMsg);
-      // Trigger Error Boundary if critical
-      setTimeout(() => setShouldThrowError(true), 500);
-    }
-  }, [view, provinces.length, parsedProvinces]);
-
   // Cascade: load regencies when province changes - with memoization
   const filteredRegencies = useMemo(() => {
     if (!form?.province_code) return [];
     try {
-      if (!Array.isArray(parsedRegencies)) {
-        throw new Error("Data kabupaten/kota tidak valid saat filter");
-      }
-      const filtered = parsedRegencies.filter((r: any) => r.province_id === form.province_code);
+      const filtered = parsedRegencies.filter((r: any) => String(r.province_id) === String(form.province_code));
       return filtered;
     } catch (e) {
       console.error("Error filtering regencies:", e);
-      setDataError("Gagal memfilter data kabupaten/kota");
-      setTimeout(() => setShouldThrowError(true), 500);
       return [];
     }
   }, [form?.province_code, parsedRegencies]);
-
-  useEffect(() => {
-    setRegencies(filteredRegencies);
-  }, [filteredRegencies]);
 
   // Cascade: load districts when regency changes - with memoization
   const filteredDistricts = useMemo(() => {
     if (!form?.regency_code) return [];
     try {
-      if (!Array.isArray(parsedDistricts)) {
-        throw new Error("Data kecamatan tidak valid saat filter");
-      }
-      const filtered = parsedDistricts.filter((d: any) => d.regency_id === form.regency_code);
+      const filtered = parsedDistricts.filter((d: any) => String(d.regency_id) === String(form.regency_code));
       return filtered;
     } catch (e) {
       console.error("Error filtering districts:", e);
-      setDataError("Gagal memfilter data kecamatan");
-      setTimeout(() => setShouldThrowError(true), 500);
       return [];
     }
   }, [form?.regency_code, parsedDistricts]);
-
-  useEffect(() => {
-    setDistricts(filteredDistricts);
-  }, [filteredDistricts]);
 
   const save = async () => {
     if (!user) return;
@@ -453,7 +412,7 @@ function ProfilContent() {
                   value={form.province_code ?? ""}
                   onValueChange={(v) => {
                     if (!v) return;
-                    const p = provinces.find((x) => x.id === v);
+                    const p = parsedProvinces.find((x) => String(x.id) === String(v));
                     setForm({ 
                       ...form, 
                       province_code: v, 
@@ -469,8 +428,8 @@ function ProfilContent() {
                     <SelectValue placeholder="Pilih provinsi" />
                   </SelectTrigger>
                   <SelectContent className="max-h-72">
-                    {provinces.length > 0 ? (
-                      provinces.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)
+                    {parsedProvinces.length > 0 ? (
+                      parsedProvinces.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)
                     ) : (
                       <div className="p-2 text-center text-xs text-muted-foreground">
                         Daftar provinsi tidak tersedia
@@ -485,7 +444,7 @@ function ProfilContent() {
                   value={form.regency_code ?? ""}
                   onValueChange={(v) => {
                     if (!v) return;
-                    const r = regencies.find((x) => x.id === v);
+                    const r = filteredRegencies.find((x) => String(x.id) === String(v));
                     setForm({ 
                       ...form, 
                       regency_code: v, 
@@ -502,8 +461,8 @@ function ProfilContent() {
                     } />
                   </SelectTrigger>
                   <SelectContent className="max-h-72">
-                    {regencies.length > 0 ? (
-                      regencies.map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)
+                    {filteredRegencies.length > 0 ? (
+                      filteredRegencies.map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)
                     ) : (
                       <div className="p-2 text-center text-xs text-muted-foreground">
                         Pilih provinsi terlebih dahulu
@@ -518,7 +477,7 @@ function ProfilContent() {
                   value={form.district_code ?? ""}
                   onValueChange={(v) => {
                     if (!v) return;
-                    const d = districts.find((x) => x.id === v);
+                    const d = filteredDistricts.find((x) => String(x.id) === String(v));
                     setForm({ ...form, district_code: v, district_name: d?.name ?? null });
                   }}
                   disabled={!form.regency_code}
@@ -529,8 +488,8 @@ function ProfilContent() {
                     } />
                   </SelectTrigger>
                   <SelectContent className="max-h-72">
-                    {districts.length > 0 ? (
-                      districts.map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)
+                    {filteredDistricts.length > 0 ? (
+                      filteredDistricts.map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)
                     ) : (
                       <div className="p-2 text-center text-xs text-muted-foreground">
                         Pilih kabupaten/kota terlebih dahulu
