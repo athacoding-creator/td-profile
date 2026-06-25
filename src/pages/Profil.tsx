@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import provincesData from "@/data/provinces.json";
 import regenciesData from "@/data/regencies.json";
 import districtsData from "@/data/districts.json";
@@ -65,6 +65,38 @@ export default function Profil() {
   const [provinces, setProvinces] = useState<Wilayah[]>([]);
   const [regencies, setRegencies] = useState<Wilayah[]>([]);
   const [districts, setDistricts] = useState<Wilayah[]>([]);
+  const [dataError, setDataError] = useState<string | null>(null);
+
+  // Memoize data parsing to prevent re-parsing on every render
+  const parsedProvinces = useMemo(() => {
+    try {
+      return Array.isArray(provincesData) ? provincesData : [];
+    } catch (e) {
+      console.error("Error parsing provinces:", e);
+      setDataError("Gagal memuat data provinsi");
+      return [];
+    }
+  }, []);
+
+  const parsedRegencies = useMemo(() => {
+    try {
+      return Array.isArray(regenciesData) ? regenciesData : [];
+    } catch (e) {
+      console.error("Error parsing regencies:", e);
+      setDataError("Gagal memuat data kabupaten/kota");
+      return [];
+    }
+  }, []);
+
+  const parsedDistricts = useMemo(() => {
+    try {
+      return Array.isArray(districtsData) ? districtsData : [];
+    } catch (e) {
+      console.error("Error parsing districts:", e);
+      setDataError("Gagal memuat data kecamatan");
+      return [];
+    }
+  }, []);
 
   useEffect(() => {
     if (profile) setForm(profile);
@@ -73,72 +105,89 @@ export default function Profil() {
   // Load provinces when entering edit
   useEffect(() => {
     if (view !== "edit" || provinces.length) return;
-    setProvinces(provincesData as Wilayah[]);
-  }, [view, provinces.length]);
-
-  // Cascade: load regencies when province changes
-  useEffect(() => {
-    if (!form?.province_code) { 
-      setRegencies([]); 
-      return; 
+    try {
+      setProvinces(parsedProvinces as Wilayah[]);
+      setDataError(null);
+    } catch (e) {
+      console.error("Error loading provinces:", e);
+      setDataError("Gagal memuat data provinsi");
+      toast.error("Gagal memuat data provinsi");
     }
-    
-    const filteredRegencies = (regenciesData as Wilayah[]).filter(
-      (r) => r.province_id === form.province_code
-    );
+  }, [view, provinces.length, parsedProvinces]);
+
+  // Cascade: load regencies when province changes - with memoization
+  const filteredRegencies = useMemo(() => {
+    if (!form?.province_code) return [];
+    try {
+      return parsedRegencies.filter((r: any) => r.province_id === form.province_code);
+    } catch (e) {
+      console.error("Error filtering regencies:", e);
+      return [];
+    }
+  }, [form?.province_code, parsedRegencies]);
+
+  useEffect(() => {
     setRegencies(filteredRegencies);
-  }, [form?.province_code]);
+  }, [filteredRegencies]);
 
-  // Cascade: load districts when regency changes
-  useEffect(() => {
-    if (!form?.regency_code) { 
-      setDistricts([]); 
-      return; 
+  // Cascade: load districts when regency changes - with memoization
+  const filteredDistricts = useMemo(() => {
+    if (!form?.regency_code) return [];
+    try {
+      return parsedDistricts.filter((d: any) => d.regency_id === form.regency_code);
+    } catch (e) {
+      console.error("Error filtering districts:", e);
+      return [];
     }
-    
-    const filteredDistricts = (districtsData as Wilayah[]).filter(
-      (d) => d.regency_id === form.regency_code
-    );
+  }, [form?.regency_code, parsedDistricts]);
+
+  useEffect(() => {
     setDistricts(filteredDistricts);
-  }, [form?.regency_code]);
+  }, [filteredDistricts]);
 
   const save = async () => {
     if (!user) return;
     setLoading(true);
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        full_name: form.full_name,
-        gender: form.gender,
-        birth_date: form.birth_date || null,
-        address: form.address,
-        province_code: form.province_code || null,
-        province_name: form.province_name || null,
-        regency_code: form.regency_code || null,
-        regency_name: form.regency_name || null,
-        district_code: form.district_code || null,
-        district_name: form.district_name || null,
-        city: form.regency_name || form.city || null,
-        occupation: form.occupation || null,
-        instansi: form.instansi || null,
-        hobi: form.hobi || null,
-      })
-      .eq("id", user.id);
-    setLoading(false);
-    if (error) return toast.error(error.message);
-    const wasComplete = profile?.is_complete;
-    await refreshProfile();
-    const { data: fresh } = await supabase
-      .from("profiles")
-      .select("is_complete")
-      .eq("id", user.id)
-      .maybeSingle();
-    if (!wasComplete && fresh?.is_complete) {
-      toast.success("Profil lengkap! Bonus poin diberikan 🎉");
-    } else {
-      toast.success("Tersimpan");
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          full_name: form.full_name,
+          gender: form.gender,
+          birth_date: form.birth_date || null,
+          address: form.address,
+          province_code: form.province_code || null,
+          province_name: form.province_name || null,
+          regency_code: form.regency_code || null,
+          regency_name: form.regency_name || null,
+          district_code: form.district_code || null,
+          district_name: form.district_name || null,
+          city: form.regency_name || form.city || null,
+          occupation: form.occupation || null,
+          instansi: form.instansi || null,
+          hobi: form.hobi || null,
+        })
+        .eq("id", user.id);
+      setLoading(false);
+      if (error) return toast.error(error.message);
+      const wasComplete = profile?.is_complete;
+      await refreshProfile();
+      const { data: fresh } = await supabase
+        .from("profiles")
+        .select("is_complete")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (!wasComplete && fresh?.is_complete) {
+        toast.success("Profil lengkap! Bonus poin diberikan 🎉");
+      } else {
+        toast.success("Tersimpan");
+      }
+      setView("menu");
+    } catch (e) {
+      console.error("Error saving profile:", e);
+      toast.error("Terjadi kesalahan saat menyimpan profil");
+      setLoading(false);
     }
-    setView("menu");
   };
 
   const changePassword = async () => {
@@ -152,6 +201,9 @@ export default function Profil() {
       toast.success("Password berhasil diubah");
       setPw({ newPw: "", confirmPw: "" });
       setView("menu");
+    } catch (e) {
+      console.error("Error changing password:", e);
+      toast.error("Terjadi kesalahan saat mengubah password");
     } finally {
       setPwLoading(false);
     }
@@ -317,6 +369,13 @@ export default function Profil() {
               <ChevronLeft className="h-4 w-4" /> Kembali
             </button>
             <h1 className="font-display text-2xl font-bold">Ubah data akun</h1>
+            
+            {dataError && (
+              <div className="mt-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+                {dataError}
+              </div>
+            )}
+
             <div className="mt-6 space-y-4">
               <div className="space-y-1.5">
                 <Label>Nama lengkap</Label>
@@ -448,30 +507,34 @@ export default function Profil() {
                 <Input value={form.address ?? ""} onChange={(e) => setForm({ ...form, address: e.target.value })} maxLength={250} />
               </div>
 
-              {/* Pekerjaan & Instansi */}
               <div className="space-y-1.5">
                 <Label>Pekerjaan</Label>
                 <Select value={form.occupation ?? ""} onValueChange={(v) => setForm({ ...form, occupation: v })}>
-                  <SelectTrigger><SelectValue placeholder="Pilih pekerjaan" /></SelectTrigger>
-                  <SelectContent>
-                    {OCCUPATIONS.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih pekerjaan" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    {OCCUPATIONS.map((occ) => (
+                      <SelectItem key={occ} value={occ}>
+                        {occ}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
+
               <div className="space-y-1.5">
-                <Label>Instansi / Tempat kerja / Sekolah</Label>
-                <Input value={form.instansi ?? ""} onChange={(e) => setForm({ ...form, instansi: e.target.value })} maxLength={150} placeholder="Contoh: UGM, PT ABC" />
+                <Label>Instansi / Perusahaan</Label>
+                <Input value={form.instansi ?? ""} onChange={(e) => setForm({ ...form, instansi: e.target.value })} maxLength={100} />
               </div>
+
               <div className="space-y-1.5">
                 <Label>Hobi</Label>
-                <Textarea value={form.hobi ?? ""} onChange={(e) => setForm({ ...form, hobi: e.target.value })} maxLength={250} rows={2} placeholder="Contoh: membaca, futsal, traveling" />
+                <Input value={form.hobi ?? ""} onChange={(e) => setForm({ ...form, hobi: e.target.value })} maxLength={100} />
               </div>
 
               <Button onClick={save} disabled={loading} className="w-full bg-primary text-primary-foreground">
-                {loading ? "Menyimpan…" : "Simpan"}
-              </Button>
-              <Button onClick={() => setView("menu")} variant="outline" className="w-full">
-                Batal
+                {loading ? "Menyimpan…" : "Simpan data"}
               </Button>
             </div>
           </>
