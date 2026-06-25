@@ -1,7 +1,4 @@
 import { useEffect, useState, useMemo } from "react";
-import provincesData from "@/data/provinces.json";
-import regenciesData from "@/data/regencies.json";
-import districtsData from "@/data/districts.json";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Header } from "@/components/Header";
@@ -32,6 +29,8 @@ import {
   Download,
   Sun,
   Moon,
+  AlertTriangle,
+  Loader2,
 } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
 import { Link } from "react-router-dom";
@@ -63,84 +62,59 @@ function ProfilContent() {
   const [loading, setLoading] = useState(false);
   const [pw, setPw] = useState({ newPw: "", confirmPw: "" });
   const [pwLoading, setPwLoading] = useState(false);
+  
+  const [provinces, setProvinces] = useState<Wilayah[]>([]);
+  const [regencies, setRegencies] = useState<Wilayah[]>([]);
+  const [districts, setDistricts] = useState<Wilayah[]>([]);
+  const [isDataLoading, setIsDataLoading] = useState(false);
   const [dataError, setDataError] = useState<string | null>(null);
-  const [shouldThrowError, setShouldThrowError] = useState(false);
-
-  // Throw error to trigger Error Boundary if critical error occurs
-  if (shouldThrowError) {
-    throw new Error("Terjadi kesalahan saat memproses data profil. Silakan muat ulang halaman.");
-  }
-
-  // Memoize data parsing to prevent re-parsing on every render
-  const parsedProvinces = useMemo(() => {
-    try {
-      if (!Array.isArray(provincesData)) {
-        throw new Error("Data provinsi tidak valid");
-      }
-      return provincesData as Wilayah[];
-    } catch (e) {
-      console.error("Error parsing provinces:", e);
-      setDataError("Gagal memuat data provinsi");
-      setTimeout(() => setShouldThrowError(true), 100);
-      return [];
-    }
-  }, []);
-
-  const parsedRegencies = useMemo(() => {
-    try {
-      if (!Array.isArray(regenciesData)) {
-        throw new Error("Data kabupaten/kota tidak valid");
-      }
-      return regenciesData as Wilayah[];
-    } catch (e) {
-      console.error("Error parsing regencies:", e);
-      setDataError("Gagal memuat data kabupaten/kota");
-      setTimeout(() => setShouldThrowError(true), 100);
-      return [];
-    }
-  }, []);
-
-  const parsedDistricts = useMemo(() => {
-    try {
-      if (!Array.isArray(districtsData)) {
-        throw new Error("Data kecamatan tidak valid");
-      }
-      return districtsData as Wilayah[];
-    } catch (e) {
-      console.error("Error parsing districts:", e);
-      setDataError("Gagal memuat data kecamatan");
-      setTimeout(() => setShouldThrowError(true), 100);
-      return [];
-    }
-  }, []);
 
   useEffect(() => {
     if (profile) setForm(profile);
   }, [profile]);
 
-  // Cascade: load regencies when province changes - with memoization
-  const filteredRegencies = useMemo(() => {
-    if (!form?.province_code) return [];
-    try {
-      const filtered = parsedRegencies.filter((r: any) => String(r.province_id) === String(form.province_code));
-      return filtered;
-    } catch (e) {
-      console.error("Error filtering regencies:", e);
-      return [];
+  // Lazy load regional data when entering edit mode
+  useEffect(() => {
+    if (view === "edit" && provinces.length === 0) {
+      loadRegionalData();
     }
-  }, [form?.province_code, parsedRegencies]);
+  }, [view]);
 
-  // Cascade: load districts when regency changes - with memoization
-  const filteredDistricts = useMemo(() => {
-    if (!form?.regency_code) return [];
+  const loadRegionalData = async () => {
+    setIsDataLoading(true);
+    setDataError(null);
     try {
-      const filtered = parsedDistricts.filter((d: any) => String(d.regency_id) === String(form.regency_code));
-      return filtered;
+      // Import JSON dynamically to reduce initial bundle size
+      const [pData, rData, dData] = await Promise.all([
+        import("@/data/provinces.json").then(m => m.default),
+        import("@/data/regencies.json").then(m => m.default),
+        import("@/data/districts.json").then(m => m.default)
+      ]);
+
+      if (Array.isArray(pData)) setProvinces(pData as Wilayah[]);
+      if (Array.isArray(rData)) setRegencies(rData as Wilayah[]);
+      if (Array.isArray(dData)) setDistricts(dData as Wilayah[]);
+      
     } catch (e) {
-      console.error("Error filtering districts:", e);
-      return [];
+      console.error("Error loading regional data:", e);
+      setDataError("Gagal memuat data wilayah. Anda tetap bisa mengisi profil secara manual.");
+      toast.error("Gagal memuat data wilayah");
+    } finally {
+      setIsDataLoading(false);
     }
-  }, [form?.regency_code, parsedDistricts]);
+  };
+
+  // Cascade: load regencies when province changes
+  const filteredRegencies = useMemo(() => {
+    if (!form?.province_code || regencies.length === 0) return [];
+    return regencies.filter((r) => String(r.province_id) === String(form.province_code));
+  }, [form?.province_code, regencies]);
+
+  // Cascade: load districts when regency changes
+  const filteredDistricts = useMemo(() => {
+    if (!form?.regency_code || districts.length === 0) return [];
+    return districts.filter((d) => String(d.regency_id) === String(form.regency_code));
+  }, [form?.regency_code, districts]);
 
   const save = async () => {
     if (!user) return;
@@ -236,7 +210,6 @@ function ProfilContent() {
           <>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                {/* Avatar: inisial saja, tidak ada foto profil */}
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-2xl font-bold text-primary">
                   {initial}
                 </div>
@@ -368,8 +341,9 @@ function ProfilContent() {
             <h1 className="font-display text-2xl font-bold">Ubah data akun</h1>
             
             {dataError && (
-              <div className="mt-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
-                {dataError}
+              <div className="mt-4 flex items-start gap-2 rounded-lg bg-yellow-500/10 p-3 text-sm text-yellow-600 dark:text-yellow-500">
+                <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                <p>{dataError}</p>
               </div>
             )}
 
@@ -407,96 +381,122 @@ function ProfilContent() {
 
               {/* Domisili */}
               <div className="space-y-1.5">
-                <Label>Provinsi</Label>
-                <Select
-                  value={form.province_code ?? ""}
-                  onValueChange={(v) => {
-                    if (!v) return;
-                    const p = parsedProvinces.find((x) => String(x.id) === String(v));
-                    setForm({ 
-                      ...form, 
-                      province_code: v, 
-                      province_name: p?.name ?? null,
-                      regency_code: null, 
-                      regency_name: null, 
-                      district_code: null, 
-                      district_name: null 
-                    });
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Pilih provinsi" />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-72">
-                    {parsedProvinces.length > 0 ? (
-                      parsedProvinces.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)
-                    ) : (
-                      <div className="p-2 text-center text-xs text-muted-foreground">
-                        Daftar provinsi tidak tersedia
-                      </div>
-                    )}
-                  </SelectContent>
-                </Select>
+                <div className="flex items-center justify-between">
+                  <Label>Provinsi</Label>
+                  {isDataLoading && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
+                </div>
+                {provinces.length > 0 ? (
+                  <Select
+                    value={form.province_code ?? ""}
+                    onValueChange={(v) => {
+                      if (!v) return;
+                      const p = provinces.find((x) => String(x.id) === String(v));
+                      setForm({ 
+                        ...form, 
+                        province_code: v, 
+                        province_name: p?.name ?? null,
+                        regency_code: null, 
+                        regency_name: null, 
+                        district_code: null, 
+                        district_name: null 
+                      });
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih provinsi" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-72">
+                      {provinces.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Input 
+                    placeholder={isDataLoading ? "Memuat data..." : "Ketik nama provinsi"} 
+                    value={form.province_name ?? ""} 
+                    onChange={(e) => setForm({ ...form, province_name: e.target.value, province_code: null })} 
+                    disabled={isDataLoading}
+                  />
+                )}
               </div>
+
               <div className="space-y-1.5">
                 <Label>Kabupaten / Kota</Label>
-                <Select
-                  value={form.regency_code ?? ""}
-                  onValueChange={(v) => {
-                    if (!v) return;
-                    const r = filteredRegencies.find((x) => String(x.id) === String(v));
-                    setForm({ 
-                      ...form, 
-                      regency_code: v, 
-                      regency_name: r?.name ?? null,
-                      district_code: null, 
-                      district_name: null 
-                    });
-                  }}
-                  disabled={!form.province_code}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={
-                      form.province_code ? "Pilih kabupaten/kota" : "Pilih provinsi dulu"
-                    } />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-72">
-                    {filteredRegencies.length > 0 ? (
-                      filteredRegencies.map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)
-                    ) : (
-                      <div className="p-2 text-center text-xs text-muted-foreground">
-                        Pilih provinsi terlebih dahulu
-                      </div>
-                    )}
-                  </SelectContent>
-                </Select>
+                {regencies.length > 0 ? (
+                  <Select
+                    value={form.regency_code ?? ""}
+                    onValueChange={(v) => {
+                      if (!v) return;
+                      const r = filteredRegencies.find((x) => String(x.id) === String(v));
+                      setForm({ 
+                        ...form, 
+                        regency_code: v, 
+                        regency_name: r?.name ?? null,
+                        district_code: null, 
+                        district_name: null 
+                      });
+                    }}
+                    disabled={!form.province_code && provinces.length > 0}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={
+                        form.province_code || provinces.length === 0 ? "Pilih kabupaten/kota" : "Pilih provinsi dulu"
+                      } />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-72">
+                      {filteredRegencies.length > 0 ? (
+                        filteredRegencies.map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)
+                      ) : (
+                        <div className="p-2 text-center text-xs text-muted-foreground">
+                          {form.province_code ? "Data tidak tersedia" : "Pilih provinsi terlebih dahulu"}
+                        </div>
+                      )}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Input 
+                    placeholder={isDataLoading ? "Memuat data..." : "Ketik nama kabupaten/kota"} 
+                    value={form.regency_name ?? ""} 
+                    onChange={(e) => setForm({ ...form, regency_name: e.target.value, regency_code: null })} 
+                    disabled={isDataLoading}
+                  />
+                )}
               </div>
+
               <div className="space-y-1.5">
                 <Label>Kecamatan</Label>
-                <Select
-                  value={form.district_code ?? ""}
-                  onValueChange={(v) => {
-                    if (!v) return;
-                    const d = filteredDistricts.find((x) => String(x.id) === String(v));
-                    setForm({ ...form, district_code: v, district_name: d?.name ?? null });
-                  }}
-                  disabled={!form.regency_code}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={
-                      form.regency_code ? "Pilih kecamatan" : "Pilih kabupaten/kota dulu"
-                    } />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-72">
-                    {filteredDistricts.length > 0 ? (
-                      filteredDistricts.map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)
-                    ) : (
-                      <div className="p-2 text-center text-xs text-muted-foreground">
-                        Pilih kabupaten/kota terlebih dahulu
-                      </div>
-                    )}
-                  </SelectContent>
-                </Select>
+                {districts.length > 0 ? (
+                  <Select
+                    value={form.district_code ?? ""}
+                    onValueChange={(v) => {
+                      if (!v) return;
+                      const d = filteredDistricts.find((x) => String(x.id) === String(v));
+                      setForm({ ...form, district_code: v, district_name: d?.name ?? null });
+                    }}
+                    disabled={!form.regency_code && regencies.length > 0}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={
+                        form.regency_code || regencies.length === 0 ? "Pilih kecamatan" : "Pilih kabupaten/kota dulu"
+                      } />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-72">
+                      {filteredDistricts.length > 0 ? (
+                        filteredDistricts.map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)
+                      ) : (
+                        <div className="p-2 text-center text-xs text-muted-foreground">
+                          {form.regency_code ? "Data tidak tersedia" : "Pilih kabupaten/kota terlebih dahulu"}
+                        </div>
+                      )}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Input 
+                    placeholder={isDataLoading ? "Memuat data..." : "Ketik nama kecamatan"} 
+                    value={form.district_name ?? ""} 
+                    onChange={(e) => setForm({ ...form, district_name: e.target.value, district_code: null })} 
+                    disabled={isDataLoading}
+                  />
+                )}
               </div>
 
               <div className="space-y-1.5">
