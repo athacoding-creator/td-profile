@@ -121,24 +121,22 @@ export default function Index() {
         </section>
 
         <footer className="container mt-12 flex flex-col items-center gap-6 border-t border-border/60 pt-6 pb-3">
-          <div className="flex items-center gap-12">
+          <div className="flex flex-col items-center gap-4">
             <a 
               href="https://profile.terasdakwah.com" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="flex items-center gap-2 text-xs font-semibold text-foreground hover:text-accent transition-colors"
+              className="text-xs font-semibold text-foreground hover:text-accent transition-colors"
             >
-              <UserCircle className="h-4 w-4" />
-              Profile
+              Tentang Kami
             </a>
             <a 
               href="https://sedekah.terasdakwah.com" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="flex items-center gap-2 text-xs font-semibold text-foreground hover:text-accent transition-colors"
+              className="text-xs font-semibold text-foreground hover:text-accent transition-colors"
             >
-              <CreditCardIcon className="h-4 w-4" />
-              Sedekah
+              Program Kebaikan
             </a>
           </div>
           
