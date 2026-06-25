@@ -14,8 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        inter: ["Inter", "sans-serif"],
-        "josefin-sans": ["Josefin Sans", "sans-serif"],
+        ubuntu: ["Ubuntu", "sans-serif"],
+        display: ["Ubuntu", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
