@@ -36,6 +36,7 @@ import {
 import { useTheme } from "@/components/theme-provider";
 import { Link } from "react-router-dom";
 import { formatPhoneDisplay } from "@/lib/phone";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const OCCUPATIONS = [
   "Pelajar",
@@ -54,7 +55,7 @@ type Wilayah = { id: string; name: string; province_id?: string; regency_id?: st
 
 type View = "menu" | "edit" | "password";
 
-export default function Profil() {
+function ProfilContent() {
   const { user, profile, refreshProfile, signOut, isAdmin } = useAuth();
   const { theme, setTheme } = useTheme();
   const [view, setView] = useState<View>("menu");
@@ -66,34 +67,53 @@ export default function Profil() {
   const [regencies, setRegencies] = useState<Wilayah[]>([]);
   const [districts, setDistricts] = useState<Wilayah[]>([]);
   const [dataError, setDataError] = useState<string | null>(null);
+  const [shouldThrowError, setShouldThrowError] = useState(false);
+
+  // Throw error to trigger Error Boundary if critical error occurs
+  if (shouldThrowError) {
+    throw new Error("Terjadi kesalahan saat memproses data profil. Silakan muat ulang halaman.");
+  }
 
   // Memoize data parsing to prevent re-parsing on every render
   const parsedProvinces = useMemo(() => {
     try {
-      return Array.isArray(provincesData) ? provincesData : [];
+      if (!Array.isArray(provincesData)) {
+        throw new Error("Data provinsi tidak valid");
+      }
+      return provincesData;
     } catch (e) {
       console.error("Error parsing provinces:", e);
       setDataError("Gagal memuat data provinsi");
+      // Trigger Error Boundary after a short delay to ensure state updates
+      setTimeout(() => setShouldThrowError(true), 100);
       return [];
     }
   }, []);
 
   const parsedRegencies = useMemo(() => {
     try {
-      return Array.isArray(regenciesData) ? regenciesData : [];
+      if (!Array.isArray(regenciesData)) {
+        throw new Error("Data kabupaten/kota tidak valid");
+      }
+      return regenciesData;
     } catch (e) {
       console.error("Error parsing regencies:", e);
       setDataError("Gagal memuat data kabupaten/kota");
+      setTimeout(() => setShouldThrowError(true), 100);
       return [];
     }
   }, []);
 
   const parsedDistricts = useMemo(() => {
     try {
-      return Array.isArray(districtsData) ? districtsData : [];
+      if (!Array.isArray(districtsData)) {
+        throw new Error("Data kecamatan tidak valid");
+      }
+      return districtsData;
     } catch (e) {
       console.error("Error parsing districts:", e);
       setDataError("Gagal memuat data kecamatan");
+      setTimeout(() => setShouldThrowError(true), 100);
       return [];
     }
   }, []);
@@ -106,12 +126,18 @@ export default function Profil() {
   useEffect(() => {
     if (view !== "edit" || provinces.length) return;
     try {
+      if (!Array.isArray(parsedProvinces) || parsedProvinces.length === 0) {
+        throw new Error("Data provinsi kosong atau tidak valid");
+      }
       setProvinces(parsedProvinces as Wilayah[]);
       setDataError(null);
     } catch (e) {
       console.error("Error loading provinces:", e);
-      setDataError("Gagal memuat data provinsi");
-      toast.error("Gagal memuat data provinsi");
+      const errorMsg = "Gagal memuat data provinsi";
+      setDataError(errorMsg);
+      toast.error(errorMsg);
+      // Trigger Error Boundary if critical
+      setTimeout(() => setShouldThrowError(true), 500);
     }
   }, [view, provinces.length, parsedProvinces]);
 
@@ -119,9 +145,15 @@ export default function Profil() {
   const filteredRegencies = useMemo(() => {
     if (!form?.province_code) return [];
     try {
-      return parsedRegencies.filter((r: any) => r.province_id === form.province_code);
+      if (!Array.isArray(parsedRegencies)) {
+        throw new Error("Data kabupaten/kota tidak valid saat filter");
+      }
+      const filtered = parsedRegencies.filter((r: any) => r.province_id === form.province_code);
+      return filtered;
     } catch (e) {
       console.error("Error filtering regencies:", e);
+      setDataError("Gagal memfilter data kabupaten/kota");
+      setTimeout(() => setShouldThrowError(true), 500);
       return [];
     }
   }, [form?.province_code, parsedRegencies]);
@@ -134,9 +166,15 @@ export default function Profil() {
   const filteredDistricts = useMemo(() => {
     if (!form?.regency_code) return [];
     try {
-      return parsedDistricts.filter((d: any) => d.regency_id === form.regency_code);
+      if (!Array.isArray(parsedDistricts)) {
+        throw new Error("Data kecamatan tidak valid saat filter");
+      }
+      const filtered = parsedDistricts.filter((d: any) => d.regency_id === form.regency_code);
+      return filtered;
     } catch (e) {
       console.error("Error filtering districts:", e);
+      setDataError("Gagal memfilter data kecamatan");
+      setTimeout(() => setShouldThrowError(true), 500);
       return [];
     }
   }, [form?.regency_code, parsedDistricts]);
@@ -234,7 +272,7 @@ export default function Profil() {
   return (
     <div className="min-h-screen bg-background pb-24">
       <Header />
-      <main className="container max-w-2xl py-8">
+      <main className="container max-w-2xl py-8 min-h-screen">
         {view === "menu" ? (
           <>
             <div className="flex items-center justify-between">
@@ -542,5 +580,13 @@ export default function Profil() {
       </main>
       <BottomNav />
     </div>
+  );
+}
+
+export default function Profil() {
+  return (
+    <ErrorBoundary>
+      <ProfilContent />
+    </ErrorBoundary>
   );
 }
