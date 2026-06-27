@@ -31,6 +31,7 @@ import {
   Moon,
   AlertTriangle,
   Loader2,
+  CheckCircle2,
 } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
 import { Link } from "react-router-dom";
@@ -71,14 +72,16 @@ function ProfilContent() {
   const [dataError, setDataError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (profile) setForm(profile);
-    // Check if we should show the profile completion popup
-    const shouldShow = sessionStorage.getItem("showProfileCompletionPopup");
-    if (shouldShow === "true") {
-      setShowProfileCompletionPopup(true);
-      sessionStorage.removeItem("showProfileCompletionPopup");
-      // Auto-navigate to edit view
-      setView("edit");
+    if (profile) {
+      setForm(profile);
+      // Check if we should show the profile completion popup
+      const shouldShow = sessionStorage.getItem("showProfileCompletionPopup");
+      if (shouldShow === "true") {
+        setShowProfileCompletionPopup(true);
+        sessionStorage.removeItem("showProfileCompletionPopup");
+        // Auto-navigate to edit view
+        setView("edit");
+      }
     }
   }, [profile]);
 

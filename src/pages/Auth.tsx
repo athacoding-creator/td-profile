@@ -78,7 +78,7 @@ export default function Auth() {
     setLoading(true);
     try {
       const email = phoneToEmail(normalized);
-        if (mode === "signup") {
+      if (mode === "signup") {
         if (!name.trim()) {
           toast.error("Nama wajib diisi");
           setLoading(false);
@@ -111,7 +111,6 @@ export default function Auth() {
           throw error;
         }
         navigate(consumeRedirect("/"));
-      }
       }
     } catch (err: any) {
       toast.error(err.message);
