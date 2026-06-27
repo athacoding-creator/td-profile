@@ -37,6 +37,9 @@ import { useTheme } from "@/components/theme-provider";
 import { Link } from "react-router-dom";
 import { formatPhoneDisplay } from "@/lib/phone";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import provincesData from "@/data/provinces.json";
+import regenciesData from "@/data/regencies.json";
+import districtsData from "@/data/districts.json";
 
 const OCCUPATIONS = [
   "Pelajar",
@@ -65,11 +68,11 @@ function ProfilContent() {
   const [pwLoading, setPwLoading] = useState(false);
   const [showProfileCompletionPopup, setShowProfileCompletionPopup] = useState(false);
   
-  const [provinces, setProvinces] = useState<Wilayah[]>([]);
-  const [regencies, setRegencies] = useState<Wilayah[]>([]);
-  const [districts, setDistricts] = useState<Wilayah[]>([]);
-  const [isDataLoading, setIsDataLoading] = useState(false);
-  const [dataError, setDataError] = useState<string | null>(null);
+  const [provinces] = useState<Wilayah[]>(provincesData as Wilayah[]);
+  const [regencies] = useState<Wilayah[]>(regenciesData as Wilayah[]);
+  const [districts] = useState<Wilayah[]>(districtsData as Wilayah[]);
+  const [isDataLoading] = useState(false);
+  const [dataError] = useState<string | null>(null);
 
   useEffect(() => {
     if (profile) {
@@ -85,39 +88,8 @@ function ProfilContent() {
     }
   }, [profile]);
 
-  // Lazy load regional data when entering edit mode
-  useEffect(() => {
-    if (view === "edit" && provinces.length === 0) {
-      loadRegionalData();
-    }
-  }, [view]);
-
   const handleProfileCompletionClose = () => {
     setShowProfileCompletionPopup(false);
-  };
-
-  const loadRegionalData = async () => {
-    setIsDataLoading(true);
-    setDataError(null);
-    try {
-      // Import JSON dynamically to reduce initial bundle size
-      const [pData, rData, dData] = await Promise.all([
-        import("@/data/provinces.json").then(m => m.default),
-        import("@/data/regencies.json").then(m => m.default),
-        import("@/data/districts.json").then(m => m.default)
-      ]);
-
-      if (Array.isArray(pData)) setProvinces(pData as Wilayah[]);
-      if (Array.isArray(rData)) setRegencies(rData as Wilayah[]);
-      if (Array.isArray(dData)) setDistricts(dData as Wilayah[]);
-      
-    } catch (e) {
-      console.error("Error loading regional data:", e);
-      setDataError("Gagal memuat data wilayah. Anda tetap bisa mengisi profil secara manual.");
-      toast.error("Gagal memuat data wilayah");
-    } finally {
-      setIsDataLoading(false);
-    }
   };
 
   // Cascade: load regencies when province changes
