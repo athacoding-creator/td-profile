@@ -15,6 +15,15 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
 import { computeScanWindow, isRecurring, describeRecurring } from "@/lib/eventSchedule";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { CheckCircle2 } from "lucide-react";
 
 export default function EventDetail() {
   const { id } = useParams();
@@ -29,6 +38,8 @@ export default function EventDetail() {
   const [paymentForm, setPaymentForm] = useState({ amount: 0, proofFile: null as File | null });
   const [paymentMethod, setPaymentMethod] = useState<any>(null);
   const [selectedEpisode, setSelectedEpisode] = useState<number>(0);
+  const [showPrayerModal, setShowPrayerModal] = useState(false);
+  const [prayerMessage, setPrayerMessage] = useState("");
   const [showVideoAfterInfaq, setShowVideoAfterInfaq] = useState(() => {
     if (!id) return false;
     const stored = localStorage.getItem(`video_unlocked_${id}`);
@@ -150,10 +161,12 @@ export default function EventDetail() {
       // Proceed to register
     }
 
-    register();
+    // Wajib kirim doa terbaik dulu sebelum pendaftaran diproses
+    setPrayerMessage("");
+    setShowPrayerModal(true);
   };
 
-  const register = async () => {
+  const register = async (donorMessage: string) => {
     setSubmitting(true);
     try {
       const isInfaq = event.registration_type === "infaq";
@@ -166,7 +179,8 @@ export default function EventDetail() {
         user_id: user.id,
         payment_status,
         amount_paid,
-        attendance_mode: "offline"
+        attendance_mode: "offline",
+        donor_message: donorMessage,
       });
       setSubmitting(false);
       if (error) throw error;
@@ -176,7 +190,8 @@ export default function EventDetail() {
         user_id: user.id,
         payment_status,
         amount_paid,
-        attendance_mode: "offline"
+        attendance_mode: "offline",
+        donor_message: donorMessage,
       });
 
       if (event.registration_type === "free") {
@@ -192,6 +207,20 @@ export default function EventDetail() {
       setSubmitting(false);
       toast.error(error.message);
     }
+  };
+
+  const submitPrayer = async () => {
+    const trimmed = prayerMessage.trim();
+    if (trimmed.length < 10) {
+      toast.error("Doa minimal 10 karakter");
+      return;
+    }
+    if (trimmed.length > 500) {
+      toast.error("Doa maksimal 500 karakter");
+      return;
+    }
+    setShowPrayerModal(false);
+    await register(trimmed);
   };
 
   const submitPayment = async () => {
