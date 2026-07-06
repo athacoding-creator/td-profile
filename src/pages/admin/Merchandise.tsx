@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Plus, Trash2, Save } from "lucide-react";
 import { Section } from "./components";
 import { ImagePicker } from "@/components/admin/ImagePicker";
+import { confirmDialog } from "@/components/ConfirmDialog";
 
 type Reward = {
   id: string;
@@ -60,7 +61,12 @@ export default function Merchandise() {
   };
 
   const remove = async (id: string) => {
-    if (!confirm("Hapus merchandise ini?")) return;
+    const r = rewards.find((x) => x.id === id);
+    const ok = await confirmDialog({
+      title: `Yakin ingin menghapus merchandise "${r?.name ?? ""}"?`,
+      description: "Tindakan ini tidak dapat dibatalkan.",
+    });
+    if (!ok) return;
     const { error } = await supabase.from("rewards").delete().eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("Dihapus");
