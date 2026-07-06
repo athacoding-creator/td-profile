@@ -9,6 +9,7 @@ import QRCode from "qrcode";
 import { QrCode as QrIcon, Trash2, Pencil, X } from "lucide-react";
 import { useAdmin } from "./AdminLayout";
 import { Section } from "./components";
+import { confirmDialog } from "@/components/ConfirmDialog";
 
 export default function ProgramsPage() {
   const { programs, reloadPrograms } = useAdmin();
@@ -61,7 +62,12 @@ export default function ProgramsPage() {
   };
 
   const remove = async (id: string) => {
-    if (!confirm("Hapus program?")) return;
+    const p = programs.find((x) => x.id === id);
+    const ok = await confirmDialog({
+      title: `Yakin ingin menghapus program "${p?.name ?? ""}"?`,
+      description: "Tindakan ini tidak dapat dibatalkan. Event yang terhubung dengan program ini akan kehilangan referensinya.",
+    });
+    if (!ok) return;
     const { error } = await supabase.from("programs").delete().eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("Program dihapus");

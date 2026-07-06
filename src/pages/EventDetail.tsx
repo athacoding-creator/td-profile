@@ -15,6 +15,15 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
 import { computeScanWindow, isRecurring, describeRecurring } from "@/lib/eventSchedule";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { CheckCircle2 } from "lucide-react";
 
 export default function EventDetail() {
   const { id } = useParams();
@@ -29,6 +38,8 @@ export default function EventDetail() {
   const [paymentForm, setPaymentForm] = useState({ amount: 0, proofFile: null as File | null });
   const [paymentMethod, setPaymentMethod] = useState<any>(null);
   const [selectedEpisode, setSelectedEpisode] = useState<number>(0);
+  const [showPrayerModal, setShowPrayerModal] = useState(false);
+  const [prayerMessage, setPrayerMessage] = useState("");
   const [showVideoAfterInfaq, setShowVideoAfterInfaq] = useState(() => {
     if (!id) return false;
     const stored = localStorage.getItem(`video_unlocked_${id}`);
@@ -150,10 +161,12 @@ export default function EventDetail() {
       // Proceed to register
     }
 
-    register();
+    // Wajib kirim doa terbaik dulu sebelum pendaftaran diproses
+    setPrayerMessage("");
+    setShowPrayerModal(true);
   };
 
-  const register = async () => {
+  const register = async (donorMessage: string) => {
     setSubmitting(true);
     try {
       const isInfaq = event.registration_type === "infaq";
@@ -166,7 +179,8 @@ export default function EventDetail() {
         user_id: user.id,
         payment_status,
         amount_paid,
-        attendance_mode: "offline"
+        attendance_mode: "offline",
+        donor_message: donorMessage,
       });
       setSubmitting(false);
       if (error) throw error;
@@ -176,7 +190,8 @@ export default function EventDetail() {
         user_id: user.id,
         payment_status,
         amount_paid,
-        attendance_mode: "offline"
+        attendance_mode: "offline",
+        donor_message: donorMessage,
       });
 
       if (event.registration_type === "free") {
@@ -192,6 +207,20 @@ export default function EventDetail() {
       setSubmitting(false);
       toast.error(error.message);
     }
+  };
+
+  const submitPrayer = async () => {
+    const trimmed = prayerMessage.trim();
+    if (trimmed.length < 10) {
+      toast.error("Doa minimal 10 karakter");
+      return;
+    }
+    if (trimmed.length > 500) {
+      toast.error("Doa maksimal 500 karakter");
+      return;
+    }
+    setShowPrayerModal(false);
+    await register(trimmed);
   };
 
   const submitPayment = async () => {
@@ -362,7 +391,24 @@ export default function EventDetail() {
         {/* Scan QR diletakkan di sini sesuai permintaan user (di atas deskripsi) */}
         {registration && ((registration.payment_status === "none") || (event.registration_type === "paid" && registration.payment_status === "approved")) && !sw.expired && (
           <div className="mt-4 space-y-2">
-            {scanAvailable ? (
+            {userHasScanned ? (
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-center">
+                <div className="flex items-center justify-center gap-2 font-semibold text-emerald-700">
+                  <CheckCircle2 className="h-5 w-5" />
+                  Kamu sudah absen di event ini
+                </div>
+                {attendance?.created_at && (
+                  <p className="mt-1 text-[11px] text-emerald-700/80">
+                    {format(new Date(attendance.created_at), "EEEE, d MMM yyyy • HH:mm", { locale: idLocale })}
+                  </p>
+                )}
+                {attendance?.points_awarded ? (
+                  <p className="mt-1 text-xs font-medium text-emerald-800">
+                    +{attendance.points_awarded} poin telah ditambahkan
+                  </p>
+                ) : null}
+              </div>
+            ) : scanAvailable ? (
               <>
                 <Link to={`/event/${event.id}/scan`}>
                   <Button className="w-full h-12 font-bold shadow-lg">
@@ -549,6 +595,58 @@ export default function EventDetail() {
 
         {/* Mode Selector Modal */}
       </main>
+      <Dialog
+        open={showPrayerModal}
+        onOpenChange={(open) => {
+          // Cegah penutupan modal via klik luar / Esc — user harus pilih Batal atau Kirim
+          if (!submitting && !open) return;
+        }}
+      >
+        <DialogContent
+          className="max-w-md"
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
+        >
+          <DialogHeader>
+            <DialogTitle>Kirim Doa Terbaik Kamu</DialogTitle>
+            <DialogDescription>
+              Sebelum pendaftaran diproses, tuliskan doa/harapan terbaik kamu untuk event ini. Doa ini wajib diisi (minimal 10 karakter).
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Textarea
+              value={prayerMessage}
+              onChange={(e) => setPrayerMessage(e.target.value.slice(0, 500))}
+              placeholder="Contoh: Semoga acara ini membawa keberkahan dan ilmu yang bermanfaat…"
+              rows={5}
+              autoFocus
+            />
+            <p className="text-right text-[11px] text-muted-foreground">
+              {prayerMessage.trim().length}/500
+            </p>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              disabled={submitting}
+              onClick={() => {
+                setShowPrayerModal(false);
+                setPrayerMessage("");
+              }}
+            >
+              Batal
+            </Button>
+            <Button
+              onClick={submitPrayer}
+              disabled={submitting || prayerMessage.trim().length < 10}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              {submitting ? "Mendaftarkan…" : "Kirim & Daftar"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
       <BottomNav />
     </div>
   );

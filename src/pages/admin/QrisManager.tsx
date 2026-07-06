@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Save, Trash2, Plus, Edit2, Eye, EyeOff, MoveUp, MoveDown, Info } from "lucide-react";
 import { Section } from "./components";
 import { ImagePicker } from "@/components/admin/ImagePicker";
+import { confirmDialog } from "@/components/ConfirmDialog";
 import {
   Dialog,
   DialogContent,
@@ -132,7 +133,11 @@ export default function QrisManagerPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Hapus QRIS ini?")) return;
+    const ok = await confirmDialog({
+      title: "Yakin ingin menghapus QRIS ini?",
+      description: "Tindakan ini tidak dapat dibatalkan.",
+    });
+    if (!ok) return;
 
     try {
       const { error } = await supabase

@@ -14,6 +14,7 @@ import { MessageCircle, Search, User as UserIcon, ShieldCheck, ShieldOff } from 
 import { formatPhoneDisplay } from "@/lib/phone";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { confirmDialog } from "@/components/ConfirmDialog";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 
@@ -105,7 +106,12 @@ export default function UsersPage() {
       if (error && !/duplicate/i.test(error.message)) return toast.error(error.message);
       toast.success("Sekarang menjadi admin");
     } else {
-      if (!confirm("Cabut akses admin dari user ini?")) return;
+      const ok = await confirmDialog({
+        title: "Cabut akses admin dari user ini?",
+        description: "User tidak akan lagi bisa mengakses panel admin.",
+        confirmText: "Ya, Cabut",
+      });
+      if (!ok) return;
       const { error } = await supabase.from("user_roles").delete().eq("user_id", uid).eq("role", "admin");
       if (error) return toast.error(error.message);
       toast.success("Admin dicabut");
