@@ -595,6 +595,58 @@ export default function EventDetail() {
 
         {/* Mode Selector Modal */}
       </main>
+      <Dialog
+        open={showPrayerModal}
+        onOpenChange={(open) => {
+          // Cegah penutupan modal via klik luar / Esc — user harus pilih Batal atau Kirim
+          if (!submitting && !open) return;
+        }}
+      >
+        <DialogContent
+          className="max-w-md"
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
+        >
+          <DialogHeader>
+            <DialogTitle>Kirim Doa Terbaik Kamu</DialogTitle>
+            <DialogDescription>
+              Sebelum pendaftaran diproses, tuliskan doa/harapan terbaik kamu untuk event ini. Doa ini wajib diisi (minimal 10 karakter).
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Textarea
+              value={prayerMessage}
+              onChange={(e) => setPrayerMessage(e.target.value.slice(0, 500))}
+              placeholder="Contoh: Semoga acara ini membawa keberkahan dan ilmu yang bermanfaat…"
+              rows={5}
+              autoFocus
+            />
+            <p className="text-right text-[11px] text-muted-foreground">
+              {prayerMessage.trim().length}/500
+            </p>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              disabled={submitting}
+              onClick={() => {
+                setShowPrayerModal(false);
+                setPrayerMessage("");
+              }}
+            >
+              Batal
+            </Button>
+            <Button
+              onClick={submitPrayer}
+              disabled={submitting || prayerMessage.trim().length < 10}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              {submitting ? "Mendaftarkan…" : "Kirim & Daftar"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
       <BottomNav />
     </div>
   );
