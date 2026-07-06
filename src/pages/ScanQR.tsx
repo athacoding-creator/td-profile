@@ -16,6 +16,7 @@ export default function ScanQR() {
   const [event, setEvent] = useState<any>(null);
   const [scanning, setScanning] = useState(false);
   const [now, setNow] = useState(new Date());
+  const [alreadyScanned, setAlreadyScanned] = useState(false);
   const scannerRef = useRef<Html5Qrcode | null>(null);
 
   const goToSuccess = (successEventId: string) => {
@@ -32,6 +33,17 @@ export default function ScanQR() {
       .select("id,title,venue,starts_at,ends_at,status,points_reward,program_id")
       .eq("id", id).maybeSingle().then(({ data }) => setEvent(data));
   }, [id]);
+
+  useEffect(() => {
+    if (!user || !id) return;
+    supabase
+      .from("attendance")
+      .select("id")
+      .eq("event_id", id)
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => setAlreadyScanned(!!data?.id));
+  }, [id, user]);
 
   const getScanStatus = () => {
     if (!event) return null;
@@ -100,18 +112,23 @@ export default function ScanQR() {
         </button>
         <h1 className="font-display text-2xl font-bold">Scan QR Absensi</h1>
         <p className="mt-2 text-sm text-muted-foreground">{event?.title}</p>
+        {alreadyScanned && (
+          <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-center text-sm font-medium text-emerald-800">
+            ✓ Kamu sudah absen di event ini. Tidak perlu scan lagi.
+          </div>
+        )}
         {scanStatus && !scanStatus.allowed && (
           <div className="mt-4 rounded-lg bg-amber-50 p-4 text-center text-sm text-amber-800 border border-amber-200">
             {scanStatus.message}
           </div>
         )}
         <div id="qr-reader" className="mt-6 overflow-hidden rounded-2xl bg-card" />
-        {!scanning && (
+        {!scanning && !alreadyScanned && (
           <Button onClick={start} disabled={scanStatus && !scanStatus.allowed} className="mt-6 w-full bg-primary text-primary-foreground">
             Mulai Scan
           </Button>
         )}
-        {scanStatus?.allowed && (
+        {scanStatus?.allowed && !alreadyScanned && (
           <div className="mt-6 text-xs text-muted-foreground">
             Atau masukkan kode manual:
             <ManualInput onSubmit={validate} />
