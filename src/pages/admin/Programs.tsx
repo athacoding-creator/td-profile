@@ -1,3 +1,4 @@
+import { confirmDelete } from "@/lib/confirmDelete";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -61,7 +62,8 @@ export default function ProgramsPage() {
   };
 
   const remove = async (id: string) => {
-    if (!confirm("Hapus program?")) return;
+    const p = programs.find((x: any) => x.id === id);
+    if (!(await confirmDelete({ title: "Hapus program ini?", itemName: p?.name }))) return;
     const { error } = await supabase.from("programs").delete().eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("Program dihapus");

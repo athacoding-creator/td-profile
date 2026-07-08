@@ -1,3 +1,4 @@
+import { confirmDelete } from "@/lib/confirmDelete";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -60,7 +61,8 @@ export default function Merchandise() {
   };
 
   const remove = async (id: string) => {
-    if (!confirm("Hapus merchandise ini?")) return;
+    const r = rewards.find((x) => x.id === id);
+    if (!(await confirmDelete({ title: "Hapus merchandise ini?", itemName: r?.name }))) return;
     const { error } = await supabase.from("rewards").delete().eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("Dihapus");

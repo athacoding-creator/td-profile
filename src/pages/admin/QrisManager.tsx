@@ -1,3 +1,4 @@
+import { confirmDelete } from "@/lib/confirmDelete";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -132,7 +133,7 @@ export default function QrisManagerPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Hapus QRIS ini?")) return;
+    if (!(await confirmDelete({ title: "Hapus QRIS ini?" }))) return;
 
     try {
       const { error } = await supabase
