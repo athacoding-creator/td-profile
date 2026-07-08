@@ -362,7 +362,11 @@ export default function EventDetail() {
         {/* Scan QR diletakkan di sini sesuai permintaan user (di atas deskripsi) */}
         {registration && ((registration.payment_status === "none") || (event.registration_type === "paid" && registration.payment_status === "approved")) && !sw.expired && (
           <div className="mt-4 space-y-2">
-            {scanAvailable ? (
+            {userHasScanned ? (
+              <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950/40 p-4 text-center text-sm font-semibold text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900">
+                ✅ Kamu sudah absen untuk event ini
+              </div>
+            ) : scanAvailable ? (
               <>
                 <Link to={`/event/${event.id}/scan`}>
                   <Button className="w-full h-12 font-bold shadow-lg">
