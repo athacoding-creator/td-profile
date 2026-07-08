@@ -158,14 +158,22 @@ export default function EventDetail() {
     try {
       const isInfaq = event.registration_type === "infaq";
       const isPaid = event.registration_type === "paid";
-      const payment_status = event.registration_type === "free" ? "none" : isInfaq ? "none" : "pending";
-      const amount_paid = isPaid ? event.price : isInfaq ? (event.min_infaq || 0) : 0;
 
+      // Untuk infaq / paid: JANGAN insert registrasi dulu.
+      // Registrasi baru dibuat setelah user menyelesaikan pilihan di halaman /bayar
+      // (submit nominal infaq, doa terbaik, atau upload bukti bayar).
+      if (isInfaq || isPaid) {
+        setSubmitting(false);
+        navigate(`/event/${event.id}/bayar`);
+        return;
+      }
+
+      // Free event: langsung buat registrasi
       const { error } = await supabase.from("registrations").insert({
         event_id: event.id,
         user_id: user.id,
-        payment_status,
-        amount_paid,
+        payment_status: "none",
+        amount_paid: 0,
         attendance_mode: "offline"
       });
       setSubmitting(false);
@@ -174,20 +182,12 @@ export default function EventDetail() {
       setRegistration({
         event_id: event.id,
         user_id: user.id,
-        payment_status,
-        amount_paid,
+        payment_status: "none",
+        amount_paid: 0,
         attendance_mode: "offline"
       });
 
-      if (event.registration_type === "free") {
-        toast.success(event.is_online ? "Pendaftaran berhasil! Akses video tersedia di halaman event." : "Pendaftaran offline berhasil!");
-      } else if (isInfaq) {
-        toast.success(event.is_online ? "Pendaftaran berhasil! Silakan berinfaq untuk membuka akses video." : "Pendaftaran berhasil! Silakan pilih infaq uang atau doa terbaik.");
-        navigate(`/event/${event.id}/bayar`);
-      } else {
-        toast.success("Pendaftaran berhasil! Silakan upload bukti pembayaran.");
-        navigate(`/event/${event.id}/bayar`);
-      }
+      toast.success(event.is_online ? "Pendaftaran berhasil! Akses video tersedia di halaman event." : "Pendaftaran offline berhasil!");
     } catch (error: any) {
       setSubmitting(false);
       toast.error(error.message);
