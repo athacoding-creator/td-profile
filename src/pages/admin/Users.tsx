@@ -105,7 +105,7 @@ export default function UsersPage() {
       if (error && !/duplicate/i.test(error.message)) return toast.error(error.message);
       toast.success("Sekarang menjadi admin");
     } else {
-      if (!confirm("Cabut akses admin dari user ini?")) return;
+      if (!(await confirmDelete({ title: "Cabut akses admin?", description: "Akses admin user ini akan dicabut.", confirmLabel: "Ya, cabut admin" }))) return;
       const { error } = await supabase.from("user_roles").delete().eq("user_id", uid).eq("role", "admin");
       if (error) return toast.error(error.message);
       toast.success("Admin dicabut");

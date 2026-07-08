@@ -332,7 +332,8 @@ function EventList({ events, programs, onChanged }: { events: any[]; programs: a
   };
 
   const remove = async (id: string) => {
-    if (!confirm("Hapus event?")) return;
+    const ev = events.find((e) => e.id === id);
+    if (!(await confirmDelete({ title: "Hapus event ini?", itemName: ev?.title }))) return;
     const { error } = await supabase.from("events").delete().eq("id", id);
     if (error) return toast.error(error.message);
     if (qr?.id === id) setQr(null);

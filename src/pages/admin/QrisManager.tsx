@@ -132,7 +132,7 @@ export default function QrisManagerPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Hapus QRIS ini?")) return;
+    if (!(await confirmDelete({ title: "Hapus QRIS ini?" }))) return;
 
     try {
       const { error } = await supabase
