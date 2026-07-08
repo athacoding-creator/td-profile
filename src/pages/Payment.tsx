@@ -66,9 +66,6 @@ export default function Payment() {
           if (regData.amount_paid > 0) setInfaqType("money");
           else if (regData.donor_message) setInfaqType("prayer");
         }
-        if (regData?.donor_message) {
-          setPaymentForm(prev => ({ ...prev, donorMessage: regData.donor_message }));
-        }
       }
 
       // Load payment method

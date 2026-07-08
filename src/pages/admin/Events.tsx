@@ -14,7 +14,6 @@ import { Section } from "./components";
 import { ImagePicker } from "@/components/admin/ImagePicker";
 import { isEventExpired, describeRecurring, DAY_NAMES } from "@/lib/eventSchedule";
 import { buildEventQrUrl, buildProgramQrUrl } from "@/lib/qrUrl";
-import { confirmDialog } from "@/components/ConfirmDialog";
 
 // datetime-local value -> ISO string with local timezone offset preserved
 const localInputToISO = (v?: string | null) => {
@@ -333,13 +332,7 @@ function EventList({ events, programs, onChanged }: { events: any[]; programs: a
   };
 
   const remove = async (id: string) => {
-    const ev = events.find((e) => e.id === id);
-    const ok = await confirmDialog({
-      title: `Yakin ingin menghapus event "${ev?.title ?? ""}"?`,
-      description: "Tindakan ini tidak dapat dibatalkan. Data pendaftaran dan absensi terkait juga akan ikut terhapus.",
-      confirmText: "Ya, Hapus",
-    });
-    if (!ok) return;
+    if (!confirm("Hapus event?")) return;
     const { error } = await supabase.from("events").delete().eq("id", id);
     if (error) return toast.error(error.message);
     if (qr?.id === id) setQr(null);

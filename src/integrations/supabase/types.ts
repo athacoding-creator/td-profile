@@ -102,8 +102,6 @@ export type Database = {
           created_by: string | null
           description: string | null
           ends_at: string | null
-          episode_count: number
-          episode_youtube_urls: Json
           event_type: string | null
           gender: Database["public"]["Enums"]["event_gender"]
           group_link: string | null
@@ -131,6 +129,8 @@ export type Database = {
           updated_at: string
           venue: string
           youtube_url: string | null
+          episode_count: number
+          episode_youtube_urls: string[]
         }
         Insert: {
           city?: string | null
@@ -138,8 +138,6 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           ends_at?: string | null
-          episode_count?: number
-          episode_youtube_urls?: Json
           event_type?: string | null
           gender?: Database["public"]["Enums"]["event_gender"]
           group_link?: string | null
@@ -167,6 +165,8 @@ export type Database = {
           updated_at?: string
           venue: string
           youtube_url?: string | null
+          episode_count?: number
+          episode_youtube_urls?: string[] | null
         }
         Update: {
           city?: string | null
@@ -174,8 +174,6 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           ends_at?: string | null
-          episode_count?: number
-          episode_youtube_urls?: Json
           event_type?: string | null
           gender?: Database["public"]["Enums"]["event_gender"]
           group_link?: string | null
@@ -203,6 +201,8 @@ export type Database = {
           updated_at?: string
           venue?: string
           youtube_url?: string | null
+          episode_count?: number
+          episode_youtube_urls?: string[] | null
         }
         Relationships: [
           {
@@ -475,7 +475,6 @@ export type Database = {
       }
       programs: {
         Row: {
-          category: string
           code: string
           created_at: string
           description: string | null
@@ -486,7 +485,6 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          category?: string
           code: string
           created_at?: string
           description?: string | null
@@ -497,7 +495,6 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          category?: string
           code?: string
           created_at?: string
           description?: string | null
