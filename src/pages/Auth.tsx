@@ -53,10 +53,22 @@ export default function Auth() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-  const [age, setAge] = useState("");
+  const [birthDate, setBirthDate] = useState("");
   const [loading, setLoading] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const navigate = useNavigate();
+
+  const calculateAge = (birthDateStr: string): number => {
+    if (!birthDateStr) return 0;
+    const today = new Date();
+    const birthDateObj = new Date(birthDateStr);
+    let age = today.getFullYear() - birthDateObj.getFullYear();
+    const monthDiff = today.getMonth() - birthDateObj.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDateObj.getDate())) {
+      age--;
+    }
+    return age;
+  };
 
   const consumeRedirect = (fallback: string) => {
     try {
@@ -85,9 +97,14 @@ export default function Auth() {
           setLoading(false);
           return;
         }
-        const ageNum = parseInt(age, 10);
-        if (!ageNum || ageNum < 5 || ageNum > 100) {
-          toast.error("Usia wajib diisi (5–100)");
+        if (!birthDate) {
+          toast.error("Tanggal lahir wajib diisi");
+          setLoading(false);
+          return;
+        }
+        const ageNum = calculateAge(birthDate);
+        if (ageNum < 5 || ageNum > 100) {
+          toast.error("Usia harus antara 5–100 tahun");
           setLoading(false);
           return;
         }
@@ -96,7 +113,7 @@ export default function Auth() {
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/`,
-            data: { full_name: name.trim(), phone: normalized, age: String(ageNum) },
+            data: { full_name: name.trim(), phone: normalized, age: String(ageNum), birth_date: birthDate },
           },
         });
         if (error) {
@@ -199,17 +216,13 @@ export default function Auth() {
                     </div>
                     <div className="space-y-2">
                       <Label className="text-sm font-medium text-foreground">
-                        Usia <span className="text-accent">*</span>
+                        Tanggal Lahir <span className="text-accent">*</span>
                       </Label>
                       <Input
-                        type="number"
-                        inputMode="numeric"
-                        min={5}
-                        max={100}
-                        value={age}
-                        onChange={(e) => setAge(e.target.value)}
+                        type="date"
+                        value={birthDate}
+                        onChange={(e) => setBirthDate(e.target.value)}
                         required
-                        placeholder="Contoh: 25"
                         className="bg-card/50 border-accent/20 placeholder:text-muted-foreground text-foreground focus:border-accent focus:ring-accent/50"
                       />
                     </div>
@@ -311,6 +324,7 @@ export default function Auth() {
                 setName("");
                 setPhone("");
                 setPassword("");
+                setBirthDate("");
               }}
               className="mt-6 w-full text-sm text-muted-foreground hover:text-accent transition-colors py-2"
             >
