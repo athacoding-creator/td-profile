@@ -88,14 +88,6 @@ export default function Poin() {
         )}
 
         <h2 className="mt-8 font-display text-lg font-semibold">Tukar Reward</h2>
-        {!profile?.is_complete && (
-          <div className="mt-3 flex items-start gap-2 rounded-xl border border-yellow-500/40 bg-yellow-500/10 p-3 text-xs text-yellow-700 dark:text-yellow-400">
-            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-            <p>
-              Untuk menukar poin merchandise, kamu wajib melengkapi data diri dulu di halaman profil.
-            </p>
-          </div>
-        )}
         <div className="mt-3 grid grid-cols-2 gap-3">
           {rewards.map((r) => (
             <div key={r.id} className="rounded-2xl bg-card p-3" style={{ boxShadow: "var(--shadow-card)" }}>

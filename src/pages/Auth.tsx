@@ -53,22 +53,9 @@ export default function Auth() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-  const [birthDate, setBirthDate] = useState("");
   const [loading, setLoading] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const navigate = useNavigate();
-
-  const calculateAge = (birthDateStr: string): number => {
-    if (!birthDateStr) return 0;
-    const today = new Date();
-    const birthDateObj = new Date(birthDateStr);
-    let age = today.getFullYear() - birthDateObj.getFullYear();
-    const monthDiff = today.getMonth() - birthDateObj.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDateObj.getDate())) {
-      age--;
-    }
-    return age;
-  };
 
   const consumeRedirect = (fallback: string) => {
     try {
@@ -97,23 +84,12 @@ export default function Auth() {
           setLoading(false);
           return;
         }
-        if (!birthDate) {
-          toast.error("Tanggal lahir wajib diisi");
-          setLoading(false);
-          return;
-        }
-        const ageNum = calculateAge(birthDate);
-        if (ageNum < 5 || ageNum > 100) {
-          toast.error("Usia harus antara 5–100 tahun");
-          setLoading(false);
-          return;
-        }
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/`,
-            data: { full_name: name.trim(), phone: normalized, age: String(ageNum), birth_date: birthDate },
+            data: { full_name: name.trim(), phone: normalized },
           },
         });
         if (error) {
@@ -123,7 +99,9 @@ export default function Auth() {
           throw error;
         }
         toast.success("Akun dibuat!");
-        navigate(consumeRedirect("/"));
+        // Set flag to show profile completion popup
+        sessionStorage.setItem("showProfileCompletionPopup", "true");
+        navigate(consumeRedirect("/profil"));
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) {
@@ -199,33 +177,19 @@ export default function Auth() {
                     animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
                     transition={{ duration: 0.3 }}
-                    className="space-y-4"
+                    className="space-y-2"
                   >
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium text-foreground">
-                        Nama Lengkap <span className="text-accent">*</span>
-                      </Label>
-                      <Input
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        required
-                        maxLength={100}
-                        placeholder="Masukkan nama lengkap Anda"
-                        className="bg-card/50 border-accent/20 placeholder:text-muted-foreground text-foreground focus:border-accent focus:ring-accent/50"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium text-foreground">
-                        Tanggal Lahir <span className="text-accent">*</span>
-                      </Label>
-                      <Input
-                        type="date"
-                        value={birthDate}
-                        onChange={(e) => setBirthDate(e.target.value)}
-                        required
-                        className="bg-card/50 border-accent/20 placeholder:text-muted-foreground text-foreground focus:border-accent focus:ring-accent/50"
-                      />
-                    </div>
+                    <Label className="text-sm font-medium text-foreground">
+                      Nama Lengkap <span className="text-accent">*</span>
+                    </Label>
+                    <Input
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      required
+                      maxLength={100}
+                      placeholder="Masukkan nama lengkap Anda"
+                      className="bg-card/50 border-accent/20 placeholder:text-muted-foreground text-foreground focus:border-accent focus:ring-accent/50"
+                    />
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -324,7 +288,6 @@ export default function Auth() {
                 setName("");
                 setPhone("");
                 setPassword("");
-                setBirthDate("");
               }}
               className="mt-6 w-full text-sm text-muted-foreground hover:text-accent transition-colors py-2"
             >
