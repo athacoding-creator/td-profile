@@ -363,7 +363,11 @@ function ProfilContent() {
               <ChevronLeft className="h-4 w-4" /> Kembali
             </button>
             <h1 className="font-display text-2xl font-bold">Ubah data akun</h1>
-            
+            <p className="mt-2 text-xs text-muted-foreground">
+              Melengkapi data diri bersifat <span className="font-semibold text-foreground">opsional</span>,
+              tapi <span className="font-semibold text-accent">wajib</span> jika ingin menukar poin merchandise.
+            </p>
+
             {dataError && (
               <div className="mt-4 flex items-start gap-2 rounded-lg bg-yellow-500/10 p-3 text-sm text-yellow-600 dark:text-yellow-500">
                 <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
