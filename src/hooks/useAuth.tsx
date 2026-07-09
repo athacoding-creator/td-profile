@@ -23,6 +23,7 @@ type Profile = {
   occupation: string | null;
   instansi: string | null;
   hobi: string | null;
+  age: number | null;
 };
 
 type AuthCtx = {
