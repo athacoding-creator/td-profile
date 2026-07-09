@@ -406,6 +406,16 @@ function ProfilContent() {
                 <Label>Tanggal lahir</Label>
                 <Input type="date" value={form.birth_date ?? ""} onChange={(e) => setForm({ ...form, birth_date: e.target.value })} />
               </div>
+              <div className="space-y-1.5">
+                <Label>Usia</Label>
+                <Input
+                  type="number"
+                  min={5}
+                  max={100}
+                  value={form.age ?? ""}
+                  onChange={(e) => setForm({ ...form, age: e.target.value })}
+                />
+              </div>
 
               {/* Domisili */}
               <div className="space-y-1.5">
