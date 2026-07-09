@@ -22,7 +22,6 @@ export default function AttendanceQR() {
         const qrUrl = await QRCode.toDataURL(user.id, {
           errorCorrectionLevel: "H",
           type: "image/png",
-          quality: 0.95,
           margin: 1,
           width: 300,
           color: {
