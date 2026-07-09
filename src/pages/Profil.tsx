@@ -113,6 +113,7 @@ function ProfilContent() {
         .update({
           full_name: form.full_name,
           gender: form.gender,
+          age: form.age ? Number(form.age) : null,
           birth_date: form.birth_date || null,
           address: form.address,
           province_code: form.province_code || null,
