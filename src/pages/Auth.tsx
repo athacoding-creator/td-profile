@@ -182,19 +182,37 @@ export default function Auth() {
                     animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
                     transition={{ duration: 0.3 }}
-                    className="space-y-2"
+                    className="space-y-4"
                   >
-                    <Label className="text-sm font-medium text-foreground">
-                      Nama Lengkap <span className="text-accent">*</span>
-                    </Label>
-                    <Input
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      required
-                      maxLength={100}
-                      placeholder="Masukkan nama lengkap Anda"
-                      className="bg-card/50 border-accent/20 placeholder:text-muted-foreground text-foreground focus:border-accent focus:ring-accent/50"
-                    />
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-foreground">
+                        Nama Lengkap <span className="text-accent">*</span>
+                      </Label>
+                      <Input
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        required
+                        maxLength={100}
+                        placeholder="Masukkan nama lengkap Anda"
+                        className="bg-card/50 border-accent/20 placeholder:text-muted-foreground text-foreground focus:border-accent focus:ring-accent/50"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-foreground">
+                        Usia <span className="text-accent">*</span>
+                      </Label>
+                      <Input
+                        type="number"
+                        inputMode="numeric"
+                        min={5}
+                        max={100}
+                        value={age}
+                        onChange={(e) => setAge(e.target.value)}
+                        required
+                        placeholder="Contoh: 25"
+                        className="bg-card/50 border-accent/20 placeholder:text-muted-foreground text-foreground focus:border-accent focus:ring-accent/50"
+                      />
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>
