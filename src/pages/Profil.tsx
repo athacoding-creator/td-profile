@@ -179,9 +179,7 @@ function ProfilContent() {
     {
       icon: QrCode,
       label: "QR Kehadiran saya",
-      badge: "Segera hadir",
-      onClick: () =>
-        toast.info("Fitur QR Kehadiran masih dalam pengembangan."),
+      to: "/profil/qr",
     },
     { icon: Ticket, label: "Event saya", to: "/riwayat" },
     { icon: HeartHandshake, label: "Donasi", href: "https://sedekah.terasdakwah.com" },
