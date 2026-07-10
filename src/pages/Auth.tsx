@@ -53,6 +53,7 @@ export default function Auth() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [birthDate, setBirthDate] = useState("");
   const [loading, setLoading] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const navigate = useNavigate();
@@ -84,12 +85,17 @@ export default function Auth() {
           setLoading(false);
           return;
         }
+        if (!birthDate) {
+          toast.error("Tanggal lahir wajib diisi");
+          setLoading(false);
+          return;
+        }
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/`,
-            data: { full_name: name.trim(), phone: normalized },
+            data: { full_name: name.trim(), phone: normalized, birth_date: birthDate },
           },
         });
         if (error) {
@@ -99,9 +105,7 @@ export default function Auth() {
           throw error;
         }
         toast.success("Akun dibuat!");
-        // Set flag to show profile completion popup
-        sessionStorage.setItem("showProfileCompletionPopup", "true");
-        navigate(consumeRedirect("/profil"));
+        navigate(consumeRedirect("/onboarding"));
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) {
