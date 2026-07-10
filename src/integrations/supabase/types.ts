@@ -395,6 +395,7 @@ export type Database = {
       profiles: {
         Row: {
           address: string | null
+          age: number | null
           app_role: Database["public"]["Enums"]["app_role"] | null
           avatar_url: string | null
           birth_date: string | null
@@ -421,6 +422,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          age?: number | null
           app_role?: Database["public"]["Enums"]["app_role"] | null
           avatar_url?: string | null
           birth_date?: string | null
@@ -447,6 +449,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          age?: number | null
           app_role?: Database["public"]["Enums"]["app_role"] | null
           avatar_url?: string | null
           birth_date?: string | null
