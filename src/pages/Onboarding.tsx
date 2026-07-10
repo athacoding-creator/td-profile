@@ -18,7 +18,7 @@ export default function Onboarding() {
     setLoading(false);
     if (error) return toast.error(error.message);
     await refreshProfile();
-    navigate("/profil");
+    navigate("/");
   };
 
   return (
