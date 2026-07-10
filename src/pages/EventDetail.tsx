@@ -135,11 +135,6 @@ export default function EventDetail() {
 
   const handleRegisterClick = () => {
     if (!user) return navigate("/auth");
-    if (!profile?.is_complete) {
-      toast.error("Lengkapi profil dulu di halaman Profil.");
-      return navigate("/profil");
-    }
-
     if (genderMismatch) {
       toast.error(`Maaf, event ini khusus untuk ${event.gender === "L" ? "Laki-laki" : "Perempuan"}.`);
       return;
