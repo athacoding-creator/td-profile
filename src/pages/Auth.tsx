@@ -214,6 +214,31 @@ export default function Auth() {
                 />
               </div>
 
+              <AnimatePresence mode="wait">
+                {mode === "signup" && (
+                  <motion.div
+                    key="birth-field"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="space-y-2"
+                  >
+                    <Label className="text-sm font-medium text-foreground">
+                      Tanggal Lahir <span className="text-accent">*</span>
+                    </Label>
+                    <Input
+                      type="date"
+                      value={birthDate}
+                      onChange={(e) => setBirthDate(e.target.value)}
+                      required
+                      max={new Date().toISOString().split("T")[0]}
+                      className="bg-card/50 border-accent/20 text-foreground focus:border-accent focus:ring-accent/50"
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-foreground">
                   Password <span className="text-accent">*</span>
