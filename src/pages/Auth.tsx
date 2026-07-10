@@ -53,6 +53,7 @@ export default function Auth() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [birthDate, setBirthDate] = useState("");
   const [loading, setLoading] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const navigate = useNavigate();
@@ -84,12 +85,17 @@ export default function Auth() {
           setLoading(false);
           return;
         }
+        if (!birthDate) {
+          toast.error("Tanggal lahir wajib diisi");
+          setLoading(false);
+          return;
+        }
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/`,
-            data: { full_name: name.trim(), phone: normalized },
+            data: { full_name: name.trim(), phone: normalized, birth_date: birthDate },
           },
         });
         if (error) {
@@ -99,9 +105,7 @@ export default function Auth() {
           throw error;
         }
         toast.success("Akun dibuat!");
-        // Set flag to show profile completion popup
-        sessionStorage.setItem("showProfileCompletionPopup", "true");
-        navigate(consumeRedirect("/profil"));
+        navigate(consumeRedirect("/onboarding"));
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) {
@@ -209,6 +213,31 @@ export default function Auth() {
                   className="bg-card/50 border-accent/20 placeholder:text-muted-foreground text-foreground focus:border-accent focus:ring-accent/50"
                 />
               </div>
+
+              <AnimatePresence mode="wait">
+                {mode === "signup" && (
+                  <motion.div
+                    key="birth-field"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="space-y-2"
+                  >
+                    <Label className="text-sm font-medium text-foreground">
+                      Tanggal Lahir <span className="text-accent">*</span>
+                    </Label>
+                    <Input
+                      type="date"
+                      value={birthDate}
+                      onChange={(e) => setBirthDate(e.target.value)}
+                      required
+                      max={new Date().toISOString().split("T")[0]}
+                      className="bg-card/50 border-accent/20 text-foreground focus:border-accent focus:ring-accent/50"
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-foreground">
