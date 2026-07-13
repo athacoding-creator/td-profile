@@ -231,7 +231,7 @@ export default function Events() {
         </section>
 
         <section className="mt-10">
-          <h2 className="font-display text-lg font-semibold text-foreground">Event Selesai</h2>
+          <h2 className="font-display text-lg font-semibold text-foreground">Event Selesai (Tonton Ulang)</h2>
           <div className="mt-3 grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6">
             {loading ? (
               Array.from({ length: 2 }).map((_, i) => (
