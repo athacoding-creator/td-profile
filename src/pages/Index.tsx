@@ -87,7 +87,7 @@ export default function Index() {
                     >
                       <div className="aspect-[3/4] overflow-hidden">
                         {e.poster_url ? (
-                          <img src={e.poster_url} alt={e.title} loading="lazy" className={`h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 ${locked || finished ? "grayscale" : ""}`} />
+                          <img src={e.poster_url} alt={e.title} loading="lazy" className={`h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 ${locked ? "grayscale" : ""}`} />
                         ) : (
                           <div className="flex h-full items-center justify-center bg-muted text-muted-foreground">No poster</div>
                         )}
@@ -97,11 +97,7 @@ export default function Index() {
                           <Lock className="h-4 w-4 text-muted-foreground" />
                         </div>
                       )}
-                      {!locked && finished && (
-                        <div className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-card/90 px-2 py-1 text-[10px] font-semibold text-muted-foreground">
-                          <CheckCircle2 className="h-3 w-3" /> Selesai
-                        </div>
-                      )}
+
                       <div className="space-y-2 p-4">
                         <h3 className="line-clamp-2 font-semibold text-sm md:text-base text-foreground group-hover:text-accent transition-colors">{e.title}</h3>
                         <div className="flex items-center gap-1.5 text-xs md:text-sm text-muted-foreground">

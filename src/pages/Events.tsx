@@ -103,7 +103,7 @@ export default function Events() {
               alt={e.title}
               loading="lazy"
               className={`h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 ${
-                locked || isFinished ? "grayscale" : ""
+                locked ? "grayscale" : ""
               }`}
             />
           ) : (
@@ -115,11 +115,7 @@ export default function Events() {
             <Lock className="h-4 w-4 text-muted-foreground" />
           </div>
         )}
-        {!locked && isFinished && (
-          <div className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-card/90 px-2 py-1 text-[10px] font-semibold text-muted-foreground">
-            <CheckCircle2 className="h-3 w-3" /> Selesai
-          </div>
-        )}
+
         <div className="space-y-2 p-4">
           <h3 className="line-clamp-2 text-sm font-semibold text-foreground group-hover:text-accent transition-colors md:text-base">
             {e.title}
