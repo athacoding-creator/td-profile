@@ -107,7 +107,13 @@ export default function Auth() {
         toast.success("Akun dibuat!");
         navigate(consumeRedirect("/onboarding"));
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        let { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error && /invalid login/i.test(error.message)) {
+          // Backward compatibility: users registered under legacy .local domain
+          const legacyEmail = `${normalized}@wa.tdprofile.local`;
+          const retry = await supabase.auth.signInWithPassword({ email: legacyEmail, password });
+          error = retry.error;
+        }
         if (error) {
           if (/invalid login/i.test(error.message)) {
             throw new Error("Nomor WhatsApp atau password salah.");

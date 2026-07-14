@@ -100,7 +100,10 @@ Deno.serve(async (req) => {
     let targetUserId = profile?.id ?? null;
     let targetName = profile?.full_name ?? null;
     if (!targetUserId) {
-      const authUser = await findAuthUserByEmail(admin, `${phone}@wa.tdprofile.app`);
+      let authUser = await findAuthUserByEmail(admin, `${phone}@wa.tdprofile.app`);
+      if (!authUser) {
+        authUser = await findAuthUserByEmail(admin, `${phone}@wa.tdprofile.local`);
+      }
       if (authUser) {
         targetUserId = authUser.id;
         targetName =
