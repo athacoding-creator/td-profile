@@ -58,6 +58,28 @@ export default function ScanPage() {
       .maybeSingle();
     const name = prof?.full_name || "Jamaah";
 
+    // Wajib sudah terdaftar di event
+    const { data: reg } = await supabase
+      .from("registrations")
+      .select("id, payment_status")
+      .eq("event_id", ev.id)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (!reg) {
+      const msg = `${name} belum mendaftar event ini`;
+      toast.error(msg);
+      pushHistory({ time, status: "error", name, message: "Belum daftar — scan ditolak" });
+      return;
+    }
+
+    if ((ev as any).registration_type === "paid" && reg.payment_status !== "approved") {
+      const msg = `Pembayaran ${name} belum diverifikasi`;
+      toast.error(msg);
+      pushHistory({ time, status: "error", name, message: "Pembayaran belum diverifikasi" });
+      return;
+    }
+
     const { error } = await supabase
       .from("attendance")
       .insert({ event_id: ev.id, user_id: userId });
