@@ -56,7 +56,7 @@ export default function ScanSuccess() {
           )}
         </div>
 
-        <div className="mt-6 space-y-2">
+        <div className="mt-6 space-y-3">
           {event?.group_link && (
             <a href={event.group_link} target="_blank" rel="noreferrer">
               <Button variant="outline" className="w-full">
