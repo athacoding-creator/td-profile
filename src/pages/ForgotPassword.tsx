@@ -46,7 +46,7 @@ export default function ForgotPassword() {
         {done ? (
           <div className="mt-8 space-y-4">
             <div className="rounded-lg border border-border bg-muted/40 p-4 text-sm text-foreground">
-              Permintaan diproses. Jika nomor terdaftar, password baru akan dikirim via WhatsApp.
+              Fitur ini sedang dalam masalah. Mohon maaf atas ketidaknyamanannya. Silakan hubungi admin untuk reset password.
             </div>
             <Link to="/auth" className="block text-center text-sm text-muted-foreground hover:underline">
               ← Kembali ke Masuk
