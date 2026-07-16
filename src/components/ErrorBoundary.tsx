@@ -4,6 +4,7 @@ import { AlertCircle, RefreshCw } from "lucide-react";
 
 interface Props {
   children: React.ReactNode;
+  resetKey?: string;
 }
 
 interface State {
@@ -23,6 +24,33 @@ export class ErrorBoundary extends React.Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
+    // Chunk load failures happen after deploys when old JS references stale chunks.
+    // Auto-reload once to fetch the latest bundle instead of showing a scary screen.
+    const msg = String(error?.message || "");
+    const name = String((error as any)?.name || "");
+    if (
+      /Loading chunk [\d]+ failed/i.test(msg) ||
+      /Loading CSS chunk/i.test(msg) ||
+      /Failed to fetch dynamically imported module/i.test(msg) ||
+      /Importing a module script failed/i.test(msg) ||
+      name === "ChunkLoadError"
+    ) {
+      try {
+        const key = "__td_chunk_reload__";
+        if (!sessionStorage.getItem(key)) {
+          sessionStorage.setItem(key, "1");
+          window.location.reload();
+        }
+      } catch {
+        window.location.reload();
+      }
+    }
+  }
+
+  componentDidUpdate(prevProps: Props) {
+    if (this.state.hasError && prevProps.resetKey !== this.props.resetKey) {
+      this.setState({ hasError: false, error: undefined });
+    }
   }
 
   render() {

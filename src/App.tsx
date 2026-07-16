@@ -65,6 +65,11 @@ const Shell = ({ children }: { children: ReactNode }) => {
   );
 };
 
+const RoutedErrorBoundary = ({ children }: { children: ReactNode }) => {
+  const { pathname } = useLocation();
+  return <ErrorBoundary resetKey={pathname}>{children}</ErrorBoundary>;
+};
+
 const App = () => (
   <HelmetProvider>
     <QueryClientProvider client={queryClient}>
@@ -75,7 +80,7 @@ const App = () => (
           <BrowserRouter>
             <AuthProvider>
               <Shell>
-              <ErrorBoundary>
+              <RoutedErrorBoundary>
                 <Suspense fallback={<PageFallback />}>
                 <Routes>
                   <Route path="/" element={<Index />} />
@@ -111,7 +116,7 @@ const App = () => (
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>
-              </ErrorBoundary>
+              </RoutedErrorBoundary>
               </Shell>
             </AuthProvider>
           </BrowserRouter>

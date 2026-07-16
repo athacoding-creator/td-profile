@@ -56,24 +56,24 @@ export default function ScanSuccess() {
           )}
         </div>
 
-        <div className="mt-6 space-y-2">
+        <div className="mt-6 flex flex-col gap-3">
           {event?.group_link && (
-            <a href={event.group_link} target="_blank" rel="noreferrer">
-              <Button variant="outline" className="w-full">
+            <Button variant="outline" className="w-full" asChild>
+              <a href={event.group_link} target="_blank" rel="noreferrer">
                 <Link2 className="mr-2 h-4 w-4" /> Gabung Grup
-              </Button>
-            </a>
+              </a>
+            </Button>
           )}
-          <Link to="/poin">
-            <Button variant="outline" className="w-full">
+          <Button variant="outline" className="w-full" asChild>
+            <Link to="/poin">
               <Coins className="mr-2 h-4 w-4" /> Lihat Poin Saya
-            </Button>
-          </Link>
-          <Link to="/">
-            <Button className="w-full bg-primary text-primary-foreground">
+            </Link>
+          </Button>
+          <Button className="w-full bg-primary text-primary-foreground" asChild>
+            <Link to="/">
               <Home className="mr-2 h-4 w-4" /> Kembali ke Beranda
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </div>
       </main>
     </div>

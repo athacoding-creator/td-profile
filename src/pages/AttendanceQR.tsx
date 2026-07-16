@@ -4,12 +4,14 @@ import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Download, Copy, CheckCircle2 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import QRCode from "qrcode";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function AttendanceQR() {
   const { user, profile } = useAuth();
+  const navigate = useNavigate();
   const [qrDataUrl, setQrDataUrl] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
@@ -40,6 +42,33 @@ export default function AttendanceQR() {
 
     generateQR();
   }, [user?.id]);
+
+  // Realtime: kalau admin sudah scan QR-ku, langsung arahkan ke halaman sukses
+  useEffect(() => {
+    if (!user?.id) return;
+    const channel = supabase
+      .channel(`attendance-self-${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "attendance",
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload: any) => {
+          const eventId = payload?.new?.event_id;
+          if (eventId) {
+            toast.success("Kehadiran tercatat! 🎉");
+            navigate(`/event/${eventId}/sukses`, { replace: true });
+          }
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, navigate]);
 
   const downloadQR = async () => {
     if (!qrDataUrl) return;
