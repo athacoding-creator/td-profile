@@ -117,7 +117,7 @@ export default function UsersPage() {
       if (error) return toast.error(error.message);
       toast.success("Admin dicabut");
     }
-    loadUsers(currentPage, debouncedQuery);
+    loadUsers(currentPage, debouncedQuery, dateFrom, dateTo);
   };
 
   const downloadXLSX = async () => {
@@ -326,7 +326,7 @@ export default function UsersPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => loadUsers(currentPage - 1, debouncedQuery)}
+              onClick={() => loadUsers(currentPage - 1, debouncedQuery, dateFrom, dateTo)}
               disabled={currentPage === 0}
             >
               Sebelumnya
@@ -337,7 +337,7 @@ export default function UsersPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => loadUsers(currentPage + 1, debouncedQuery)}
+              onClick={() => loadUsers(currentPage + 1, debouncedQuery, dateFrom, dateTo)}
               disabled={currentPage >= totalPages - 1}
             >
               Selanjutnya
