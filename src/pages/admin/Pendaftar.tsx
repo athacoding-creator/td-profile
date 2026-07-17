@@ -8,17 +8,31 @@ import * as XLSX from "xlsx";
 import { isEventExpired } from "@/lib/eventSchedule";
 
 export default function PendaftarPage() {
-  const { events, registrations } = useAdmin();
+  const { events, registrations, programs } = useAdmin();
   const [eventFilter, setEventFilter] = useState<string>("");
+  const [programFilter, setProgramFilter] = useState<string>("");
   const [showPastEvents, setShowPastEvents] = useState(false);
   const [searchPast, setSearchPast] = useState("");
 
-  const filtered = eventFilter ? registrations.filter((r) => r.event_id === eventFilter) : registrations;
+  const eventsInProgram = useMemo(
+    () => (programFilter ? events.filter((e) => e.program_id === programFilter) : events),
+    [events, programFilter],
+  );
+  const eventIdsInProgram = useMemo(
+    () => new Set(eventsInProgram.map((e) => e.id)),
+    [eventsInProgram],
+  );
+
+  const filtered = registrations.filter((r) => {
+    if (eventFilter) return r.event_id === eventFilter;
+    if (programFilter) return eventIdsInProgram.has(r.event_id);
+    return true;
+  });
   const counts: Record<string, number> = {};
   registrations.forEach((r) => { counts[r.event_id] = (counts[r.event_id] || 0) + 1; });
 
-  const activeEvents = events.filter((e) => e.status === "active" && !isEventExpired(e));
-  const pastEvents = events.filter((e) => e.status !== "active" || isEventExpired(e));
+  const activeEvents = eventsInProgram.filter((e) => e.status === "active" && !isEventExpired(e));
+  const pastEvents = eventsInProgram.filter((e) => e.status !== "active" || isEventExpired(e));
   const filteredPastEvents = pastEvents
     .sort((a, b) => new Date(b.starts_at).getTime() - new Date(a.starts_at).getTime())
     .filter((e) =>
@@ -84,6 +98,29 @@ export default function PendaftarPage() {
 
       <Section title="Pilih Event">
         <div className="space-y-3">
+          {programs && programs.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Program</p>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => { setProgramFilter(""); setEventFilter(""); }}
+                  className={`rounded-full border px-3 py-1 text-xs transition ${!programFilter ? "border-primary bg-primary/10 text-primary font-semibold" : "border-border/60 hover:border-border"}`}
+                >
+                  Semua Program
+                </button>
+                {programs.map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => { setProgramFilter(p.id); setEventFilter(""); }}
+                    className={`rounded-full border px-3 py-1 text-xs transition ${programFilter === p.id ? "border-primary bg-primary/10 text-primary font-semibold" : "border-border/60 hover:border-border"}`}
+                  >
+                    {p.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {activeEvents.length > 0 && (
             <div className="space-y-2">
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Event Aktif</p>
