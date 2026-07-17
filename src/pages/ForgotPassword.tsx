@@ -41,12 +41,12 @@ export default function ForgotPassword() {
       <main className="container max-w-md py-12">
         <h1 className="font-display text-3xl font-bold text-foreground">Lupa password</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Masukkan nomor WhatsApp akun Anda. Jika nomor terdaftar, password baru akan dikirim via WhatsApp.
+          Fitur ini sedang dalam masalah. Mohon maaf atas ketidaknyamanannya. Silakan hubungi admin untuk reset password.
         </p>
         {done ? (
           <div className="mt-8 space-y-4">
             <div className="rounded-lg border border-border bg-muted/40 p-4 text-sm text-foreground">
-              Fitur ini dalam masalah. Mohon maaf atas ketidaknyamanannya. Silakan hubungi admin untuk reset password.
+              Permintaan diproses. Jika nomor terdaftar, password baru akan dikirim via WhatsApp.
             </div>
             <Link to="/auth" className="block text-center text-sm text-muted-foreground hover:underline">
               ← Kembali ke Masuk
