@@ -11,10 +11,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Section } from "./components";
-import { MessageCircle, Search, User as UserIcon, ShieldCheck, ShieldOff } from "lucide-react";
+import { MessageCircle, Search, User as UserIcon, ShieldCheck, ShieldOff, Download } from "lucide-react";
 import { formatPhoneDisplay } from "@/lib/phone";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import * as XLSX from "xlsx";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 
@@ -42,25 +43,30 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(0);
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [downloading, setDownloading] = useState(false);
   const ITEMS_PER_PAGE = 100;
   const { user: me } = useAuth();
 
-  const loadUsers = useCallback(async (page: number, search: string) => {
+  const loadUsers = useCallback(async (page: number, search: string, from?: string, to?: string) => {
     setLoading(true);
     setCurrentPage(page);
     
-    const from = page * ITEMS_PER_PAGE;
-    const to = (page + 1) * ITEMS_PER_PAGE - 1;
+    const rangeFrom = page * ITEMS_PER_PAGE;
+    const rangeTo = (page + 1) * ITEMS_PER_PAGE - 1;
     const searchFilter = buildSearchFilter(search);
     let profilesQuery = supabase
       .from("profiles")
       .select("*", { count: "exact" })
       .order("created_at", { ascending: false })
-      .range(from, to);
+      .range(rangeFrom, rangeTo);
 
     if (searchFilter) {
       profilesQuery = profilesQuery.or(searchFilter);
     }
+    if (from) profilesQuery = profilesQuery.gte("created_at", from);
+    if (to) profilesQuery = profilesQuery.lte("created_at", `${to}T23:59:59`);
 
     const [{ data, count, error }, { data: roles }] = await Promise.all([
       profilesQuery,
@@ -80,14 +86,14 @@ export default function UsersPage() {
   }, []);
 
   useEffect(() => {
-    loadUsers(0, debouncedQuery);
+    loadUsers(0, debouncedQuery, dateFrom, dateTo);
     const ch = supabase
       .channel("admin-users")
-      .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => loadUsers(0, debouncedQuery))
-      .on("postgres_changes", { event: "*", schema: "public", table: "user_roles" }, () => loadUsers(0, debouncedQuery))
+      .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => loadUsers(0, debouncedQuery, dateFrom, dateTo))
+      .on("postgres_changes", { event: "*", schema: "public", table: "user_roles" }, () => loadUsers(0, debouncedQuery, dateFrom, dateTo))
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [debouncedQuery, loadUsers]);
+  }, [debouncedQuery, dateFrom, dateTo, loadUsers]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -114,14 +120,74 @@ export default function UsersPage() {
     loadUsers(currentPage, debouncedQuery);
   };
 
+  const downloadXLSX = async () => {
+    setDownloading(true);
+    try {
+      let all: any[] = [];
+      let page = 0;
+      const size = 1000;
+      while (true) {
+        let q = supabase
+          .from("profiles")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .range(page * size, (page + 1) * size - 1);
+        const sf = buildSearchFilter(debouncedQuery);
+        if (sf) q = q.or(sf);
+        if (dateFrom) q = q.gte("created_at", dateFrom);
+        if (dateTo) q = q.lte("created_at", `${dateTo}T23:59:59`);
+        const { data, error } = await q;
+        if (error) { toast.error(error.message); break; }
+        if (!data?.length) break;
+        all = all.concat(data);
+        if (data.length < size) break;
+        page++;
+      }
+      if (!all.length) { toast.info("Tidak ada akun untuk diunduh"); return; }
+      const rows = all.map((p, i) => ({
+        No: i + 1,
+        "Tanggal Daftar": p.created_at ? new Date(p.created_at).toLocaleString("id-ID") : "-",
+        Nama: p.full_name ?? "-",
+        WhatsApp: p.phone ? formatPhoneDisplay(p.phone) : "-",
+        Email: p.email ?? "-",
+        Gender: p.gender === "L" ? "Laki-laki" : p.gender === "P" ? "Perempuan" : (p.gender ?? "-"),
+        "Tanggal Lahir": p.birth_date ?? "-",
+        Pekerjaan: p.occupation ?? "-",
+        Instansi: p.instansi ?? "-",
+        Provinsi: p.province_name ?? "-",
+        "Kab/Kota": p.regency_name ?? p.city ?? "-",
+        Kecamatan: p.district_name ?? "-",
+        Alamat: p.address ?? "-",
+        Poin: p.points ?? 0,
+        Status: p.is_complete ? "Lengkap" : "Belum lengkap",
+      }));
+      const ws = XLSX.utils.json_to_sheet(rows);
+      ws["!cols"] = [{ wch: 5 }, { wch: 20 }, { wch: 28 }, { wch: 16 }, { wch: 26 }, { wch: 12 }, { wch: 12 }, { wch: 18 }, { wch: 22 }, { wch: 22 }, { wch: 22 }, { wch: 22 }, { wch: 30 }, { wch: 8 }, { wch: 14 }];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Akun");
+      const stamp = new Date().toISOString().slice(0, 10);
+      const range = dateFrom || dateTo ? `_${dateFrom || "awal"}_${dateTo || "sekarang"}` : "";
+      XLSX.writeFile(wb, `akun${range}-${stamp}.xlsx`);
+      toast.success(`${all.length} akun diunduh`);
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   const totalPages = Math.max(1, Math.ceil(totalCount / ITEMS_PER_PAGE));
   const isSearching = debouncedQuery.length > 0;
 
   return (
     <>
-      <div>
-        <h1 className="font-display text-3xl font-bold">Akun</h1>
-        <p className="text-sm text-muted-foreground">Lihat data lengkap setiap akun jamaah</p>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div>
+          <h1 className="font-display text-3xl font-bold">Akun</h1>
+          <p className="text-sm text-muted-foreground">Lihat data lengkap setiap akun jamaah</p>
+        </div>
+        <Button onClick={downloadXLSX} disabled={downloading} className="w-full sm:w-auto">
+          <Download className="mr-2 h-4 w-4" />
+          {downloading ? "Menyiapkan…" : `Download Excel (${totalCount})`}
+        </Button>
       </div>
 
       <Section title={`Daftar Akun (${isSearching ? "Hasil: " : "Total: "}${totalCount})`}>
@@ -136,6 +202,21 @@ export default function UsersPage() {
                 className="pl-9 text-sm"
               />
             </div>
+          </div>
+          <div className="flex flex-col sm:flex-row sm:items-end gap-2">
+            <div className="flex-1">
+              <label className="text-[11px] text-muted-foreground">Dari tanggal</label>
+              <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="h-9 text-sm" />
+            </div>
+            <div className="flex-1">
+              <label className="text-[11px] text-muted-foreground">Sampai tanggal</label>
+              <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="h-9 text-sm" />
+            </div>
+            {(dateFrom || dateTo) && (
+              <Button variant="outline" size="sm" onClick={() => { setDateFrom(""); setDateTo(""); }} className="h-9">
+                Reset
+              </Button>
+            )}
           </div>
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span>
