@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useAdmin } from "./AdminLayout";
 import {
-  CalendarDays, Sparkles, Users, Gift, ShoppingBag, Image as ImageIcon, Settings as SettingsIcon, Hand, UserCircle, ClipboardCheck, CreditCard, Camera, QrCode
+  CalendarDays, Sparkles, Users, Gift, ShoppingBag, Image as ImageIcon, Settings as SettingsIcon, Hand, UserCircle, ClipboardCheck, CreditCard, Camera, QrCode, Lock
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import ActivityStatsCard from "./ActivityStatsCard";
@@ -22,6 +22,7 @@ const groups = [
       { to: "/admin/kehadiran", icon: ClipboardCheck, title: "Kehadiran", desc: "Data scan QR & Export Excel", tag: "Excel" },
       { to: "/admin/scan", icon: Camera, title: "Scan QR", desc: "Scan QR Kehadiran jamaah dari halaman profil mereka", tag: "Aktif" },
       { to: "/admin/akun", icon: UserCircle, title: "Akun", desc: "Lihat data lengkap tiap akun jamaah" },
+      { to: "/admin/reset-password", icon: Lock, title: "Reset Password", desc: "Kelola permintaan reset password & kirim manual via WA" },
     ],
   },
   {
