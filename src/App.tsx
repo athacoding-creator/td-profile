@@ -40,6 +40,7 @@ const AdminSettings = lazy(() => import("./pages/admin/Settings"));
 const AdminDonations = lazy(() => import("./pages/admin/Donations"));
 const AdminQrisManager = lazy(() => import("./pages/admin/QrisManager"));
 const AdminScan = lazy(() => import("./pages/admin/Scan"));
+const AdminPasswordResets = lazy(() => import("./pages/admin/PasswordResets"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -111,6 +112,7 @@ const App = () => (
                     <Route path="qris" element={<AdminQrisManager />} />
                     <Route path="merchandise" element={<AdminMerchandise />} />
                     <Route path="scan" element={<AdminScan />} />
+                    <Route path="reset-password" element={<AdminPasswordResets />} />
                     <Route path="pengaturan" element={<AdminSettings />} />
                   </Route>
                   <Route path="*" element={<NotFound />} />
