@@ -63,7 +63,7 @@ export default function EventsPage() {
 }
 
 function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; defaultPoints: number; onCreated: () => void }) {
-  const [form, setForm] = useState<any>({ gender: "ALL", points_reward: defaultPoints, program_id: "", is_pinned: false, is_recurring: false, recurring_days: [], registration_type: "free", price: 0, min_infaq: 0, max_infaq: 50000, is_online: false, youtube_url: "", episode_count: 0, episode_youtube_urls: [] });
+  const [form, setForm] = useState<any>({ gender: "ALL", points_reward: defaultPoints, program_id: "", is_pinned: false, is_recurring: false, recurring_days: [], registration_type: "free", price: 0, min_infaq: 0, max_infaq: 50000, max_participants: "", is_online: false, youtube_url: "", episode_count: 0, episode_youtube_urls: [] });
   useEffect(() => { setForm((f: any) => ({ ...f, points_reward: f.points_reward ?? defaultPoints })); }, [defaultPoints]);
 
   const create = async (e: React.FormEvent) => {
@@ -99,6 +99,7 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
       price: form.registration_type === "paid" ? Number(form.price ?? 0) : 0,
       min_infaq: form.registration_type === "infaq" ? Number(form.min_infaq ?? 0) : 0,
       max_infaq: form.registration_type === "infaq" ? Number(form.max_infaq ?? 50000) : 0,
+      max_participants: form.max_participants === "" ? null : Number(form.max_participants),
       is_online: !!form.is_online,
       youtube_url: form.is_online ? (form.youtube_url || null) : null,
       episode_count: isEpisodeProgram ? Number(form.episode_count) : 0,
@@ -106,7 +107,7 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
     } as any);
     if (error) return toast.error(error.message);
     toast.success("Event dibuat");
-    setForm({ gender: "ALL", points_reward: defaultPoints, program_id: "", is_pinned: false, is_recurring: false, recurring_days: [], registration_type: "free", price: 0, min_infaq: 0, max_infaq: 50000, is_online: false, youtube_url: "", episode_count: 0, episode_youtube_urls: [] });
+    setForm({ gender: "ALL", points_reward: defaultPoints, program_id: "", is_pinned: false, is_recurring: false, recurring_days: [], registration_type: "free", price: 0, min_infaq: 0, max_infaq: 50000, max_participants: "", is_online: false, youtube_url: "", episode_count: 0, episode_youtube_urls: [] });
     onCreated();
   };
 
@@ -139,6 +140,7 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
           </select>
         </div>
         <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Poin Reward</Label><Input type="number" value={form.points_reward ?? defaultPoints} onChange={(e) => setForm({ ...form, points_reward: e.target.value })} className="text-sm h-9 sm:h-10" /></div>
+        <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Max Peserta (opsional)</Label><Input type="number" min="1" value={form.max_participants} onChange={(e) => setForm({ ...form, max_participants: e.target.value })} placeholder="Tanpa batas" className="text-sm h-9 sm:h-10" /></div>
         <div className="space-y-1.5">
           <Label className="text-xs sm:text-sm">Tipe Pendaftaran</Label>
           <select className="h-9 sm:h-10 w-full rounded-md border border-input bg-background px-3 text-xs sm:text-sm" value={form.registration_type} onChange={(e) => setForm({ ...form, registration_type: e.target.value })}>
@@ -432,6 +434,7 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
       status: ev.status ?? "active",
       success_message: ev.success_message ?? "",
       speaker: ev.speaker ?? "",
+      max_participants: ev.max_participants ?? "",
       is_pinned: !!ev.is_pinned,
       is_recurring: !!ev.is_recurring,
       recurring_days: ev.recurring_days ?? [],
@@ -463,6 +466,7 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
       poster_url: form.poster_url, event_type: form.event_type, gender: form.gender,
       starts_at: localInputToISO(form.starts_at)!, ends_at: localInputToISO(form.ends_at), group_link: form.group_link,
       points_reward: Number(form.points_reward),
+      max_participants: form.max_participants === "" ? null : Number(form.max_participants),
       program_id: form.program_id || null,
       status: form.status,
       success_message: form.success_message || null,
@@ -523,6 +527,7 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
             </select>
           </div>
           <div className="space-y-1.5"><Label>Poin Reward</Label><Input type="number" value={form.points_reward ?? 0} onChange={(e) => setForm({ ...form, points_reward: e.target.value })} /></div>
+          <div className="space-y-1.5"><Label>Max Peserta (opsional)</Label><Input type="number" min="1" value={form.max_participants} onChange={(e) => setForm({ ...form, max_participants: e.target.value })} placeholder="Tanpa batas" /></div>
           <div className="space-y-1.5">
             <Label>Status</Label>
             <select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.status ?? "active"} onChange={(e) => setForm({ ...form, status: e.target.value })}>

@@ -53,16 +53,17 @@ export default function PendaftarPage() {
     const rows = filtered.map((r, i) => ({
       No: i + 1,
       "Tanggal Daftar": new Date(r.created_at).toLocaleString("id-ID"),
-      Nama: r.profiles?.full_name ?? "-",
-      WhatsApp: r.profiles?.phone ?? "-",
+      Nama: r.guest_name ?? r.profiles?.full_name ?? "-",
+      WhatsApp: r.guest_phone ?? r.profiles?.phone ?? "-",
       Gender:
-        r.profiles?.gender === "L"
+        (r.guest_gender ?? r.profiles?.gender) === "L"
           ? "Laki-laki"
-          : r.profiles?.gender === "P"
+          : (r.guest_gender ?? r.profiles?.gender) === "P"
           ? "Perempuan"
-          : (r.profiles?.gender ?? "-"),
+          : (r.guest_gender ?? r.profiles?.gender ?? "-"),
       Kota: r.profiles?.city ?? "-",
       Email: r.profiles?.email ?? "-",
+      "Didaftarkan oleh": r.registrant?.full_name ?? "-",
       Event: r.events?.title ?? (eventFilter ? "-" : "Semua Event"),
       Nominal: r.amount_paid && r.amount_paid > 0 ? Number(r.amount_paid) : 0,
       "Pesan Doa": r.donor_message ?? "",
@@ -201,19 +202,20 @@ export default function PendaftarPage() {
                 <th className="px-4 py-3 text-center">Gender</th>
                 <th className="px-4 py-3">Kota</th>
                 <th className="px-4 py-3">Event</th>
+                <th className="px-4 py-3">Didaftarkan oleh</th>
                 <th className="px-4 py-3 text-right">Nominal</th>
                 <th className="px-4 py-3">Pesan Doa</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/40">
               {filtered.map((r) => {
-                const phone = r.profiles?.phone || "";
+                const phone = r.guest_phone || r.profiles?.phone || "";
                 return (
                   <tr key={r.id} className="hover:bg-muted/30 transition-colors">
                     <td className="px-4 py-3 whitespace-nowrap text-xs text-muted-foreground">
                       {new Date(r.created_at).toLocaleString("id-ID", { day: "2-digit", month: "2-digit", year: "numeric" })}
                     </td>
-                    <td className="px-4 py-3 font-medium">{r.profiles?.full_name || "—"}</td>
+                    <td className="px-4 py-3 font-medium">{r.guest_name || r.profiles?.full_name || "—"}</td>
                     <td className="px-4 py-3">
                       {phone ? (
                         <a href={`https://wa.me/${phone}`} target="_blank" rel="noopener noreferrer"
@@ -222,9 +224,10 @@ export default function PendaftarPage() {
                         </a>
                       ) : "—"}
                     </td>
-                    <td className="px-4 py-3 text-center text-xs">{r.profiles?.gender || "—"}</td>
+                    <td className="px-4 py-3 text-center text-xs">{r.guest_gender || r.profiles?.gender || "—"}</td>
                     <td className="px-4 py-3 text-xs">{r.profiles?.city || "—"}</td>
                     <td className="px-4 py-3 text-xs text-muted-foreground max-w-[180px] truncate">{r.events?.title}</td>
+                    <td className="px-4 py-3 text-xs">{r.registrant?.full_name || "—"}</td>
                     <td className="px-4 py-3 text-xs text-right whitespace-nowrap font-medium">
                       {fmtRp(r.amount_paid)}
                     </td>
@@ -241,12 +244,12 @@ export default function PendaftarPage() {
         {/* Mobile card view */}
         <div className="md:hidden space-y-2">
           {filtered.map((r) => {
-            const phone = r.profiles?.phone || "";
+            const phone = r.guest_phone || r.profiles?.phone || "";
             return (
               <div key={r.id} className="rounded-xl border border-border/60 bg-muted/20 p-3 space-y-3">
                 <div className="flex items-start justify-between">
                   <div className="min-w-0 flex-1">
-                    <p className="font-bold text-sm truncate">{r.profiles?.full_name || "—"}</p>
+                    <p className="font-bold text-sm truncate">{r.guest_name || r.profiles?.full_name || "—"}</p>
                     <p className="text-[10px] text-muted-foreground mt-0.5">
                       Daftar: {new Date(r.created_at).toLocaleString("id-ID", { day: "2-digit", month: "short" })}
                     </p>

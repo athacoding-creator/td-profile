@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,8 @@ export default function Payment() {
   const { id } = useParams();
   const { user, profile } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const guest = (location.state as { guest?: { guest_name: string; guest_phone: string; guest_gender: "L" | "P"; registered_by: string } } | null)?.guest;
   const [event, setEvent] = useState<any>(null);
   const [registration, setRegistration] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -53,7 +55,7 @@ export default function Payment() {
         amount: defaultAmount
       }));
 
-      if (user) {
+      if (user && !guest) {
         const { data: regData } = await supabase
           .from("registrations")
           .select("*")
@@ -194,7 +196,8 @@ export default function Payment() {
         const { error } = await (supabase.from("registrations") as any).insert({
           ...updateData,
           event_id: event.id,
-          user_id: user?.id
+          user_id: guest ? null : user?.id,
+          ...(guest ?? { registered_by: user?.id })
         });
         if (error) throw error;
       }
@@ -274,7 +277,8 @@ export default function Payment() {
         await (supabase.from("registrations") as any).insert({
           ...updateData,
           event_id: event.id,
-          user_id: user?.id,
+          user_id: guest ? null : user?.id,
+          ...(guest ?? { registered_by: user?.id }),
           attendance_mode: (isOnline || isExpired) ? "online" : "offline"
         });
       }
@@ -339,6 +343,7 @@ export default function Payment() {
               <h2 className="font-display text-xl font-bold flex items-center gap-2">
                 <CreditCard className="h-5 w-5 text-rose-500" /> Pendaftaran: {event.title}
               </h2>
+              {guest && <p className="mt-1 text-sm text-muted-foreground">Peserta: {guest.guest_name} ({guest.guest_phone})</p>}
               <p className="text-xs text-muted-foreground mt-1">
                 {isOnline 
                   ? "Khusus pendaftaran online, silakan berinfaq untuk mengakses video kajian selamanya." 
@@ -462,6 +467,7 @@ export default function Payment() {
         <div className="space-y-6 rounded-2xl border border-border/60 bg-card p-4 sm:p-6 shadow-sm">
           <div className="border-b pb-4">
             <h2 className="font-display text-xl font-bold">Pembayaran: {event.title}</h2>
+            {guest && <p className="mt-1 text-sm text-muted-foreground">Peserta: {guest.guest_name} ({guest.guest_phone})</p>}
             <p className="text-xs text-muted-foreground mt-1">
               Silakan selesaikan pembayaran untuk mengonfirmasi pendaftaran Anda.
             </p>

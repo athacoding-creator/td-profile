@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
 import { computeScanWindow, isRecurring, describeRecurring } from "@/lib/eventSchedule";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function EventDetail() {
   const { id } = useParams();
@@ -29,6 +30,8 @@ export default function EventDetail() {
   const [paymentForm, setPaymentForm] = useState({ amount: 0, proofFile: null as File | null });
   const [paymentMethod, setPaymentMethod] = useState<any>(null);
   const [selectedEpisode, setSelectedEpisode] = useState<number>(0);
+  const [registrationChoiceOpen, setRegistrationChoiceOpen] = useState(false);
+  const [guest, setGuest] = useState({ name: "", phone: "", gender: "" });
   const [showVideoAfterInfaq, setShowVideoAfterInfaq] = useState(() => {
     if (!id) return false;
     const stored = localStorage.getItem(`video_unlocked_${id}`);
@@ -52,7 +55,7 @@ export default function EventDetail() {
     (async () => {
       let eventData: any = null;
       const { data, error } = await supabase.from("events")
-        .select("id,title,description,venue,city,starts_at,ends_at,status,gender,event_type,poster_url,group_link,points_reward,program_id,created_at,is_pinned,is_recurring,recurring_days,recurring_start_time,recurring_end_time,recurring_until,registration_type,price,min_infaq,max_infaq,speaker,payment_method_id,is_online,youtube_url,episode_count,episode_youtube_urls, programs(category,name,code)")
+        .select("id,title,description,venue,city,starts_at,ends_at,status,gender,event_type,poster_url,group_link,points_reward,program_id,created_at,is_pinned,is_recurring,recurring_days,recurring_start_time,recurring_end_time,recurring_until,registration_type,price,min_infaq,max_infaq,max_participants,speaker,payment_method_id,is_online,youtube_url,episode_count,episode_youtube_urls, programs(category,name,code)")
         .eq("id", id)
         .maybeSingle();
 
@@ -133,40 +136,55 @@ export default function EventDetail() {
     })();
   }, [id, user]);
 
-  const handleRegisterClick = () => {
-    if (!user) return navigate("/auth");
-    if (genderMismatch) {
-      toast.error(`Maaf, event ini khusus untuk ${event.gender === "L" ? "Laki-laki" : "Perempuan"}.`);
-      return;
+  const checkQuota = async () => {
+    if (!event.max_participants) return true;
+    const { count, error } = await supabase.from("registrations")
+      .select("*", { count: "exact", head: true }).eq("event_id", event.id);
+    if (error) throw error;
+    if ((count ?? 0) >= event.max_participants) {
+      toast.error("Maaf, kuota peserta untuk event ini sudah penuh.");
+      return false;
     }
-
-    // Allow registration even if expired to access video
-    if (sw.expired && !event.is_online) {
-      // Proceed to register
-    }
-
-    register();
+    return true;
   };
 
-  const register = async () => {
+  const handleRegisterClick = () => {
+    if (!user) return navigate("/auth");
+    setRegistrationChoiceOpen(true);
+  };
+
+  const register = async (guestRegistration = false) => {
+    const participantGender = guestRegistration ? guest.gender : profile?.gender;
+    if (event.gender !== "ALL" && event.gender !== participantGender) {
+      return toast.error(`Maaf, event ini khusus untuk ${event.gender === "L" ? "Laki-laki" : "Perempuan"}.`);
+    }
+    if (guestRegistration && (!guest.name.trim() || !guest.phone.trim() || !guest.gender)) {
+      return toast.error("Lengkapi nama, nomor WhatsApp, dan gender peserta.");
+    }
     setSubmitting(true);
     try {
+      if (!await checkQuota()) return;
       const isInfaq = event.registration_type === "infaq";
       const isPaid = event.registration_type === "paid";
+      const guestData = guestRegistration ? {
+        guest_name: guest.name.trim(), guest_phone: guest.phone.trim(), guest_gender: guest.gender,
+        registered_by: user.id,
+      } : { registered_by: user.id };
 
       // Untuk infaq / paid: JANGAN insert registrasi dulu.
       // Registrasi baru dibuat setelah user menyelesaikan pilihan di halaman /bayar
       // (submit nominal infaq, doa terbaik, atau upload bukti bayar).
       if (isInfaq || isPaid) {
         setSubmitting(false);
-        navigate(`/event/${event.id}/bayar`);
+        navigate(`/event/${event.id}/bayar`, { state: guestRegistration ? { guest: guestData } : undefined });
         return;
       }
 
       // Free event: langsung buat registrasi
       const { error } = await supabase.from("registrations").insert({
         event_id: event.id,
-        user_id: user.id,
+        user_id: guestRegistration ? null : user.id,
+        ...guestData,
         payment_status: "none",
         amount_paid: 0,
         attendance_mode: "offline"
@@ -176,7 +194,8 @@ export default function EventDetail() {
 
       setRegistration({
         event_id: event.id,
-        user_id: user.id,
+        user_id: guestRegistration ? null : user.id,
+        ...guestData,
         payment_status: "none",
         amount_paid: 0,
         attendance_mode: "offline"
@@ -525,20 +544,14 @@ export default function EventDetail() {
           ) : (
             <Button
               onClick={handleRegisterClick}
-              disabled={submitting || genderMismatch}
-              className={`w-full text-white text-sm sm:text-base font-bold ${
-                genderMismatch
-                  ? "bg-muted text-muted-foreground cursor-not-allowed" 
-                  : "bg-green-600 hover:bg-green-700"
-              }`}
+              disabled={submitting}
+              className="w-full text-white text-sm sm:text-base font-bold bg-green-600 hover:bg-green-700"
             >
               {submitting 
                 ? "Mendaftarkan…" 
                 : !user 
                   ? "Login untuk Daftar" 
-                  : genderMismatch
-                    ? "Gender Tidak Sesuai"
-                    : sw.expired 
+                  : sw.expired
                       ? "Buka Akses Video"
                       : "Daftar Event"
               }
@@ -546,7 +559,23 @@ export default function EventDetail() {
           )}
         </div>
 
-        {/* Mode Selector Modal */}
+        <Dialog open={registrationChoiceOpen} onOpenChange={setRegistrationChoiceOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader><DialogTitle>Pilih peserta</DialogTitle></DialogHeader>
+            <div className="space-y-4">
+              <Button className="w-full" disabled={submitting} onClick={() => { setRegistrationChoiceOpen(false); register(false); }}>
+                Daftar untuk Diri Sendiri
+              </Button>
+              <div className="space-y-3 rounded-lg border p-3">
+                <p className="text-sm font-medium">Daftarkan Orang Lain</p>
+                <div className="space-y-1"><Label>Nama Lengkap</Label><Input value={guest.name} onChange={(e) => setGuest({ ...guest, name: e.target.value })} /></div>
+                <div className="space-y-1"><Label>Nomor WhatsApp</Label><Input type="tel" value={guest.phone} onChange={(e) => setGuest({ ...guest, phone: e.target.value })} /></div>
+                <div className="space-y-1"><Label>Gender</Label><select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={guest.gender} onChange={(e) => setGuest({ ...guest, gender: e.target.value })}><option value="">Pilih gender</option><option value="L">Laki-laki</option><option value="P">Perempuan</option></select></div>
+                <Button className="w-full" disabled={submitting} onClick={() => { setRegistrationChoiceOpen(false); register(true); }}>Daftarkan Peserta</Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </main>
       <BottomNav />
     </div>

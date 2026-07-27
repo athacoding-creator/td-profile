@@ -112,6 +112,7 @@ export type Database = {
           is_pinned: boolean
           is_recurring: boolean
           max_infaq: number | null
+          max_participants: number | null
           min_infaq: number | null
           points_reward: number
           poster_url: string | null
@@ -148,6 +149,7 @@ export type Database = {
           is_pinned?: boolean
           is_recurring?: boolean
           max_infaq?: number | null
+          max_participants?: number | null
           min_infaq?: number | null
           points_reward?: number
           poster_url?: string | null
@@ -184,6 +186,7 @@ export type Database = {
           is_pinned?: boolean
           is_recurring?: boolean
           max_infaq?: number | null
+          max_participants?: number | null
           min_infaq?: number | null
           points_reward?: number
           poster_url?: string | null
@@ -597,11 +600,15 @@ export type Database = {
           created_at: string
           donor_message: string | null
           event_id: string
+          guest_gender: string | null
+          guest_name: string | null
+          guest_phone: string | null
           id: string
           paid_at: string | null
           payment_proof_url: string | null
           payment_status: string | null
-          user_id: string
+          registered_by: string | null
+          user_id: string | null
         }
         Insert: {
           amount_paid?: number | null
@@ -609,11 +616,15 @@ export type Database = {
           created_at?: string
           donor_message?: string | null
           event_id: string
+          guest_gender?: string | null
+          guest_name?: string | null
+          guest_phone?: string | null
           id?: string
           paid_at?: string | null
           payment_proof_url?: string | null
           payment_status?: string | null
-          user_id: string
+          registered_by?: string | null
+          user_id?: string | null
         }
         Update: {
           amount_paid?: number | null
@@ -621,11 +632,15 @@ export type Database = {
           created_at?: string
           donor_message?: string | null
           event_id?: string
+          guest_gender?: string | null
+          guest_name?: string | null
+          guest_phone?: string | null
           id?: string
           paid_at?: string | null
           payment_proof_url?: string | null
           payment_status?: string | null
-          user_id?: string
+          registered_by?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -638,6 +653,13 @@ export type Database = {
           {
             foreignKeyName: "registrations_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "registrations_registered_by_fkey"
+            columns: ["registered_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
