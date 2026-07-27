@@ -59,30 +59,41 @@ export default function RegistrationsPage() {
     const ev = eventFilter ? events.find((e) => e.id === eventFilter) : null;
     const rows = filtered.map((a, i) => {
       const reg = getReg(a);
+      const birthDate = a.profiles?.birth_date;
+      let tglLahir = "-";
+      if (birthDate) {
+        const d = new Date(birthDate);
+        if (!isNaN(d.getTime())) {
+          tglLahir = d.toLocaleDateString("id-ID", { day: "2-digit", month: "2-digit", year: "numeric" });
+        }
+      }
       return ({
-      No: i + 1,
-      "Waktu Hadir": new Date(a.scanned_at).toLocaleString("id-ID"),
-      Nama: a.profiles?.full_name ?? "-",
-      WhatsApp: a.profiles?.phone ?? "-",
-      Gender:
-        a.profiles?.gender === "L"
-          ? "Laki-laki"
-          : a.profiles?.gender === "P"
-          ? "Perempuan"
-          : (a.profiles?.gender ?? "-"),
-      Kota: a.profiles?.city ?? "-",
-      Email: a.profiles?.email ?? "-",
-      Event: ev?.title ?? (eventFilter ? "-" : "Semua Event"),
-      "Poin Diperoleh": a.points_awarded ?? 0,
-      Nominal: reg.amount_paid && reg.amount_paid > 0 ? Number(reg.amount_paid) : 0,
-      "Pesan Doa": reg.donor_message ?? "",
-    });
+        No: i + 1,
+        "Waktu Hadir": new Date(a.scanned_at).toLocaleString("id-ID"),
+        Nama: a.profiles?.full_name ?? "-",
+        WhatsApp: a.profiles?.phone ?? "-",
+        "Tgl Lahir": tglLahir,
+        "Alamat Rumah": a.profiles?.address ?? "-",
+        Gender:
+          a.profiles?.gender === "L"
+            ? "Laki-laki"
+            : a.profiles?.gender === "P"
+            ? "Perempuan"
+            : (a.profiles?.gender ?? "-"),
+        Kota: a.profiles?.city ?? "-",
+        Email: a.profiles?.email ?? "-",
+        Event: ev?.title ?? (eventFilter ? "-" : "Semua Event"),
+        "Poin Diperoleh": a.points_awarded ?? 0,
+        Nominal: reg.amount_paid && reg.amount_paid > 0 ? Number(reg.amount_paid) : 0,
+        "Pesan Doa": reg.donor_message ?? "",
+      });
     });
     const ws = XLSX.utils.json_to_sheet(rows);
     ws["!cols"] = [
       { wch: 5 }, { wch: 22 }, { wch: 28 }, { wch: 16 },
-      { wch: 12 }, { wch: 18 }, { wch: 30 }, { wch: 36 }, { wch: 14 },
-      { wch: 14 }, { wch: 40 },
+      { wch: 12 }, { wch: 40 },
+      { wch: 12 }, { wch: 18 }, { wch: 30 }, { wch: 36 },
+      { wch: 14 }, { wch: 14 }, { wch: 40 },
     ];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Kehadiran");
@@ -239,6 +250,8 @@ export default function RegistrationsPage() {
                 <th className="py-2 pr-3">Waktu Hadir</th>
                 <th className="pr-3">Nama</th>
                 <th className="pr-3">WhatsApp</th>
+                <th className="pr-3">Tgl Lahir</th>
+                <th className="pr-3">Alamat Rumah</th>
                 <th className="pr-3">Gender</th>
                 <th className="pr-3">Kota</th>
                 <th className="pr-3 text-right">Nominal</th>

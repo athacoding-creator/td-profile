@@ -50,27 +50,40 @@ export default function PendaftarPage() {
 
   const exportXLSX = () => {
     const ev = eventFilter ? events.find((e) => e.id === eventFilter) : null;
-    const rows = filtered.map((r, i) => ({
-      No: i + 1,
-      "Tanggal Daftar": new Date(r.created_at).toLocaleString("id-ID"),
-      Nama: r.profiles?.full_name ?? "-",
-      WhatsApp: r.profiles?.phone ?? "-",
-      Gender:
-        r.profiles?.gender === "L"
-          ? "Laki-laki"
-          : r.profiles?.gender === "P"
-          ? "Perempuan"
-          : (r.profiles?.gender ?? "-"),
-      Kota: r.profiles?.city ?? "-",
-      Email: r.profiles?.email ?? "-",
-      Event: r.events?.title ?? (eventFilter ? "-" : "Semua Event"),
-      Nominal: r.amount_paid && r.amount_paid > 0 ? Number(r.amount_paid) : 0,
-      "Pesan Doa": r.donor_message ?? "",
-    }));
+    const rows = filtered.map((r, i) => {
+      const birthDate = r.profiles?.birth_date;
+      let tglLahir = "-";
+      if (birthDate) {
+        const d = new Date(birthDate);
+        if (!isNaN(d.getTime())) {
+          tglLahir = d.toLocaleDateString("id-ID", { day: "2-digit", month: "2-digit", year: "numeric" });
+        }
+      }
+      return ({
+        No: i + 1,
+        "Tanggal Daftar": new Date(r.created_at).toLocaleString("id-ID"),
+        Nama: r.profiles?.full_name ?? "-",
+        WhatsApp: r.profiles?.phone ?? "-",
+        "Tgl Lahir": tglLahir,
+        "Alamat Rumah": r.profiles?.address ?? "-",
+        Gender:
+          r.profiles?.gender === "L"
+            ? "Laki-laki"
+            : r.profiles?.gender === "P"
+            ? "Perempuan"
+            : (r.profiles?.gender ?? "-"),
+        Kota: r.profiles?.city ?? "-",
+        Email: r.profiles?.email ?? "-",
+        Event: r.events?.title ?? (eventFilter ? "-" : "Semua Event"),
+        Nominal: r.amount_paid && r.amount_paid > 0 ? Number(r.amount_paid) : 0,
+        "Pesan Doa": r.donor_message ?? "",
+      });
+    });
 
     const ws = XLSX.utils.json_to_sheet(rows);
     ws["!cols"] = [
       { wch: 5 }, { wch: 22 }, { wch: 28 }, { wch: 16 },
+      { wch: 12 }, { wch: 40 },
       { wch: 12 }, { wch: 18 }, { wch: 30 }, { wch: 36 },
       { wch: 14 }, { wch: 40 },
     ];
@@ -198,6 +211,8 @@ export default function PendaftarPage() {
                 <th className="px-4 py-3">Tanggal Daftar</th>
                 <th className="px-4 py-3">Nama</th>
                 <th className="px-4 py-3">WhatsApp</th>
+                <th className="px-4 py-3">Tgl Lahir</th>
+                <th className="px-4 py-3">Alamat Rumah</th>
                 <th className="px-4 py-3 text-center">Gender</th>
                 <th className="px-4 py-3">Kota</th>
                 <th className="px-4 py-3">Event</th>
