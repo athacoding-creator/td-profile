@@ -53,17 +53,16 @@ export default function PendaftarPage() {
     const rows = filtered.map((r, i) => ({
       No: i + 1,
       "Tanggal Daftar": new Date(r.created_at).toLocaleString("id-ID"),
-      Nama: r.guest_name ?? r.profiles?.full_name ?? "-",
-      WhatsApp: r.guest_phone ?? r.profiles?.phone ?? "-",
+      Nama: r.profiles?.full_name ?? "-",
+      WhatsApp: r.profiles?.phone ?? "-",
       Gender:
-        (r.guest_gender ?? r.profiles?.gender) === "L"
+        r.profiles?.gender === "L"
           ? "Laki-laki"
-          : (r.guest_gender ?? r.profiles?.gender) === "P"
+          : r.profiles?.gender === "P"
           ? "Perempuan"
-          : (r.guest_gender ?? r.profiles?.gender ?? "-"),
+          : (r.profiles?.gender ?? "-"),
       Kota: r.profiles?.city ?? "-",
       Email: r.profiles?.email ?? "-",
-      "Didaftarkan oleh": r.registrant?.full_name ?? "-",
       Event: r.events?.title ?? (eventFilter ? "-" : "Semua Event"),
       Nominal: r.amount_paid && r.amount_paid > 0 ? Number(r.amount_paid) : 0,
       "Pesan Doa": r.donor_message ?? "",
@@ -72,6 +71,7 @@ export default function PendaftarPage() {
     const ws = XLSX.utils.json_to_sheet(rows);
     ws["!cols"] = [
       { wch: 5 }, { wch: 22 }, { wch: 28 }, { wch: 16 },
+      { wch: 12 }, { wch: 40 },
       { wch: 12 }, { wch: 18 }, { wch: 30 }, { wch: 36 },
       { wch: 14 }, { wch: 40 },
     ];
@@ -199,6 +199,8 @@ export default function PendaftarPage() {
                 <th className="px-4 py-3">Tanggal Daftar</th>
                 <th className="px-4 py-3">Nama</th>
                 <th className="px-4 py-3">WhatsApp</th>
+                <th className="px-4 py-3">Tgl Lahir</th>
+                <th className="px-4 py-3">Alamat Rumah</th>
                 <th className="px-4 py-3 text-center">Gender</th>
                 <th className="px-4 py-3">Kota</th>
                 <th className="px-4 py-3">Event</th>
