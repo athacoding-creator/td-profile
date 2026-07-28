@@ -555,7 +555,7 @@ export default function EventDetail() {
         </div>
 
         <Dialog open={registrationChoiceOpen} onOpenChange={setRegistrationChoiceOpen}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-h-[85vh] max-w-md overflow-y-auto">
             <DialogHeader><DialogTitle>Pilih peserta</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <Button className="w-full" disabled={submitting} onClick={() => { setRegistrationChoiceOpen(false); register(false); }}>
