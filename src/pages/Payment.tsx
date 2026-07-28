@@ -18,10 +18,11 @@ export default function Payment() {
   const navigate = useNavigate();
   const location = useLocation();
   type Guest = { guest_name: string; guest_phone: string; guest_gender: "L" | "P"; registered_by: string };
-  const paymentState = location.state as { guest?: Guest; guests?: Guest[] } | null;
+  const paymentState = location.state as { guest?: Guest; guests?: Guest[]; includeSelf?: boolean } | null;
   const guests = paymentState?.guests ?? (paymentState?.guest ? [paymentState.guest] : []);
   const isGuestRegistration = guests.length > 0;
-  const participantCount = Math.max(guests.length, 1);
+  const includeSelf = paymentState?.includeSelf ?? false;
+  const participantCount = Math.max(guests.length + (includeSelf ? 1 : 0), 1);
   const [event, setEvent] = useState<any>(null);
   const [registration, setRegistration] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -198,7 +199,10 @@ export default function Payment() {
         if (error) throw error;
       } else {
         const records = isGuestRegistration
-          ? guests.map((guest) => ({ ...updateData, event_id: event.id, user_id: null, ...guest }))
+          ? [
+              ...(includeSelf ? [{ ...updateData, event_id: event.id, user_id: user?.id, registered_by: user?.id }] : []),
+              ...guests.map((guest) => ({ ...updateData, event_id: event.id, user_id: null, ...guest })),
+            ]
           : [{ ...updateData, event_id: event.id, user_id: user?.id, registered_by: user?.id }];
         const { error } = await (supabase.from("registrations") as any).insert(records);
         if (error) throw error;
@@ -277,7 +281,10 @@ export default function Payment() {
         await (supabase.from("registrations") as any).update(updateData).eq("id", registration.id);
       } else {
         const records = isGuestRegistration
-          ? guests.map((guest) => ({ ...updateData, amount_paid: amount / participantCount, event_id: event.id, user_id: null, ...guest, attendance_mode: (isOnline || isExpired) ? "online" : "offline" }))
+          ? [
+              ...(includeSelf ? [{ ...updateData, amount_paid: amount / participantCount, event_id: event.id, user_id: user?.id, registered_by: user?.id, attendance_mode: (isOnline || isExpired) ? "online" : "offline" }] : []),
+              ...guests.map((guest) => ({ ...updateData, amount_paid: amount / participantCount, event_id: event.id, user_id: null, ...guest, attendance_mode: (isOnline || isExpired) ? "online" : "offline" })),
+            ]
           : [{ ...updateData, event_id: event.id, user_id: user?.id, registered_by: user?.id, attendance_mode: (isOnline || isExpired) ? "online" : "offline" }];
         await (supabase.from("registrations") as any).insert(records);
       }

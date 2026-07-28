@@ -31,6 +31,7 @@ export default function EventDetail() {
   const [paymentMethod, setPaymentMethod] = useState<any>(null);
   const [selectedEpisode, setSelectedEpisode] = useState<number>(0);
   const [registrationChoiceOpen, setRegistrationChoiceOpen] = useState(false);
+  const [showGuestForm, setShowGuestForm] = useState(false);
   const emptyGuest = () => ({ name: "", phone: "", gender: "" });
   const [guestCount, setGuestCount] = useState(1);
   const [guests, setGuests] = useState([emptyGuest()]);
@@ -152,49 +153,56 @@ export default function EventDetail() {
 
   const handleRegisterClick = () => {
     if (!user) return navigate("/auth");
+    setShowGuestForm(false);
     setRegistrationChoiceOpen(true);
   };
 
-  const register = async (guestRegistration = false) => {
-    const participants = guestRegistration ? guests : [null];
-    if (guestRegistration && guests.some((guest) => !guest.name.trim() || !guest.phone.trim() || !guest.gender)) {
+  const register = async (includeSelf: boolean, includeGuests = false) => {
+    if (includeGuests && guests.some((guest) => !guest.name.trim() || !guest.phone.trim() || !guest.gender)) {
       return toast.error("Lengkapi nama, nomor WhatsApp, dan gender semua peserta.");
     }
-    if (event.gender !== "ALL" && participants.some((guest) => (guest?.gender ?? profile?.gender) !== event.gender)) {
+    const participantGenders = [
+      ...(includeSelf ? [profile?.gender] : []),
+      ...(includeGuests ? guests.map((guest) => guest.gender) : []),
+    ];
+    if (event.gender !== "ALL" && participantGenders.some((gender) => gender !== event.gender)) {
       return toast.error(`Maaf, event ini khusus untuk ${event.gender === "L" ? "Laki-laki" : "Perempuan"}.`);
     }
     setSubmitting(true);
     try {
-      if (!await checkQuota(participants.length)) return;
+      if (!await checkQuota(participantGenders.length)) {
+        setSubmitting(false);
+        return;
+      }
       const isInfaq = event.registration_type === "infaq";
       const isPaid = event.registration_type === "paid";
-      const guestData = guestRegistration
+      const guestData = includeGuests
         ? guests.map((guest) => ({ guest_name: guest.name.trim(), guest_phone: guest.phone.trim(), guest_gender: guest.gender, registered_by: user.id }))
-        : [{ registered_by: user.id }];
+        : [];
 
       // Untuk infaq / paid: JANGAN insert registrasi dulu.
       // Registrasi baru dibuat setelah user menyelesaikan pilihan di halaman /bayar
       // (submit nominal infaq, doa terbaik, atau upload bukti bayar).
       if (isInfaq || isPaid) {
         setSubmitting(false);
-        navigate(`/event/${event.id}/bayar`, { state: guestRegistration ? { guests: guestData } : undefined });
+        navigate(`/event/${event.id}/bayar`, { state: includeGuests ? { guests: guestData, includeSelf } : undefined });
         return;
       }
 
       // Free event: langsung buat registrasi
-      const registrations = guestData.map((data) => ({
-        event_id: event.id, user_id: guestRegistration ? null : user.id, ...data,
-        payment_status: "none", amount_paid: 0, attendance_mode: "offline"
-      }));
+      const registrations = [
+        ...(includeSelf ? [{ event_id: event.id, user_id: user.id, registered_by: user.id, payment_status: "none", amount_paid: 0, attendance_mode: "offline" }] : []),
+        ...guestData.map((data) => ({ event_id: event.id, user_id: null, ...data, payment_status: "none", amount_paid: 0, attendance_mode: "offline" })),
+      ];
       const { error } = await supabase.from("registrations").insert(registrations);
       setSubmitting(false);
       if (error) throw error;
 
-      if (!guestRegistration) setRegistration(registrations[0]);
-      else {
+      if (includeSelf) setRegistration(registrations[0]);
+      if (includeGuests) {
         setGuests(Array.from({ length: guestCount }, emptyGuest));
-        setRegistrationChoiceOpen(false);
       }
+      setRegistrationChoiceOpen(false);
 
       toast.success(event.is_online ? "Pendaftaran berhasil! Akses video tersedia di halaman event." : "Pendaftaran offline berhasil!");
     } catch (error: any) {
@@ -558,11 +566,17 @@ export default function EventDetail() {
           <DialogContent className="max-h-[85vh] max-w-md overflow-y-auto">
             <DialogHeader><DialogTitle>Pilih peserta</DialogTitle></DialogHeader>
             <div className="space-y-4">
-              <Button className="w-full" disabled={submitting} onClick={() => { setRegistrationChoiceOpen(false); register(false); }}>
-                Daftar untuk Diri Sendiri
-              </Button>
-              <div className="space-y-3 rounded-lg border p-3">
-                <p className="text-sm font-medium">Daftarkan Orang Lain</p>
+              {!showGuestForm ? <>
+                <Button className="w-full" disabled={submitting} onClick={() => register(true)}>
+                  Daftar Diri Sendiri
+                </Button>
+                <Button className="w-full" variant="outline" disabled={submitting} onClick={() => setShowGuestForm(true)}>
+                  Daftarkan Rombongan
+                </Button>
+              </> : <div className="space-y-3 rounded-lg border p-3">
+                <div className="flex items-center justify-between gap-3"><p className="text-sm font-medium">Rombongan</p><Button type="button" size="sm" variant="ghost" onClick={() => setShowGuestForm(false)}>Kembali</Button></div>
+                <p className="rounded-md bg-muted p-2 text-xs text-muted-foreground">Data akun kamu akan otomatis didaftarkan: <span className="font-medium text-foreground">{profile?.full_name || "Akun kamu"}</span>{profile?.phone ? ` (${profile.phone})` : ""}</p>
+                <p className="text-sm font-medium">Data orang lain</p>
                 <div className="space-y-1"><Label>Jumlah peserta</Label><Input type="number" min="1" value={guestCount} onChange={(e) => { const count = Math.max(1, Number(e.target.value) || 1); setGuestCount(count); setGuests((current) => Array.from({ length: count }, (_, index) => current[index] ?? emptyGuest())); }} /></div>
                 {guests.map((guest, index) => (
                   <div key={index} className="space-y-3 rounded-md bg-muted/40 p-3">
@@ -572,8 +586,9 @@ export default function EventDetail() {
                     <div className="space-y-1"><Label>Gender</Label><select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={guest.gender} onChange={(e) => setGuests((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, gender: e.target.value } : item))}><option value="">Pilih gender</option><option value="L">Laki-laki</option><option value="P">Perempuan</option></select></div>
                   </div>
                 ))}
-                <Button className="w-full" disabled={submitting} onClick={() => register(true)}>Daftarkan {guestCount} Peserta</Button>
+                <Button className="w-full" disabled={submitting} onClick={() => register(true, true)}>Daftarkan Saya & {guestCount} Orang Lain</Button>
               </div>
+              }
             </div>
           </DialogContent>
         </Dialog>
