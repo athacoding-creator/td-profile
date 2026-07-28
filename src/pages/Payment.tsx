@@ -17,7 +17,11 @@ export default function Payment() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const guest = (location.state as { guest?: { guest_name: string; guest_phone: string; guest_gender: "L" | "P"; registered_by: string } } | null)?.guest;
+  type Guest = { guest_name: string; guest_phone: string; guest_gender: "L" | "P"; registered_by: string };
+  const paymentState = location.state as { guest?: Guest; guests?: Guest[] } | null;
+  const guests = paymentState?.guests ?? (paymentState?.guest ? [paymentState.guest] : []);
+  const isGuestRegistration = guests.length > 0;
+  const participantCount = Math.max(guests.length, 1);
   const [event, setEvent] = useState<any>(null);
   const [registration, setRegistration] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -47,15 +51,15 @@ export default function Payment() {
       const isOnline = !!eventData.is_online;
       // Default amount: for online, it must be >= min_infaq. For offline infaq, it can be 0 if prayer is chosen.
       const defaultAmount = eventData.registration_type === "paid"
-        ? eventData.price
-        : (eventData.min_infaq || 0);
+        ? eventData.price * participantCount
+        : (eventData.min_infaq || 0) * participantCount;
       
       setPaymentForm(prev => ({
         ...prev,
         amount: defaultAmount
       }));
 
-      if (user && !guest) {
+      if (user && !isGuestRegistration) {
         const { data: regData } = await supabase
           .from("registrations")
           .select("*")
@@ -121,7 +125,7 @@ export default function Payment() {
 
       setLoading(false);
     })();
-  }, [id, user, navigate]);
+  }, [id, user, navigate, isGuestRegistration, participantCount]);
 
   const convertToWebP = async (file: File): Promise<Blob> => {
     return new Promise((resolve, reject) => {
@@ -183,7 +187,7 @@ export default function Payment() {
 
       const updateData = {
         payment_status: "pending",
-        amount_paid: paymentForm.amount,
+        amount_paid: isGuestRegistration ? event.price : paymentForm.amount,
         payment_proof_url: publicUrl,
         paid_at: new Date().toISOString(),
         donor_message: paymentForm.donorMessage?.trim() ? paymentForm.donorMessage.trim().slice(0, 500) : null,
@@ -193,12 +197,10 @@ export default function Payment() {
         const { error } = await (supabase.from("registrations") as any).update(updateData).eq("id", registration.id);
         if (error) throw error;
       } else {
-        const { error } = await (supabase.from("registrations") as any).insert({
-          ...updateData,
-          event_id: event.id,
-          user_id: guest ? null : user?.id,
-          ...(guest ?? { registered_by: user?.id })
-        });
+        const records = isGuestRegistration
+          ? guests.map((guest) => ({ ...updateData, event_id: event.id, user_id: null, ...guest }))
+          : [{ ...updateData, event_id: event.id, user_id: user?.id, registered_by: user?.id }];
+        const { error } = await (supabase.from("registrations") as any).insert(records);
         if (error) throw error;
       }
 
@@ -274,13 +276,10 @@ export default function Payment() {
       if (registration) {
         await (supabase.from("registrations") as any).update(updateData).eq("id", registration.id);
       } else {
-        await (supabase.from("registrations") as any).insert({
-          ...updateData,
-          event_id: event.id,
-          user_id: guest ? null : user?.id,
-          ...(guest ?? { registered_by: user?.id }),
-          attendance_mode: (isOnline || isExpired) ? "online" : "offline"
-        });
+        const records = isGuestRegistration
+          ? guests.map((guest) => ({ ...updateData, amount_paid: amount / participantCount, event_id: event.id, user_id: null, ...guest, attendance_mode: (isOnline || isExpired) ? "online" : "offline" }))
+          : [{ ...updateData, event_id: event.id, user_id: user?.id, registered_by: user?.id, attendance_mode: (isOnline || isExpired) ? "online" : "offline" }];
+        await (supabase.from("registrations") as any).insert(records);
       }
 
       if (infaqType === "money") {
@@ -343,7 +342,7 @@ export default function Payment() {
               <h2 className="font-display text-xl font-bold flex items-center gap-2">
                 <CreditCard className="h-5 w-5 text-rose-500" /> Pendaftaran: {event.title}
               </h2>
-              {guest && <p className="mt-1 text-sm text-muted-foreground">Peserta: {guest.guest_name} ({guest.guest_phone})</p>}
+              {isGuestRegistration && <p className="mt-1 text-sm text-muted-foreground">Peserta: {guests.map((guest) => `${guest.guest_name} (${guest.guest_phone})`).join(", ")}</p>}
               <p className="text-xs text-muted-foreground mt-1">
                 {isOnline 
                   ? "Khusus pendaftaran online, silakan berinfaq untuk mengakses video kajian selamanya." 
@@ -467,7 +466,7 @@ export default function Payment() {
         <div className="space-y-6 rounded-2xl border border-border/60 bg-card p-4 sm:p-6 shadow-sm">
           <div className="border-b pb-4">
             <h2 className="font-display text-xl font-bold">Pembayaran: {event.title}</h2>
-            {guest && <p className="mt-1 text-sm text-muted-foreground">Peserta: {guest.guest_name} ({guest.guest_phone})</p>}
+            {isGuestRegistration && <p className="mt-1 text-sm text-muted-foreground">Peserta: {guests.map((guest) => `${guest.guest_name} (${guest.guest_phone})`).join(", ")}</p>}
             <p className="text-xs text-muted-foreground mt-1">
               Silakan selesaikan pembayaran untuk mengonfirmasi pendaftaran Anda.
             </p>
@@ -517,8 +516,8 @@ export default function Payment() {
                 </>
               )}
               <div className="text-center">
-                <p className="text-2xl font-bold text-primary">Rp {event.price?.toLocaleString("id-ID")}</p>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mt-1">Nominal Tetap</p>
+                <p className="text-2xl font-bold text-primary">Rp {(event.price * participantCount)?.toLocaleString("id-ID")}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mt-1">Nominal tetap untuk {participantCount} peserta</p>
               </div>
             </div>
           ) : (

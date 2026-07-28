@@ -31,7 +31,9 @@ export default function EventDetail() {
   const [paymentMethod, setPaymentMethod] = useState<any>(null);
   const [selectedEpisode, setSelectedEpisode] = useState<number>(0);
   const [registrationChoiceOpen, setRegistrationChoiceOpen] = useState(false);
-  const [guest, setGuest] = useState({ name: "", phone: "", gender: "" });
+  const emptyGuest = () => ({ name: "", phone: "", gender: "" });
+  const [guestCount, setGuestCount] = useState(1);
+  const [guests, setGuests] = useState([emptyGuest()]);
   const [showVideoAfterInfaq, setShowVideoAfterInfaq] = useState(() => {
     if (!id) return false;
     const stored = localStorage.getItem(`video_unlocked_${id}`);
@@ -136,12 +138,12 @@ export default function EventDetail() {
     })();
   }, [id, user]);
 
-  const checkQuota = async () => {
+  const checkQuota = async (needed = 1) => {
     if (!event.max_participants) return true;
     const { count, error } = await supabase.from("registrations")
       .select("*", { count: "exact", head: true }).eq("event_id", event.id);
     if (error) throw error;
-    if ((count ?? 0) >= event.max_participants) {
+    if ((count ?? 0) + needed > event.max_participants) {
       toast.error("Maaf, kuota peserta untuk event ini sudah penuh.");
       return false;
     }
@@ -154,52 +156,45 @@ export default function EventDetail() {
   };
 
   const register = async (guestRegistration = false) => {
-    const participantGender = guestRegistration ? guest.gender : profile?.gender;
-    if (event.gender !== "ALL" && event.gender !== participantGender) {
-      return toast.error(`Maaf, event ini khusus untuk ${event.gender === "L" ? "Laki-laki" : "Perempuan"}.`);
+    const participants = guestRegistration ? guests : [null];
+    if (guestRegistration && guests.some((guest) => !guest.name.trim() || !guest.phone.trim() || !guest.gender)) {
+      return toast.error("Lengkapi nama, nomor WhatsApp, dan gender semua peserta.");
     }
-    if (guestRegistration && (!guest.name.trim() || !guest.phone.trim() || !guest.gender)) {
-      return toast.error("Lengkapi nama, nomor WhatsApp, dan gender peserta.");
+    if (event.gender !== "ALL" && participants.some((guest) => (guest?.gender ?? profile?.gender) !== event.gender)) {
+      return toast.error(`Maaf, event ini khusus untuk ${event.gender === "L" ? "Laki-laki" : "Perempuan"}.`);
     }
     setSubmitting(true);
     try {
-      if (!await checkQuota()) return;
+      if (!await checkQuota(participants.length)) return;
       const isInfaq = event.registration_type === "infaq";
       const isPaid = event.registration_type === "paid";
-      const guestData = guestRegistration ? {
-        guest_name: guest.name.trim(), guest_phone: guest.phone.trim(), guest_gender: guest.gender,
-        registered_by: user.id,
-      } : { registered_by: user.id };
+      const guestData = guestRegistration
+        ? guests.map((guest) => ({ guest_name: guest.name.trim(), guest_phone: guest.phone.trim(), guest_gender: guest.gender, registered_by: user.id }))
+        : [{ registered_by: user.id }];
 
       // Untuk infaq / paid: JANGAN insert registrasi dulu.
       // Registrasi baru dibuat setelah user menyelesaikan pilihan di halaman /bayar
       // (submit nominal infaq, doa terbaik, atau upload bukti bayar).
       if (isInfaq || isPaid) {
         setSubmitting(false);
-        navigate(`/event/${event.id}/bayar`, { state: guestRegistration ? { guest: guestData } : undefined });
+        navigate(`/event/${event.id}/bayar`, { state: guestRegistration ? { guests: guestData } : undefined });
         return;
       }
 
       // Free event: langsung buat registrasi
-      const { error } = await supabase.from("registrations").insert({
-        event_id: event.id,
-        user_id: guestRegistration ? null : user.id,
-        ...guestData,
-        payment_status: "none",
-        amount_paid: 0,
-        attendance_mode: "offline"
-      });
+      const registrations = guestData.map((data) => ({
+        event_id: event.id, user_id: guestRegistration ? null : user.id, ...data,
+        payment_status: "none", amount_paid: 0, attendance_mode: "offline"
+      }));
+      const { error } = await supabase.from("registrations").insert(registrations);
       setSubmitting(false);
       if (error) throw error;
 
-      setRegistration({
-        event_id: event.id,
-        user_id: guestRegistration ? null : user.id,
-        ...guestData,
-        payment_status: "none",
-        amount_paid: 0,
-        attendance_mode: "offline"
-      });
+      if (!guestRegistration) setRegistration(registrations[0]);
+      else {
+        setGuests(Array.from({ length: guestCount }, emptyGuest));
+        setRegistrationChoiceOpen(false);
+      }
 
       toast.success(event.is_online ? "Pendaftaran berhasil! Akses video tersedia di halaman event." : "Pendaftaran offline berhasil!");
     } catch (error: any) {
@@ -568,10 +563,16 @@ export default function EventDetail() {
               </Button>
               <div className="space-y-3 rounded-lg border p-3">
                 <p className="text-sm font-medium">Daftarkan Orang Lain</p>
-                <div className="space-y-1"><Label>Nama Lengkap</Label><Input value={guest.name} onChange={(e) => setGuest({ ...guest, name: e.target.value })} /></div>
-                <div className="space-y-1"><Label>Nomor WhatsApp</Label><Input type="tel" value={guest.phone} onChange={(e) => setGuest({ ...guest, phone: e.target.value })} /></div>
-                <div className="space-y-1"><Label>Gender</Label><select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={guest.gender} onChange={(e) => setGuest({ ...guest, gender: e.target.value })}><option value="">Pilih gender</option><option value="L">Laki-laki</option><option value="P">Perempuan</option></select></div>
-                <Button className="w-full" disabled={submitting} onClick={() => { setRegistrationChoiceOpen(false); register(true); }}>Daftarkan Peserta</Button>
+                <div className="space-y-1"><Label>Jumlah peserta</Label><Input type="number" min="1" value={guestCount} onChange={(e) => { const count = Math.max(1, Number(e.target.value) || 1); setGuestCount(count); setGuests((current) => Array.from({ length: count }, (_, index) => current[index] ?? emptyGuest())); }} /></div>
+                {guests.map((guest, index) => (
+                  <div key={index} className="space-y-3 rounded-md bg-muted/40 p-3">
+                    <p className="text-sm font-medium">Peserta {index + 1}</p>
+                    <div className="space-y-1"><Label>Nama Lengkap</Label><Input value={guest.name} onChange={(e) => setGuests((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, name: e.target.value } : item))} /></div>
+                    <div className="space-y-1"><Label>Nomor WhatsApp</Label><Input type="tel" value={guest.phone} onChange={(e) => setGuests((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, phone: e.target.value } : item))} /></div>
+                    <div className="space-y-1"><Label>Gender</Label><select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={guest.gender} onChange={(e) => setGuests((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, gender: e.target.value } : item))}><option value="">Pilih gender</option><option value="L">Laki-laki</option><option value="P">Perempuan</option></select></div>
+                  </div>
+                ))}
+                <Button className="w-full" disabled={submitting} onClick={() => register(true)}>Daftarkan {guestCount} Peserta</Button>
               </div>
             </div>
           </DialogContent>
