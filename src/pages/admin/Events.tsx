@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import QRCode from "qrcode";
-import { QrCode as QrIcon, Trash2, Pencil, Lock, Pin, Repeat, Camera } from "lucide-react";
+import { QrCode as QrIcon, Trash2, Pencil, Lock, Pin, Repeat, Camera, Plus } from "lucide-react";
 import { useAdmin } from "./AdminLayout";
 import { Section } from "./components";
 import { ImagePicker } from "@/components/admin/ImagePicker";
@@ -29,6 +29,11 @@ const buildEpisodeUrls = (urls: string[] = [], count: number) => {
 };
 
 const isExpired = (ev: any) => isEventExpired(ev);
+const SPORT_EVENT_TYPES = ["futsal", "mini-soccer"];
+const DEFAULT_POSITIONS = [
+  { position: "Pemain Lapangan", price: "10000" },
+  { position: "Kiper", price: "15000" },
+];
 
 const toLocalInput = (iso?: string | null) => {
   if (!iso) return "";
@@ -63,8 +68,10 @@ export default function EventsPage() {
 }
 
 function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; defaultPoints: number; onCreated: () => void }) {
-  const [form, setForm] = useState<any>({ gender: "ALL", points_reward: defaultPoints, program_id: "", is_pinned: false, is_recurring: false, recurring_days: [], registration_type: "free", price: 0, min_infaq: 0, max_infaq: 50000, max_participants: "", is_online: false, youtube_url: "", episode_count: 0, episode_youtube_urls: [] });
+  const [form, setForm] = useState<any>({ gender: "ALL", points_reward: defaultPoints, program_id: "", is_pinned: false, is_recurring: false, recurring_days: [], registration_type: "free", price: 0, min_infaq: 0, max_infaq: 50000, max_participants: "", is_online: false, youtube_url: "", episode_count: 0, episode_youtube_urls: [], event_type: "kajian" });
   useEffect(() => { setForm((f: any) => ({ ...f, points_reward: f.points_reward ?? defaultPoints })); }, [defaultPoints]);
+  const [positions, setPositions] = useState(() => DEFAULT_POSITIONS.map((entry) => ({ ...entry, id: crypto.randomUUID() })));
+  const isSportEvent = SPORT_EVENT_TYPES.includes(form.event_type);
 
   const create = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,8 +87,12 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
     if (isEpisodeProgram && !form.episode_count) {
       return toast.error("Pilih jumlah episode untuk program kategori episode");
     }
+    const validPositions = positions.filter((entry) => entry.position.trim() && Number(entry.price) > 0);
+    if (isSportEvent && validPositions.length === 0) {
+      return toast.error("Tambahkan minimal satu posisi dengan harga.");
+    }
 
-    const { error } = await supabase.from("events").insert({
+    const { data: createdEvent, error } = await supabase.from("events").insert({
       title: form.title, description: form.description, venue: form.venue, city: form.city,
       poster_url: form.poster_url, event_type: form.event_type, gender: form.gender,
       starts_at: localInputToISO(form.starts_at)!, ends_at: localInputToISO(form.ends_at), group_link: form.group_link,
@@ -95,8 +106,8 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
       recurring_start_time: form.is_recurring ? form.recurring_start_time : null,
       recurring_end_time: form.is_recurring ? form.recurring_end_time : null,
       recurring_until: form.is_recurring ? (form.recurring_until || null) : null,
-      registration_type: form.registration_type || "free",
-      price: form.registration_type === "paid" ? Number(form.price ?? 0) : 0,
+      registration_type: isSportEvent ? "paid" : (form.registration_type || "free"),
+      price: isSportEvent ? 0 : (form.registration_type === "paid" ? Number(form.price ?? 0) : 0),
       min_infaq: form.registration_type === "infaq" ? Number(form.min_infaq ?? 0) : 0,
       max_infaq: form.registration_type === "infaq" ? Number(form.max_infaq ?? 50000) : 0,
       max_participants: form.max_participants === "" ? null : Number(form.max_participants),
@@ -104,10 +115,17 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
       youtube_url: form.is_online ? (form.youtube_url || null) : null,
       episode_count: isEpisodeProgram ? Number(form.episode_count) : 0,
       episode_youtube_urls: isEpisodeProgram ? buildEpisodeUrls(form.episode_youtube_urls ?? [], Number(form.episode_count)) : [],
-    } as any);
+    } as any).select("id").single();
     if (error) return toast.error(error.message);
+    if (isSportEvent && createdEvent) {
+      const { error: pricingError } = await supabase.from("event_position_pricing").insert(
+        validPositions.map((entry) => ({ event_id: createdEvent.id, position: entry.position.trim(), price: Number(entry.price) }))
+      );
+      if (pricingError) toast.error(`Event dibuat, tetapi harga posisi gagal disimpan: ${pricingError.message}`);
+    }
     toast.success("Event dibuat");
-    setForm({ gender: "ALL", points_reward: defaultPoints, program_id: "", is_pinned: false, is_recurring: false, recurring_days: [], registration_type: "free", price: 0, min_infaq: 0, max_infaq: 50000, max_participants: "", is_online: false, youtube_url: "", episode_count: 0, episode_youtube_urls: [] });
+    setForm({ gender: "ALL", points_reward: defaultPoints, program_id: "", is_pinned: false, is_recurring: false, recurring_days: [], registration_type: "free", price: 0, min_infaq: 0, max_infaq: 50000, max_participants: "", is_online: false, youtube_url: "", episode_count: 0, episode_youtube_urls: [], event_type: "kajian" });
+    setPositions(DEFAULT_POSITIONS.map((entry) => ({ ...entry, id: crypto.randomUUID() })));
     onCreated();
   };
 
@@ -123,7 +141,7 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
             {programs.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
         </div>
-        <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Tipe</Label><Input value={form.event_type ?? ""} onChange={(e) => setForm({ ...form, event_type: e.target.value })} placeholder="kajian / talkshow" className="text-sm h-9 sm:h-10" /></div>
+        <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Tipe</Label><select value={form.event_type ?? "kajian"} onChange={(e) => setForm({ ...form, event_type: e.target.value })} className="h-9 sm:h-10 w-full rounded-md border border-input bg-background px-3 text-xs sm:text-sm"><option value="kajian">Kajian</option><option value="futsal">Futsal</option><option value="mini-soccer">Mini Soccer</option></select></div>
         <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Venue</Label><Input required value={form.venue ?? ""} onChange={(e) => setForm({ ...form, venue: e.target.value })} className="text-sm h-9 sm:h-10" /></div>
         <div className="space-y-1.5 md:col-span-2"><Label className="text-xs sm:text-sm">Deskripsi</Label><Textarea rows={3} value={form.description ?? ""} onChange={(e) => setForm({ ...form, description: e.target.value })} className="text-sm" /></div>
         <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Kota</Label><Input value={form.city ?? ""} onChange={(e) => setForm({ ...form, city: e.target.value })} className="text-sm h-9 sm:h-10" /></div>
@@ -143,14 +161,25 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
         <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Max Peserta (opsional)</Label><Input type="number" min="1" value={form.max_participants} onChange={(e) => setForm({ ...form, max_participants: e.target.value })} placeholder="Tanpa batas" className="text-sm h-9 sm:h-10" /></div>
         <div className="space-y-1.5">
           <Label className="text-xs sm:text-sm">Tipe Pendaftaran</Label>
-          <select className="h-9 sm:h-10 w-full rounded-md border border-input bg-background px-3 text-xs sm:text-sm" value={form.registration_type} onChange={(e) => setForm({ ...form, registration_type: e.target.value })}>
+          <select disabled={isSportEvent} className="h-9 sm:h-10 w-full rounded-md border border-input bg-background px-3 text-xs sm:text-sm disabled:opacity-70" value={isSportEvent ? "paid" : form.registration_type} onChange={(e) => setForm({ ...form, registration_type: e.target.value })}>
             <option value="free">Gratis</option>
             <option value="infaq">Berinfaq</option>
             <option value="paid">Wajib Bayar</option>
           </select>
         </div>
-        {form.registration_type === "paid" && (
+        {form.registration_type === "paid" && !isSportEvent && (
           <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Harga (Rp)</Label><Input type="number" value={form.price ?? 0} onChange={(e) => setForm({ ...form, price: e.target.value })} className="text-sm h-9 sm:h-10" /></div>
+        )}
+        {isSportEvent && (
+          <div className="md:col-span-2 space-y-3 rounded-xl border border-primary/20 bg-primary/5 p-3">
+            <div><p className="text-sm font-semibold">Harga per posisi</p><p className="text-xs text-muted-foreground">Event olahraga selalu menggunakan pendaftaran wajib bayar.</p></div>
+            {positions.map((entry) => <div key={entry.id} className="grid grid-cols-[1fr_120px_auto] gap-2">
+              <Input value={entry.position} placeholder="Nama posisi" onChange={(e) => setPositions(positions.map((item) => item.id === entry.id ? { ...item, position: e.target.value } : item))} />
+              <Input type="number" min="1" value={entry.price} placeholder="Harga" onChange={(e) => setPositions(positions.map((item) => item.id === entry.id ? { ...item, price: e.target.value } : item))} />
+              <Button type="button" variant="outline" size="icon" disabled={positions.length === 1} onClick={() => setPositions(positions.filter((item) => item.id !== entry.id))}><Trash2 className="h-4 w-4" /></Button>
+            </div>)}
+            <Button type="button" variant="outline" size="sm" onClick={() => setPositions([...positions, { id: crypto.randomUUID(), position: "", price: "" }])}><Plus className="mr-1 h-4 w-4" />Tambah posisi</Button>
+          </div>
         )}
         {form.registration_type === "infaq" && (
           <>

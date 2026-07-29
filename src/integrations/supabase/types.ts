@@ -95,6 +95,41 @@ export type Database = {
         }
         Relationships: []
       }
+      event_position_pricing: {
+        Row: {
+          created_at: string | null
+          event_id: string
+          id: string
+          is_active: boolean | null
+          position: string
+          price: number
+        }
+        Insert: {
+          created_at?: string | null
+          event_id: string
+          id?: string
+          is_active?: boolean | null
+          position: string
+          price?: number
+        }
+        Update: {
+          created_at?: string | null
+          event_id?: string
+          id?: string
+          is_active?: boolean | null
+          position?: string
+          price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_position_pricing_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           city: string | null
@@ -607,6 +642,7 @@ export type Database = {
           paid_at: string | null
           payment_proof_url: string | null
           payment_status: string | null
+          position: string | null
           registered_by: string | null
           user_id: string | null
         }
@@ -623,6 +659,7 @@ export type Database = {
           paid_at?: string | null
           payment_proof_url?: string | null
           payment_status?: string | null
+          position?: string | null
           registered_by?: string | null
           user_id?: string | null
         }
@@ -639,6 +676,7 @@ export type Database = {
           paid_at?: string | null
           payment_proof_url?: string | null
           payment_status?: string | null
+          position?: string | null
           registered_by?: string | null
           user_id?: string | null
         }

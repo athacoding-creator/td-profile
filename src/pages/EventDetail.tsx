@@ -31,6 +31,8 @@ export default function EventDetail() {
   const [paymentMethod, setPaymentMethod] = useState<any>(null);
   const [selectedEpisode, setSelectedEpisode] = useState<number>(0);
   const [registrationChoiceOpen, setRegistrationChoiceOpen] = useState(false);
+  const [positionChoiceOpen, setPositionChoiceOpen] = useState(false);
+  const [positionPricing, setPositionPricing] = useState<{ position: string; price: number }[]>([]);
   const [showGuestForm, setShowGuestForm] = useState(false);
   const emptyGuest = () => ({ name: "", phone: "", gender: "" });
   const [guestCount, setGuestCount] = useState(1);
@@ -78,6 +80,17 @@ export default function EventDetail() {
         eventData = data;
       }
       setEvent(eventData);
+
+      if (["futsal", "mini-soccer"].includes(eventData?.event_type)) {
+        const { data: pricingData, error: pricingError } = await supabase
+          .from("event_position_pricing")
+          .select("position, price")
+          .eq("event_id", eventData.id)
+          .neq("is_active", false)
+          .order("created_at");
+        if (pricingError) console.error("load position pricing", pricingError);
+        setPositionPricing(pricingData ?? []);
+      }
 
       if (eventData?.payment_method_id) {
         const { data: pmData, error: pmError } = await supabase
@@ -153,8 +166,18 @@ export default function EventDetail() {
 
   const handleRegisterClick = () => {
     if (!user) return navigate("/auth");
+    if (["futsal", "mini-soccer"].includes(event?.event_type)) {
+      if (!positionPricing.length) return toast.error("Pilihan posisi belum dikonfigurasi oleh admin.");
+      setPositionChoiceOpen(true);
+      return;
+    }
     setShowGuestForm(false);
     setRegistrationChoiceOpen(true);
+  };
+
+  const selectPosition = (pricing: { position: string; price: number }) => {
+    setPositionChoiceOpen(false);
+    navigate(`/event/${event.id}/bayar`, { state: { position: pricing.position, positionPrice: Number(pricing.price) } });
   };
 
   const register = async (includeSelf: boolean, includeGuests = false) => {
@@ -369,7 +392,7 @@ export default function EventDetail() {
               {event.registration_type !== "free" && (
             <div className="flex items-center gap-2 pt-2 text-accent font-semibold">
               {event.registration_type === "paid" 
-                ? `💰 Wajib Bayar: Rp ${event.price.toLocaleString("id-ID")}`
+                ? (["futsal", "mini-soccer"].includes(event.event_type) ? "💰 Wajib Bayar — pilih posisi untuk melihat harga" : `💰 Wajib Bayar: Rp ${event.price.toLocaleString("id-ID")}`)
                 : `🤝 Berinfaq: Rp ${event.min_infaq.toLocaleString("id-ID")} - Rp ${event.max_infaq.toLocaleString("id-ID")}`
               }
             </div>
@@ -589,6 +612,20 @@ export default function EventDetail() {
                 <Button className="w-full" disabled={submitting} onClick={() => register(true, true)}>Daftarkan Saya & {guestCount} Orang Lain</Button>
               </div>
               }
+            </div>
+          </DialogContent>
+        </Dialog>
+        <Dialog open={positionChoiceOpen} onOpenChange={setPositionChoiceOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader><DialogTitle>Pilih Posisi Bermain</DialogTitle></DialogHeader>
+            <p className="text-sm text-muted-foreground">Pilih posisi untuk melihat nominal pendaftaran dan melanjutkan pembayaran.</p>
+            <div className="space-y-2">
+              {positionPricing.map((pricing) => (
+                <button key={pricing.position} type="button" onClick={() => selectPosition(pricing)} className="flex w-full items-center justify-between rounded-xl border p-4 text-left transition hover:border-primary hover:bg-primary/5">
+                  <span className="font-semibold">{pricing.position}</span>
+                  <span className="font-bold text-primary">Rp {Number(pricing.price).toLocaleString("id-ID")}</span>
+                </button>
+              ))}
             </div>
           </DialogContent>
         </Dialog>

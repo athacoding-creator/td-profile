@@ -276,7 +276,8 @@ function DonationTableRow({ registration, event, onChanged }: { registration: an
           {registration.profiles?.full_name ?? "User"}
         </td>
         <td className="px-4 py-3 text-sm text-muted-foreground">
-          {event?.title ?? "Event"}
+          <div>{event?.title ?? "Event"}</div>
+          {registration.position && <span className="mt-1 inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">{registration.position}</span>}
         </td>
         <td className="px-4 py-3 text-sm font-semibold text-right">
           Rp {(registration.amount_paid || 0).toLocaleString("id-ID")}
@@ -376,8 +377,9 @@ function DonationMobileCard({ registration, event, onChanged }: { registration: 
           <p className="text-xs text-muted-foreground">
             {registration.paid_at ? new Date(registration.paid_at).toLocaleDateString("id-ID") : "—"}
           </p>
-          <h3 className="font-semibold text-sm truncate">{registration.profiles?.full_name ?? "User"}</h3>
+          <h3 className="font-semibold text-sm truncate">{registration.profiles?.full_name ?? registration.guest_name ?? "User"}</h3>
           <p className="text-xs text-muted-foreground line-clamp-1">{event?.title ?? "Event"}</p>
+          {registration.position && <span className="mt-1 inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-medium text-blue-700">{registration.position}</span>}
         </div>
         <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${statusColor}`}>
           {statusLabel}

@@ -18,7 +18,7 @@ export default function Payment() {
   const navigate = useNavigate();
   const location = useLocation();
   type Guest = { guest_name: string; guest_phone: string; guest_gender: "L" | "P"; registered_by: string };
-  const paymentState = location.state as { guest?: Guest; guests?: Guest[]; includeSelf?: boolean } | null;
+  const paymentState = location.state as { guest?: Guest; guests?: Guest[]; includeSelf?: boolean; position?: string; positionPrice?: number } | null;
   const guests = paymentState?.guests ?? (paymentState?.guest ? [paymentState.guest] : []);
   const isGuestRegistration = guests.length > 0;
   const includeSelf = paymentState?.includeSelf ?? false;
@@ -31,6 +31,8 @@ export default function Payment() {
   const [paymentForm, setPaymentForm] = useState({ amount: 0, proofFile: null as File | null, donorMessage: "" });
   const [infaqType, setInfaqType] = useState<"money" | "prayer">("money");
   const [settings, setSettings] = useState<any>({});
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const selectedPosition = paymentState?.position;
 
   useEffect(() => {
     (async () => {
@@ -48,11 +50,32 @@ export default function Payment() {
         return;
       }
       setEvent(eventData);
+      let sportPositionPrice: number | null = null;
+      if (["futsal", "mini-soccer"].includes(eventData.event_type)) {
+        if (!selectedPosition) {
+          toast.error("Pilih posisi terlebih dahulu.");
+          navigate(`/event/${id}`);
+          return;
+        }
+        const { data: positionData } = await supabase
+          .from("event_position_pricing")
+          .select("price")
+          .eq("event_id", id)
+          .eq("position", selectedPosition)
+          .eq("is_active", true)
+          .maybeSingle();
+        if (!positionData) {
+          toast.error("Posisi yang dipilih tidak tersedia.");
+          navigate(`/event/${id}`);
+          return;
+        }
+        sportPositionPrice = Number(positionData.price);
+      }
       
       const isOnline = !!eventData.is_online;
       // Default amount: for online, it must be >= min_infaq. For offline infaq, it can be 0 if prayer is chosen.
       const defaultAmount = eventData.registration_type === "paid"
-        ? eventData.price * participantCount
+        ? (sportPositionPrice ?? eventData.price) * participantCount
         : (eventData.min_infaq || 0) * participantCount;
       
       setPaymentForm(prev => ({
@@ -126,7 +149,7 @@ export default function Payment() {
 
       setLoading(false);
     })();
-  }, [id, user, navigate, isGuestRegistration, participantCount]);
+  }, [id, user, navigate, isGuestRegistration, participantCount, selectedPosition]);
 
   const convertToWebP = async (file: File): Promise<Blob> => {
     return new Promise((resolve, reject) => {
@@ -188,10 +211,11 @@ export default function Payment() {
 
       const updateData = {
         payment_status: "pending",
-        amount_paid: isGuestRegistration ? event.price : paymentForm.amount,
+        amount_paid: paymentForm.amount / participantCount,
         payment_proof_url: publicUrl,
         paid_at: new Date().toISOString(),
         donor_message: paymentForm.donorMessage?.trim() ? paymentForm.donorMessage.trim().slice(0, 500) : null,
+        position: selectedPosition || null,
       };
 
       if (registration) {
@@ -209,12 +233,17 @@ export default function Payment() {
       }
 
       toast.success("Bukti pembayaran berhasil diunggah!");
-      const whatsappNumber = event.registration_type === "paid" 
+      const whatsappNumber = selectedPosition
+        ? "6285111514040"
+        : event.registration_type === "paid"
         ? (settings.admin_wa_number_paid || "+6282136031995")
         : (settings.admin_wa_number_infaq || "+6285171577665");
       const template = settings.wa_verification_template || "Halo Admin, saya sudah melakukan pembayaran untuk event {{event_title}}. Berikut bukti pembayarannya. Mohon bantuannya untuk diverifikasi. Terima kasih.";
-      const whatsappMessage = template.replace("{{event_title}}", event.title);
-      window.location.href = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
+      const whatsappMessage = selectedPosition
+        ? `Halo Admin, saya ${profile?.full_name || "peserta"} sudah melakukan pembayaran untuk event ${event.title}. Posisi: ${selectedPosition}. Nominal: Rp ${paymentForm.amount.toLocaleString("id-ID")}. Mohon diverifikasi. Terima kasih.`
+        : template.replace("{{event_title}}", event.title);
+      setSettings((current: any) => ({ ...current, pendingWhatsappUrl: `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}` }));
+      setPaymentSuccess(true);
     } catch (error: any) {
       toast.error(error.message);
     } finally {
@@ -246,6 +275,19 @@ export default function Payment() {
       </main>
       <BottomNav />
     </div>
+  );
+
+  if (paymentSuccess) return (
+    <div className="min-h-screen bg-background pb-32"><Header /><main className="container max-w-3xl py-4 px-3">
+      <div className="rounded-2xl border border-green-200 bg-green-50 p-6 text-center space-y-4">
+        <CheckCircle2 className="mx-auto h-14 w-14 text-green-600" />
+        <h1 className="font-display text-xl font-bold text-green-800">Pendaftaran Berhasil!</h1>
+        <p className="text-sm text-green-700">Bukti pembayaran telah diunggah dan menunggu verifikasi admin.</p>
+        {selectedPosition && <p className="text-sm">Posisi: <strong>{selectedPosition}</strong> · Rp {paymentForm.amount.toLocaleString("id-ID")}</p>}
+        <a href={settings.pendingWhatsappUrl} target="_blank" rel="noopener noreferrer"><Button className="w-full bg-green-600 hover:bg-green-700"><MessageCircle className="mr-2 h-4 w-4" />Konfirmasi via WhatsApp</Button></a>
+        <Button variant="outline" className="w-full" onClick={() => navigate(`/event/${id}`)}>Kembali ke detail event</Button>
+      </div>
+    </main><BottomNav /></div>
   );
 
   // Check if event is expired to determine if it should be treated as online access
@@ -349,6 +391,7 @@ export default function Payment() {
               <h2 className="font-display text-xl font-bold flex items-center gap-2">
                 <CreditCard className="h-5 w-5 text-rose-500" /> Pendaftaran: {event.title}
               </h2>
+              {selectedPosition && <p className="mt-1 text-sm text-muted-foreground">Posisi: {selectedPosition}</p>}
               {isGuestRegistration && <p className="mt-1 text-sm text-muted-foreground">Peserta: {guests.map((guest) => `${guest.guest_name} (${guest.guest_phone})`).join(", ")}</p>}
               <p className="text-xs text-muted-foreground mt-1">
                 {isOnline 

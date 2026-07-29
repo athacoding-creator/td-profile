@@ -100,7 +100,7 @@ export function useAdminData(): AdminData {
     while (hasMore) {
       const { data, error } = await supabase
         .from("registrations")
-        .select("id, created_at, event_id, user_id, payment_status, amount_paid, donor_message, payment_proof_url, paid_at, events(title, programs(name), registration_type), profiles:user_id(full_name, email, phone, gender, city)")
+        .select("id, created_at, event_id, user_id, payment_status, amount_paid, donor_message, payment_proof_url, paid_at, position, guest_name, guest_phone, events(title, programs(name), registration_type), profiles:user_id(full_name, email, phone, gender, city)")
         .order("created_at", { ascending: false })
         .range(page * pageSize, (page + 1) * pageSize - 1);
 
