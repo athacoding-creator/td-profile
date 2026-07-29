@@ -73,6 +73,15 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
   const [positions, setPositions] = useState(() => DEFAULT_POSITIONS.map((entry) => ({ ...entry, id: crypto.randomUUID() })));
   const isSportEvent = SPORT_EVENT_TYPES.includes(form.event_type);
 
+  // Reset positions when event_type changes
+  useEffect(() => {
+    if (isSportEvent) {
+      setPositions(DEFAULT_POSITIONS.map((entry) => ({ ...entry, id: crypto.randomUUID() })));
+    } else {
+      setPositions([]);
+    }
+  }, [form.event_type, isSportEvent]);
+
   const create = async (e: React.FormEvent) => {
     e.preventDefault();
     const selectedProgram = programs.find((p) => p.id === form.program_id);
@@ -445,6 +454,9 @@ function EventList({ events, programs, onChanged }: { events: any[]; programs: a
 
 function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; programs: any[]; onClose: () => void; onSaved: () => void }) {
   const [form, setForm] = useState<any>({});
+  const [positions, setPositions] = useState<any[]>([]);
+  const isSportEvent = SPORT_EVENT_TYPES.includes(form.event_type);
+
   useEffect(() => {
     if (!ev) return;
     setForm({
@@ -471,8 +483,21 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
       recurring_end_time: (ev.recurring_end_time ?? "").slice(0, 5),
       recurring_until: ev.recurring_until ?? "",
       is_online: !!ev.is_online,
-      youtube_url: ev.youtube_url ?? "",      episode_count: ev.episode_count ?? 0,
-      episode_youtube_urls: ev.episode_youtube_urls ?? [],    });
+      youtube_url: ev.youtube_url ?? "",
+      episode_count: ev.episode_count ?? 0,
+      episode_youtube_urls: ev.episode_youtube_urls ?? [],
+    });
+
+    if (SPORT_EVENT_TYPES.includes(ev.event_type)) {
+      (async () => {
+        const { data } = await supabase.from("event_position_pricing").select("*").eq("event_id", ev.id).eq("is_active", true).order("created_at");
+        if (data && data.length > 0) {
+          setPositions(data.map(p => ({ ...p, price: String(p.price) })));
+        } else {
+          setPositions(DEFAULT_POSITIONS.map(p => ({ ...p, id: crypto.randomUUID() })));
+        }
+      })();
+    }
   }, [ev]);
 
   if (!ev) return null;
@@ -490,6 +515,12 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
     if (isEpisodeProgram && !form.episode_count) {
       return toast.error("Pilih jumlah episode untuk program kategori episode");
     }
+
+    const validPositions = positions.filter((entry) => entry.position.trim() && Number(entry.price) > 0);
+    if (isSportEvent && validPositions.length === 0) {
+      return toast.error("Tambahkan minimal satu posisi dengan harga.");
+    }
+
     const { error } = await supabase.from("events").update({
       title: form.title, description: form.description, venue: form.venue, city: form.city,
       poster_url: form.poster_url, event_type: form.event_type, gender: form.gender,
@@ -512,6 +543,16 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
       episode_youtube_urls: isEpisodeProgram ? buildEpisodeUrls(form.episode_youtube_urls ?? [], Number(form.episode_count)) : [],
     } as any).eq("id", ev.id);
     if (error) return toast.error(error.message);
+
+    if (isSportEvent) {
+      // Simple approach: delete old and insert new to ensure sync
+      await supabase.from("event_position_pricing").delete().eq("event_id", ev.id);
+      const { error: pricingError } = await supabase.from("event_position_pricing").insert(
+        validPositions.map((entry) => ({ event_id: ev.id, position: entry.position.trim(), price: Number(entry.price) }))
+      );
+      if (pricingError) toast.error(`Event diperbarui, tetapi harga posisi gagal disimpan: ${pricingError.message}`);
+    }
+
     toast.success("Event diperbarui");
     onSaved();
   };
@@ -539,8 +580,19 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
               {programs.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           </div>
-          <div className="space-y-1.5"><Label>Tipe</Label><Input value={form.event_type ?? ""} onChange={(e) => setForm({ ...form, event_type: e.target.value })} /></div>
+          <div className="space-y-1.5"><Label>Tipe</Label><select value={form.event_type ?? "kajian"} onChange={(e) => setForm({ ...form, event_type: e.target.value })} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"><option value="kajian">Kajian</option><option value="futsal">Futsal</option><option value="mini-soccer">Mini Soccer</option></select></div>
           <div className="space-y-1.5"><Label>Venue</Label><Input value={form.venue ?? ""} onChange={(e) => setForm({ ...form, venue: e.target.value })} /></div>
+          {isSportEvent && (
+            <div className="md:col-span-2 space-y-3 rounded-xl border border-primary/20 bg-primary/5 p-3">
+              <div><p className="text-sm font-semibold">Harga per posisi</p><p className="text-xs text-muted-foreground">Event olahraga selalu menggunakan pendaftaran wajib bayar.</p></div>
+              {positions.map((entry) => <div key={entry.id || entry.position} className="grid grid-cols-[1fr_120px_auto] gap-2">
+                <Input value={entry.position} placeholder="Nama posisi" onChange={(e) => setPositions(positions.map((item) => (item.id === entry.id || item.position === entry.position) ? { ...item, position: e.target.value } : item))} />
+                <Input type="number" min="1" value={entry.price} placeholder="Harga" onChange={(e) => setPositions(positions.map((item) => (item.id === entry.id || item.position === entry.position) ? { ...item, price: e.target.value } : item))} />
+                <Button type="button" variant="outline" size="icon" disabled={positions.length === 1} onClick={() => setPositions(positions.filter((item) => (item.id !== entry.id && item.position !== entry.position)))}><Trash2 className="h-4 w-4" /></Button>
+              </div>)}
+              <Button type="button" variant="outline" size="sm" onClick={() => setPositions([...positions, { id: crypto.randomUUID(), position: "", price: "" }])}><Plus className="mr-1 h-4 w-4" />Tambah posisi</Button>
+            </div>
+          )}
           <div className="space-y-1.5 md:col-span-2"><Label>Deskripsi</Label><Textarea rows={3} value={form.description ?? ""} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
           <div className="space-y-1.5"><Label>Kota</Label><Input value={form.city ?? ""} onChange={(e) => setForm({ ...form, city: e.target.value })} /></div>
           <div className="space-y-1.5 md:col-span-2"><Label>Poster Event</Label><ImagePicker bucket="events" value={form.poster_url ?? ""} onChange={(url) => setForm({ ...form, poster_url: url })} /></div>
