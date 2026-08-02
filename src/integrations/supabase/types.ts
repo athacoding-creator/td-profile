@@ -644,7 +644,7 @@ export type Database = {
           payment_status: string | null
           position: string | null
           registered_by: string | null
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           amount_paid?: number | null
@@ -661,7 +661,7 @@ export type Database = {
           payment_status?: string | null
           position?: string | null
           registered_by?: string | null
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           amount_paid?: number | null
@@ -678,7 +678,7 @@ export type Database = {
           payment_status?: string | null
           position?: string | null
           registered_by?: string | null
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: [
           {
@@ -689,15 +689,15 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "registrations_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "registrations_registered_by_fkey"
+            columns: ["registered_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "registrations_registered_by_fkey"
-            columns: ["registered_by"]
+            foreignKeyName: "registrations_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
