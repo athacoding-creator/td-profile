@@ -130,7 +130,11 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
       const { error: pricingError } = await supabase.from("event_position_pricing").insert(
         validPositions.map((entry) => ({ event_id: createdEvent.id, position: entry.position.trim(), price: Number(entry.price) }))
       );
-      if (pricingError) toast.error(`Event dibuat, tetapi harga posisi gagal disimpan: ${pricingError.message}`);
+      if (pricingError) {
+        // Jangan tinggalkan event olahraga tanpa harga posisi — batalkan pembuatan event.
+        await supabase.from("events").delete().eq("id", createdEvent.id);
+        return toast.error(`Harga posisi gagal disimpan, event dibatalkan: ${pricingError.message}`);
+      }
     }
     toast.success("Event dibuat");
     setForm({ gender: "ALL", points_reward: defaultPoints, program_id: "", is_pinned: false, is_recurring: false, recurring_days: [], registration_type: "free", price: 0, min_infaq: 0, max_infaq: 50000, max_participants: "", is_online: false, youtube_url: "", episode_count: 0, episode_youtube_urls: [], event_type: "kajian" });
@@ -542,6 +546,9 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
       episode_count: isEpisodeProgram ? Number(form.episode_count) : 0,
       episode_youtube_urls: isEpisodeProgram ? buildEpisodeUrls(form.episode_youtube_urls ?? [], Number(form.episode_count)) : [],
     } as any).eq("id", ev.id);
+    if (isSportEvent) {
+      await supabase.from("events").update({ registration_type: "paid", price: 0 } as any).eq("id", ev.id);
+    }
     if (error) return toast.error(error.message);
 
     if (isSportEvent) {
@@ -550,7 +557,7 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
       const { error: pricingError } = await supabase.from("event_position_pricing").insert(
         validPositions.map((entry) => ({ event_id: ev.id, position: entry.position.trim(), price: Number(entry.price) }))
       );
-      if (pricingError) toast.error(`Event diperbarui, tetapi harga posisi gagal disimpan: ${pricingError.message}`);
+      if (pricingError) return toast.error(`Harga posisi gagal disimpan: ${pricingError.message}`);
     }
 
     toast.success("Event diperbarui");

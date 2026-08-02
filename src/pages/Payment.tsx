@@ -317,10 +317,12 @@ export default function Payment() {
         amount_paid: amount,
         paid_at: new Date().toISOString(),
         donor_message: msg,
+        position: selectedPosition || null,
       };
 
       if (registration) {
-        await (supabase.from("registrations") as any).update(updateData).eq("id", registration.id);
+        const { error } = await (supabase.from("registrations") as any).update(updateData).eq("id", registration.id);
+        if (error) throw error;
       } else {
         const records = isGuestRegistration
           ? [
@@ -328,7 +330,8 @@ export default function Payment() {
               ...guests.map((guest) => ({ ...updateData, amount_paid: amount / participantCount, event_id: event.id, user_id: null, ...guest, attendance_mode: (isOnline || isExpired) ? "online" : "offline" })),
             ]
           : [{ ...updateData, event_id: event.id, user_id: user?.id, registered_by: user?.id, attendance_mode: (isOnline || isExpired) ? "online" : "offline" }];
-        await (supabase.from("registrations") as any).insert(records);
+        const { error } = await (supabase.from("registrations") as any).insert(records);
+        if (error) throw error;
       }
 
       if (infaqType === "money") {

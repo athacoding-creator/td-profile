@@ -175,7 +175,15 @@ export default function EventDetail() {
     setRegistrationChoiceOpen(true);
   };
 
-  const selectPosition = (pricing: { position: string; price: number }) => {
+  const selectPosition = async (pricing: { position: string; price: number }) => {
+    if (event.gender !== "ALL" && profile?.gender && profile.gender !== event.gender) {
+      return toast.error(`Maaf, event ini khusus untuk ${event.gender === "L" ? "Laki-laki" : "Perempuan"}.`);
+    }
+    try {
+      if (!(await checkQuota(1))) return;
+    } catch (error: any) {
+      return toast.error(error.message);
+    }
     setPositionChoiceOpen(false);
     navigate(`/event/${event.id}/bayar`, { state: { position: pricing.position, positionPrice: Number(pricing.price) } });
   };

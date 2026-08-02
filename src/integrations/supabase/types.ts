@@ -644,7 +644,7 @@ export type Database = {
           payment_status: string | null
           position: string | null
           registered_by: string | null
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           amount_paid?: number | null
@@ -661,7 +661,7 @@ export type Database = {
           payment_status?: string | null
           position?: string | null
           registered_by?: string | null
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           amount_paid?: number | null
@@ -678,7 +678,7 @@ export type Database = {
           payment_status?: string | null
           position?: string | null
           registered_by?: string | null
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -796,7 +796,6 @@ export type Database = {
             }
             Returns: boolean
           }
-        | { Args: { role_name: string; user_id: string }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
       record_attendance: {
         Args: { _event_id: string; _token: string }
