@@ -546,6 +546,9 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
       episode_count: isEpisodeProgram ? Number(form.episode_count) : 0,
       episode_youtube_urls: isEpisodeProgram ? buildEpisodeUrls(form.episode_youtube_urls ?? [], Number(form.episode_count)) : [],
     } as any).eq("id", ev.id);
+    if (isSportEvent) {
+      await supabase.from("events").update({ registration_type: "paid", price: 0 } as any).eq("id", ev.id);
+    }
     if (error) return toast.error(error.message);
 
     if (isSportEvent) {
