@@ -129,6 +129,8 @@ export default function EventDetail() {
     })();
   }, [id, user]);
 
+  const quotaFull = !!event?.max_participants && (regCount ?? 0) >= event.max_participants;
+
   const checkQuota = async (needed = 1) => {
     if (!event.max_participants) return true;
     const { data, error } = await supabase.rpc("event_registration_count", { _event_id: event.id });
