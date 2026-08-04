@@ -643,3 +643,53 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
     </Dialog>
   );
 }
+
+function PaymentCategoryFields({ form, setForm, show }: { form: any; setForm: (v: any) => void; show: boolean }) {
+  const [categories, setCategories] = useState<any[]>([]);
+  const [methods, setMethods] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!show) return;
+    (async () => {
+      const [{ data: cats }, { data: qris }] = await Promise.all([
+        supabase.from("payment_categories").select("id,name,slug,is_active").order("order_index"),
+        supabase.from("qris_methods").select("id,name,category_id,is_active").order("order_index"),
+      ]);
+      setCategories((cats || []).filter((c: any) => c.is_active && c.slug !== "infaq"));
+      setMethods((qris || []).filter((q: any) => q.is_active));
+    })();
+  }, [show]);
+
+  if (!show) return null;
+
+  const filteredMethods = form.payment_category_id
+    ? methods.filter((m) => m.category_id === form.payment_category_id)
+    : methods;
+
+  return (
+    <>
+      <div className="space-y-1.5">
+        <Label className="text-xs sm:text-sm">Kategori Pembayaran</Label>
+        <select
+          className="h-9 sm:h-10 w-full rounded-md border border-input bg-background px-3 text-xs sm:text-sm"
+          value={form.payment_category_id ?? ""}
+          onChange={(e) => setForm({ ...form, payment_category_id: e.target.value, qris_method_id: "" })}
+        >
+          <option value="">— pakai QRIS default —</option>
+          {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+      </div>
+      <div className="space-y-1.5">
+        <Label className="text-xs sm:text-sm">QRIS Khusus (opsional)</Label>
+        <select
+          className="h-9 sm:h-10 w-full rounded-md border border-input bg-background px-3 text-xs sm:text-sm"
+          value={form.qris_method_id ?? ""}
+          onChange={(e) => setForm({ ...form, qris_method_id: e.target.value })}
+        >
+          <option value="">— otomatis dari kategori —</option>
+          {filteredMethods.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+        </select>
+      </div>
+    </>
+  );
+}
