@@ -125,6 +125,8 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
       youtube_url: form.is_online ? (form.youtube_url || null) : null,
       episode_count: isEpisodeProgram ? Number(form.episode_count) : 0,
       episode_youtube_urls: isEpisodeProgram ? buildEpisodeUrls(form.episode_youtube_urls ?? [], Number(form.episode_count)) : [],
+      payment_category_id: form.payment_category_id || null,
+      qris_method_id: form.qris_method_id || null,
     } as any).select("id").single();
 
 
@@ -494,6 +496,9 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
       youtube_url: ev.youtube_url ?? "",
       episode_count: ev.episode_count ?? 0,
       episode_youtube_urls: ev.episode_youtube_urls ?? [],
+      registration_type: ev.registration_type ?? "free",
+      payment_category_id: ev.payment_category_id ?? "",
+      qris_method_id: ev.qris_method_id ?? "",
     });
 
     if (SPORT_EVENT_TYPES.includes(ev.event_type)) {
@@ -549,6 +554,8 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
       youtube_url: form.is_online ? (form.youtube_url || null) : null,
       episode_count: isEpisodeProgram ? Number(form.episode_count) : 0,
       episode_youtube_urls: isEpisodeProgram ? buildEpisodeUrls(form.episode_youtube_urls ?? [], Number(form.episode_count)) : [],
+      payment_category_id: form.payment_category_id || null,
+      qris_method_id: form.qris_method_id || null,
     } as any).eq("id", ev.id);
     if (isSportEvent) {
       await supabase.from("events").update({ registration_type: "paid", price: 0 } as any).eq("id", ev.id);
@@ -628,6 +635,7 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
               <option value="archived">archived</option>
             </select>
           </div>
+          <PaymentCategoryFields form={form} setForm={setForm} show={isSportEvent || form.registration_type === "paid"} />
           <div className="space-y-1.5 md:col-span-2">
             <Label>Pesan Sukses (ditampilkan setelah user scan QR)</Label>
             <Textarea rows={3} placeholder="Selamat, kamu telah berhasil mendaftar! Sampai jumpa di acara 🎉" value={form.success_message ?? ""} onChange={(e) => setForm({ ...form, success_message: e.target.value })} />
