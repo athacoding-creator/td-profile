@@ -171,6 +171,10 @@ export default function Payment() {
     
     setSubmitting(true);
     try {
+      if (!registration && !(await ensureQuota(participantCount))) {
+        setSubmitting(false);
+        return;
+      }
       const webpFile = await convertToWebP(paymentForm.proofFile);
       const fileName = `${user?.id}/${event.id}/${Date.now()}.webp`;
       const { error: uploadError } = await supabase.storage
@@ -207,7 +211,9 @@ export default function Payment() {
       }
 
       toast.success("Bukti pembayaran berhasil diunggah!");
-      const whatsappNumber = selectedPosition
+      const whatsappNumber = paymentMethod?.whatsapp_number
+        ? paymentMethod.whatsapp_number.replace(/[^0-9]/g, "")
+        : selectedPosition
         ? "6285111514040"
         : event.registration_type === "paid"
         ? (settings.admin_wa_number_paid || "+6282136031995")
