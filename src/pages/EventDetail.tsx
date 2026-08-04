@@ -154,6 +154,7 @@ export default function EventDetail() {
   };
 
   const selectPosition = async (pricing: { position: string; price: number }) => {
+    if (quotaFull) return toast.error("Maaf, kuota peserta untuk event ini sudah penuh.");
     if (event.gender !== "ALL" && profile?.gender && profile.gender !== event.gender) {
       return toast.error(`Maaf, event ini khusus untuk ${event.gender === "L" ? "Laki-laki" : "Perempuan"}.`);
     }
