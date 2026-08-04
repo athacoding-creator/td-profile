@@ -16,6 +16,7 @@ import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
 import { computeScanWindow, isRecurring, describeRecurring } from "@/lib/eventSchedule";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { resolveEventQris } from "@/lib/resolveQris";
 
 export default function EventDetail() {
   const { id } = useParams();
@@ -29,6 +30,7 @@ export default function EventDetail() {
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [paymentForm, setPaymentForm] = useState({ amount: 0, proofFile: null as File | null });
   const [paymentMethod, setPaymentMethod] = useState<any>(null);
+  const [regCount, setRegCount] = useState<number | null>(null);
   const [selectedEpisode, setSelectedEpisode] = useState<number>(0);
   const [registrationChoiceOpen, setRegistrationChoiceOpen] = useState(false);
   const [positionChoiceOpen, setPositionChoiceOpen] = useState(false);
@@ -60,7 +62,7 @@ export default function EventDetail() {
     (async () => {
       let eventData: any = null;
       const { data, error } = await supabase.from("events")
-        .select("id,title,description,venue,city,starts_at,ends_at,status,gender,event_type,poster_url,group_link,points_reward,program_id,created_at,is_pinned,is_recurring,recurring_days,recurring_start_time,recurring_end_time,recurring_until,registration_type,price,min_infaq,max_infaq,max_participants,speaker,payment_method_id,is_online,youtube_url,episode_count,episode_youtube_urls, programs(category,name,code)")
+        .select("id,title,description,venue,city,starts_at,ends_at,status,gender,event_type,poster_url,group_link,points_reward,program_id,created_at,is_pinned,is_recurring,recurring_days,recurring_start_time,recurring_end_time,recurring_until,registration_type,price,min_infaq,max_infaq,max_participants,speaker,payment_category_id,qris_method_id,is_online,youtube_url,episode_count,episode_youtube_urls, programs(category,name,code)")
         .eq("id", id)
         .maybeSingle();
 
@@ -92,43 +94,18 @@ export default function EventDetail() {
         setPositionPricing(pricingData ?? []);
       }
 
-      if (eventData?.payment_method_id) {
-        const { data: pmData, error: pmError } = await supabase
-          .from("payment_methods")
-          .select("*")
-          .eq("id", eventData.payment_method_id)
-          .maybeSingle();
-        if (pmError) {
-          console.error("loadPaymentMethod error", pmError);
-        }
-        setPaymentMethod(pmData ?? null);
-      } else {
-        // Get QRIS from qris_methods table based on event registration type
-        const category = eventData.registration_type === "paid" ? "paid" : eventData.registration_type === "infaq" ? "infaq" : null;
-        
-        if (category) {
-          const { data: qrisData } = await supabase
-            .from("qris_methods")
-            .select("*")
-            .eq("category", category)
-            .eq("is_active", true)
-            .order("order_index", { ascending: true })
-            .maybeSingle();
-          
-          if (qrisData) {
-            setPaymentMethod({
-              id: qrisData.id,
-              name: qrisData.name,
-              type: "qris",
-              qr_url: qrisData.qr_url,
-              description: qrisData.description,
-            });
-          } else {
-            setPaymentMethod(null);
-          }
-        } else {
+      if (eventData) {
+        try {
+          setPaymentMethod(await resolveEventQris(eventData));
+        } catch (err) {
+          console.error("resolveEventQris error", err);
           setPaymentMethod(null);
         }
+      }
+
+      if (eventData?.id) {
+        const { data: countData } = await supabase.rpc("event_registration_count", { _event_id: eventData.id });
+        setRegCount(typeof countData === "number" ? countData : null);
       }
 
       if (user && eventData) {
@@ -152,12 +129,15 @@ export default function EventDetail() {
     })();
   }, [id, user]);
 
+  const quotaFull = !!event?.max_participants && (regCount ?? 0) >= event.max_participants;
+
   const checkQuota = async (needed = 1) => {
     if (!event.max_participants) return true;
-    const { count, error } = await supabase.from("registrations")
-      .select("*", { count: "exact", head: true }).eq("event_id", event.id);
+    const { data, error } = await supabase.rpc("event_registration_count", { _event_id: event.id });
     if (error) throw error;
-    if ((count ?? 0) + needed > event.max_participants) {
+    const used = typeof data === "number" ? data : 0;
+    setRegCount(used);
+    if (used + needed > event.max_participants) {
       toast.error("Maaf, kuota peserta untuk event ini sudah penuh.");
       return false;
     }
@@ -176,6 +156,7 @@ export default function EventDetail() {
   };
 
   const selectPosition = async (pricing: { position: string; price: number }) => {
+    if (quotaFull) return toast.error("Maaf, kuota peserta untuk event ini sudah penuh.");
     if (event.gender !== "ALL" && profile?.gender && profile.gender !== event.gender) {
       return toast.error(`Maaf, event ini khusus untuk ${event.gender === "L" ? "Laki-laki" : "Perempuan"}.`);
     }
@@ -576,20 +557,31 @@ export default function EventDetail() {
               onCancel={() => setShowPaymentForm(false)}
             />
           ) : (
-            <Button
-              onClick={handleRegisterClick}
-              disabled={submitting}
-              className="w-full text-white text-sm sm:text-base font-bold bg-green-600 hover:bg-green-700"
-            >
-              {submitting 
-                ? "Mendaftarkan…" 
-                : !user 
-                  ? "Login untuk Daftar" 
-                  : sw.expired
-                      ? "Buka Akses Video"
-                      : "Daftar Event"
-              }
-            </Button>
+            <div className="space-y-2">
+              {!!event.max_participants && (
+                <p className={`text-xs font-semibold ${quotaFull ? "text-destructive" : "text-muted-foreground"}`}>
+                  {quotaFull
+                    ? "Kuota peserta sudah penuh"
+                    : `Kuota: ${regCount ?? 0}/${event.max_participants} terisi`}
+                </p>
+              )}
+              <Button
+                onClick={handleRegisterClick}
+                disabled={submitting || quotaFull}
+                className="w-full text-white text-sm sm:text-base font-bold bg-green-600 hover:bg-green-700"
+              >
+                {submitting
+                  ? "Mendaftarkan…"
+                  : !user
+                    ? "Login untuk Daftar"
+                    : quotaFull
+                      ? "Kuota Penuh"
+                      : sw.expired
+                        ? "Buka Akses Video"
+                        : "Daftar Event"
+                }
+              </Button>
+            </div>
           )}
         </div>
 

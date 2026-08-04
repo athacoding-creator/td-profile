@@ -68,6 +68,7 @@ export default function EventsPage() {
 }
 
 function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; defaultPoints: number; onCreated: () => void }) {
+  // fields kategori pembayaran (kelas, futsal, dll)
   const [form, setForm] = useState<any>({ gender: "ALL", points_reward: defaultPoints, program_id: "", is_pinned: false, is_recurring: false, recurring_days: [], registration_type: "free", price: 0, min_infaq: 0, max_infaq: 50000, max_participants: "", is_online: false, youtube_url: "", episode_count: 0, episode_youtube_urls: [], event_type: "kajian" });
   useEffect(() => { setForm((f: any) => ({ ...f, points_reward: f.points_reward ?? defaultPoints })); }, [defaultPoints]);
   const [positions, setPositions] = useState(() => DEFAULT_POSITIONS.map((entry) => ({ ...entry, id: crypto.randomUUID() })));
@@ -124,7 +125,11 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
       youtube_url: form.is_online ? (form.youtube_url || null) : null,
       episode_count: isEpisodeProgram ? Number(form.episode_count) : 0,
       episode_youtube_urls: isEpisodeProgram ? buildEpisodeUrls(form.episode_youtube_urls ?? [], Number(form.episode_count)) : [],
+      payment_category_id: form.payment_category_id || null,
+      qris_method_id: form.qris_method_id || null,
     } as any).select("id").single();
+
+
     if (error) return toast.error(error.message);
     if (isSportEvent && createdEvent) {
       const { error: pricingError } = await supabase.from("event_position_pricing").insert(
@@ -194,6 +199,7 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
             <Button type="button" variant="outline" size="sm" onClick={() => setPositions([...positions, { id: crypto.randomUUID(), position: "", price: "" }])}><Plus className="mr-1 h-4 w-4" />Tambah posisi</Button>
           </div>
         )}
+        <PaymentCategoryFields form={form} setForm={setForm} show={isSportEvent || form.registration_type === "paid"} />
         {form.registration_type === "infaq" && (
           <>
             <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Min Infaq (Rp)</Label><Input type="number" value={form.min_infaq ?? 0} onChange={(e) => setForm({ ...form, min_infaq: e.target.value })} className="text-sm h-9 sm:h-10" /></div>
@@ -490,6 +496,9 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
       youtube_url: ev.youtube_url ?? "",
       episode_count: ev.episode_count ?? 0,
       episode_youtube_urls: ev.episode_youtube_urls ?? [],
+      registration_type: ev.registration_type ?? "free",
+      payment_category_id: ev.payment_category_id ?? "",
+      qris_method_id: ev.qris_method_id ?? "",
     });
 
     if (SPORT_EVENT_TYPES.includes(ev.event_type)) {
@@ -545,6 +554,8 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
       youtube_url: form.is_online ? (form.youtube_url || null) : null,
       episode_count: isEpisodeProgram ? Number(form.episode_count) : 0,
       episode_youtube_urls: isEpisodeProgram ? buildEpisodeUrls(form.episode_youtube_urls ?? [], Number(form.episode_count)) : [],
+      payment_category_id: form.payment_category_id || null,
+      qris_method_id: form.qris_method_id || null,
     } as any).eq("id", ev.id);
     if (isSportEvent) {
       await supabase.from("events").update({ registration_type: "paid", price: 0 } as any).eq("id", ev.id);
@@ -624,6 +635,7 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
               <option value="archived">archived</option>
             </select>
           </div>
+          <PaymentCategoryFields form={form} setForm={setForm} show={isSportEvent || form.registration_type === "paid"} />
           <div className="space-y-1.5 md:col-span-2">
             <Label>Pesan Sukses (ditampilkan setelah user scan QR)</Label>
             <Textarea rows={3} placeholder="Selamat, kamu telah berhasil mendaftar! Sampai jumpa di acara 🎉" value={form.success_message ?? ""} onChange={(e) => setForm({ ...form, success_message: e.target.value })} />
@@ -638,5 +650,55 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function PaymentCategoryFields({ form, setForm, show }: { form: any; setForm: (v: any) => void; show: boolean }) {
+  const [categories, setCategories] = useState<any[]>([]);
+  const [methods, setMethods] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!show) return;
+    (async () => {
+      const [{ data: cats }, { data: qris }] = await Promise.all([
+        supabase.from("payment_categories").select("id,name,slug,is_active").order("order_index"),
+        supabase.from("qris_methods").select("id,name,category_id,is_active").order("order_index"),
+      ]);
+      setCategories((cats || []).filter((c: any) => c.is_active && c.slug !== "infaq"));
+      setMethods((qris || []).filter((q: any) => q.is_active));
+    })();
+  }, [show]);
+
+  if (!show) return null;
+
+  const filteredMethods = form.payment_category_id
+    ? methods.filter((m) => m.category_id === form.payment_category_id)
+    : methods;
+
+  return (
+    <>
+      <div className="space-y-1.5">
+        <Label className="text-xs sm:text-sm">Kategori Pembayaran</Label>
+        <select
+          className="h-9 sm:h-10 w-full rounded-md border border-input bg-background px-3 text-xs sm:text-sm"
+          value={form.payment_category_id ?? ""}
+          onChange={(e) => setForm({ ...form, payment_category_id: e.target.value, qris_method_id: "" })}
+        >
+          <option value="">— pakai QRIS default —</option>
+          {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+      </div>
+      <div className="space-y-1.5">
+        <Label className="text-xs sm:text-sm">QRIS Khusus (opsional)</Label>
+        <select
+          className="h-9 sm:h-10 w-full rounded-md border border-input bg-background px-3 text-xs sm:text-sm"
+          value={form.qris_method_id ?? ""}
+          onChange={(e) => setForm({ ...form, qris_method_id: e.target.value })}
+        >
+          <option value="">— otomatis dari kategori —</option>
+          {filteredMethods.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+        </select>
+      </div>
+    </>
   );
 }

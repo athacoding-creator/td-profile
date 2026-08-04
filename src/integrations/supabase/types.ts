@@ -149,11 +149,13 @@ export type Database = {
           max_infaq: number | null
           max_participants: number | null
           min_infaq: number | null
+          payment_category_id: string | null
           points_reward: number
           poster_url: string | null
           price: number | null
           program_id: string | null
           qr_token: string
+          qris_method_id: string | null
           recurring_days: number[]
           recurring_end_time: string | null
           recurring_start_time: string | null
@@ -186,11 +188,13 @@ export type Database = {
           max_infaq?: number | null
           max_participants?: number | null
           min_infaq?: number | null
+          payment_category_id?: string | null
           points_reward?: number
           poster_url?: string | null
           price?: number | null
           program_id?: string | null
           qr_token?: string
+          qris_method_id?: string | null
           recurring_days?: number[]
           recurring_end_time?: string | null
           recurring_start_time?: string | null
@@ -223,11 +227,13 @@ export type Database = {
           max_infaq?: number | null
           max_participants?: number | null
           min_infaq?: number | null
+          payment_category_id?: string | null
           points_reward?: number
           poster_url?: string | null
           price?: number | null
           program_id?: string | null
           qr_token?: string
+          qris_method_id?: string | null
           recurring_days?: number[]
           recurring_end_time?: string | null
           recurring_start_time?: string | null
@@ -244,10 +250,24 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "events_payment_category_id_fkey"
+            columns: ["payment_category_id"]
+            isOneToOne: false
+            referencedRelation: "payment_categories"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "events_program_id_fkey"
             columns: ["program_id"]
             isOneToOne: false
             referencedRelation: "programs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_qris_method_id_fkey"
+            columns: ["qris_method_id"]
+            isOneToOne: false
+            referencedRelation: "qris_methods"
             referencedColumns: ["id"]
           },
         ]
@@ -347,6 +367,45 @@ export type Database = {
           message?: string | null
           phone?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      payment_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          is_system: boolean
+          name: string
+          order_index: number
+          slug: string
+          updated_at: string
+          whatsapp_number: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_system?: boolean
+          name: string
+          order_index?: number
+          slug: string
+          updated_at?: string
+          whatsapp_number?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_system?: boolean
+          name?: string
+          order_index?: number
+          slug?: string
+          updated_at?: string
+          whatsapp_number?: string | null
         }
         Relationships: []
       }
@@ -553,6 +612,7 @@ export type Database = {
       qris_methods: {
         Row: {
           category: string
+          category_id: string | null
           created_at: string | null
           description: string | null
           id: string
@@ -561,9 +621,11 @@ export type Database = {
           order_index: number | null
           qr_url: string
           updated_at: string | null
+          whatsapp_number: string | null
         }
         Insert: {
           category: string
+          category_id?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
@@ -572,9 +634,11 @@ export type Database = {
           order_index?: number | null
           qr_url: string
           updated_at?: string | null
+          whatsapp_number?: string | null
         }
         Update: {
           category?: string
+          category_id?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
@@ -583,8 +647,17 @@ export type Database = {
           order_index?: number | null
           qr_url?: string
           updated_at?: string | null
+          whatsapp_number?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "qris_methods_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "payment_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       redemptions: {
         Row: {
@@ -767,6 +840,7 @@ export type Database = {
       admin_get_program_qr: { Args: { _id: string }; Returns: string }
       archive_old_events: { Args: never; Returns: undefined }
       check_is_admin: { Args: never; Returns: boolean }
+      event_registration_count: { Args: { _event_id: string }; Returns: number }
       find_active_event_by_program_token: {
         Args: { _token: string }
         Returns: string

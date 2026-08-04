@@ -11,6 +11,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { ChevronLeft, CreditCard, Info, MessageCircle, CheckCircle2, Heart, Coins, Star, Download, Smartphone, Wallet, Check } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { resolveEventQris } from "@/lib/resolveQris";
 
 export default function Payment() {
   const { id } = useParams();
@@ -98,43 +99,16 @@ export default function Payment() {
         }
       }
 
-      // Load payment method
-      if (eventData.payment_method_id) {
-        const { data: pmData } = await supabase
-          .from("payment_methods")
-          .select("*")
-          .eq("id", eventData.payment_method_id)
-          .maybeSingle();
-        setPaymentMethod(pmData);
-      } else {
-        const category = eventData.is_online
-          ? "infaq"
-          : eventData.registration_type === "paid"
-            ? "paid"
-            : eventData.registration_type === "infaq"
-              ? "infaq"
-              : null;
-        
-        if (category) {
-          const { data: qrisData } = await supabase
-            .from("qris_methods")
-            .select("*")
-            .eq("category", category)
-            .eq("is_active", true)
-            .order("order_index", { ascending: true })
-            .limit(1)
-            .maybeSingle();
-          
-          if (qrisData) {
-            setPaymentMethod({
-              id: qrisData.id,
-              name: qrisData.name,
-              type: "qris",
-              qr_url: qrisData.qr_url,
-              description: qrisData.description,
-            });
-          }
+      // Load QRIS: pilihan event -> kategori event -> kategori bawaan
+      try {
+        const qris = await resolveEventQris(eventData);
+        setPaymentMethod(qris);
+        if (!qris) {
+          toast.error("QRIS untuk kategori pembayaran event ini belum tersedia. Hubungi admin.");
         }
+      } catch (err) {
+        console.error("resolveEventQris error", err);
+        setPaymentMethod(null);
       }
 
       const { data: settingsData } = await supabase
@@ -192,11 +166,30 @@ export default function Payment() {
     }
   };
 
+  const ensureQuota = async (needed: number) => {
+    if (!event?.max_participants) return true;
+    const { data, error } = await supabase.rpc("event_registration_count", { _event_id: event.id });
+    if (error) {
+      toast.error(error.message);
+      return false;
+    }
+    const used = typeof data === "number" ? data : 0;
+    if (used + needed > event.max_participants) {
+      toast.error("Maaf, kuota peserta untuk event ini sudah penuh.");
+      return false;
+    }
+    return true;
+  };
+
   const submitPayment = async () => {
     if (!paymentForm.proofFile) return toast.error("Upload bukti pembayaran terlebih dahulu");
     
     setSubmitting(true);
     try {
+      if (!registration && !(await ensureQuota(participantCount))) {
+        setSubmitting(false);
+        return;
+      }
       const webpFile = await convertToWebP(paymentForm.proofFile);
       const fileName = `${user?.id}/${event.id}/${Date.now()}.webp`;
       const { error: uploadError } = await supabase.storage
@@ -233,7 +226,9 @@ export default function Payment() {
       }
 
       toast.success("Bukti pembayaran berhasil diunggah!");
-      const whatsappNumber = selectedPosition
+      const whatsappNumber = paymentMethod?.whatsapp_number
+        ? paymentMethod.whatsapp_number.replace(/[^0-9]/g, "")
+        : selectedPosition
         ? "6285111514040"
         : event.registration_type === "paid"
         ? (settings.admin_wa_number_paid || "+6282136031995")
@@ -310,6 +305,10 @@ export default function Payment() {
     setSubmitting(true);
     try {
       const amount = infaqType === "money" ? (Number(paymentForm.amount) || 0) : 0;
+      if (!registration && !(await ensureQuota(participantCount))) {
+        setSubmitting(false);
+        return;
+      }
       const msg = infaqType === "prayer" && paymentForm.donorMessage?.trim() ? paymentForm.donorMessage.trim().slice(0, 500) : (infaqType === "money" ? (paymentForm.donorMessage?.trim() ? paymentForm.donorMessage.trim().slice(0, 500) : null) : null);
       
       const updateData = {
