@@ -29,6 +29,7 @@ export default function EventDetail() {
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [paymentForm, setPaymentForm] = useState({ amount: 0, proofFile: null as File | null });
   const [paymentMethod, setPaymentMethod] = useState<any>(null);
+  const [regCount, setRegCount] = useState<number | null>(null);
   const [selectedEpisode, setSelectedEpisode] = useState<number>(0);
   const [registrationChoiceOpen, setRegistrationChoiceOpen] = useState(false);
   const [positionChoiceOpen, setPositionChoiceOpen] = useState(false);
