@@ -126,6 +126,7 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
       episode_count: isEpisodeProgram ? Number(form.episode_count) : 0,
       episode_youtube_urls: isEpisodeProgram ? buildEpisodeUrls(form.episode_youtube_urls ?? [], Number(form.episode_count)) : [],
     } as any).select("id").single();
+
     if (error) return toast.error(error.message);
     if (isSportEvent && createdEvent) {
       const { error: pricingError } = await supabase.from("event_position_pricing").insert(
