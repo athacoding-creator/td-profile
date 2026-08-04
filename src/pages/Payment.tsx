@@ -305,6 +305,10 @@ export default function Payment() {
     setSubmitting(true);
     try {
       const amount = infaqType === "money" ? (Number(paymentForm.amount) || 0) : 0;
+      if (!registration && !(await ensureQuota(participantCount))) {
+        setSubmitting(false);
+        return;
+      }
       const msg = infaqType === "prayer" && paymentForm.donorMessage?.trim() ? paymentForm.donorMessage.trim().slice(0, 500) : (infaqType === "money" ? (paymentForm.donorMessage?.trim() ? paymentForm.donorMessage.trim().slice(0, 500) : null) : null);
       
       const updateData = {
