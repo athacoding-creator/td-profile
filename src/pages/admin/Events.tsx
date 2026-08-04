@@ -194,6 +194,7 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
             <Button type="button" variant="outline" size="sm" onClick={() => setPositions([...positions, { id: crypto.randomUUID(), position: "", price: "" }])}><Plus className="mr-1 h-4 w-4" />Tambah posisi</Button>
           </div>
         )}
+        <PaymentCategoryFields form={form} setForm={setForm} show={isSportEvent || form.registration_type === "paid"} />
         {form.registration_type === "infaq" && (
           <>
             <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Min Infaq (Rp)</Label><Input type="number" value={form.min_infaq ?? 0} onChange={(e) => setForm({ ...form, min_infaq: e.target.value })} className="text-sm h-9 sm:h-10" /></div>
