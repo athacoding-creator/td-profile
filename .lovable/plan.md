@@ -1,40 +1,47 @@
-# Perbaikan Daftar Futsal & Daftar Rombongan
-
-Saya sudah cek database dan kode. Kedua fitur gagal karena aturan lama di database yang belum menyesuaikan fitur baru — bukan sekadar bug tampilan.
+# Perbaikan Kuota Peserta & Sistem QRIS Berkategori
 
 ## Temuan (sudah diverifikasi)
 
-**1. Daftar Rombongan selalu gagal**
-- Kolom `user_id` di tabel `registrations` masih **wajib diisi**, padahal peserta rombongan (tamu) didaftarkan dengan `user_id` kosong → insert ditolak.
-- Aturan akses (izin tambah data) hanya mengizinkan baris milik akun sendiri (`user_id = akun login`), jadi baris tamu tetap ditolak walau kolomnya dibuat opsional.
-- Ada **dua** aturan unik `(user_id, event_id)` → menghalangi satu akun mendaftarkan banyak tamu bila nanti diisi id pendaftar.
-- Pemeriksa gender program membaca data profil dari `user_id`; untuk tamu (tanpa akun) pemeriksaan ini akan error/menolak.
+**1. Max Peserta tidak pernah berfungsi**
+- Pengecekan kuota dilakukan di browser dengan menghitung baris pendaftar. Karena aturan akses database hanya mengizinkan user melihat pendaftarannya sendiri, hitungan yang kembali selalu 0–1, bukan jumlah pendaftar sesungguhnya. Jadi kuota praktis tidak pernah penuh.
+- Pengecekan hanya berjalan di halaman detail event. Baris pendaftaran sebenarnya baru dibuat di halaman bayar, jadi antara cek dan simpan tidak ada penjagaan (dua orang bisa lolos bersamaan).
+- Tidak ada penjagaan kuota di sisi database.
 
-**2. Daftar Futsal / Mini Soccer selalu gagal**
-- Tabel harga posisi (`event_position_pricing`) memakai pengecekan admin versi lama `has_role(auth.uid(), 'admin')` bertipe teks. Fungsi versi teks itu **rusak**: kondisi `WHERE user_id = user_id` selalu benar (nama parameter menutupi nama kolom), sehingga hasilnya acak/salah. Akibatnya admin gagal menyimpan daftar posisi & harga — terbukti di database: **0 baris harga posisi dan 0 event futsal** yang berhasil dibuat.
-- Selain rusak, fungsi ini juga celah keamanan (bisa mengembalikan "admin" untuk sembarang user).
-- Pemeriksa nominal pembayaran mewajibkan `amount_paid` **persis sama** dengan harga event. Pada futsal harga mengikuti posisi (Kiper/Pemain), dan pada rombongan nominal dibagi per peserta → selalu ditolak.
+**2. Sisa kode metode pembayaran lama yang rusak**
+- Halaman detail event dan halaman bayar masih membaca kolom `payment_method_id` pada tabel event, padahal kolom itu tidak ada (dicek: query menghasilkan error "column events.payment_method_id does not exist"). Di detail event error ini tertutup query cadangan; di halaman bayar tidak ada cadangan.
+
+**3. QRIS Manager terlalu kaku**
+- Kategori QRIS hanya dua nilai tetap: "Pembayaran" dan "Infaq". Tidak bisa membuat kategori seperti Kelas, Futsal, dll.
+- Saat bayar, sistem mengambil QRIS aktif pertama pada kategori itu — event tidak bisa diarahkan ke QRIS tertentu.
 
 ## Rencana Perbaikan
 
-### Tahap 1 — Migrasi database
-1. `registrations.user_id` dibuat opsional (boleh kosong untuk peserta tamu).
-2. Hapus dua aturan unik lama, ganti dengan satu aturan unik yang hanya berlaku bila `user_id` terisi — sehingga satu akun bisa mendaftarkan banyak tamu, tapi tetap tidak bisa mendaftar dobel untuk dirinya sendiri.
-3. Perbarui aturan akses `registrations`:
-   - Tambah data: diizinkan bila baris milik akun sendiri **atau** baris tamu yang didaftarkan oleh akun tersebut.
-   - Lihat/ubah data: pendaftar tetap bisa melihat & mengubah baris tamu yang ia daftarkan; admin tetap penuh.
-4. Perbaiki pemeriksa gender program agar melewati baris tamu (tanpa akun) dan memakai gender tamu bila ada.
-5. Perbaiki pemeriksa nominal: bila event futsal/mini soccer, nominal divalidasi terhadap harga posisi yang dipilih; untuk rombongan divalidasi per peserta, bukan total.
-6. Ganti aturan admin pada `event_position_pricing` agar memakai fungsi admin yang benar (`is_admin()`), lalu **hapus fungsi `has_role(user_id uuid, role_name text)` yang rusak** setelah dipastikan tidak ada aturan lain yang memakainya (aturan pada `payment_methods` juga memakainya dan akan ikut diperbaiki).
-7. Pastikan hak akses (GRANT) `event_position_pricing` benar untuk publik baca & admin tulis.
+### Tahap 1 — Kuota peserta (database + kode)
+1. Tambah fungsi hitung pendaftar aman di database yang bisa dibaca semua orang (hanya mengembalikan angka, bukan data peserta), plus penjagaan otomatis saat baris pendaftaran dibuat: bila kuota penuh, penyimpanan ditolak dengan pesan "Kuota peserta sudah penuh".
+2. Halaman detail event: tampilkan sisa kuota ("12/50 terisi", "Kuota penuh") dan nonaktifkan tombol daftar bila penuh, memakai fungsi hitung tadi.
+3. Halaman bayar & pendaftaran rombongan: cek ulang kuota sebelum simpan dan tampilkan pesan dari database apa adanya bila ditolak.
+4. Untuk rombongan, kuota dihitung dari jumlah peserta yang didaftarkan, bukan satu.
 
-### Tahap 2 — Perbaikan kode
-- `src/pages/admin/Events.tsx`: bila penyimpanan harga posisi gagal, tampilkan pesan error jelas dan jangan tinggalkan event tanpa harga (rollback/peringatan).
-- `src/pages/EventDetail.tsx`: alur futsal saat ini selalu melompat ke halaman bayar dan melewati cek kuota & gender — dirapikan agar kuota/gender tetap dicek, dan event futsal gratis tidak dipaksa ke halaman bayar.
-- `src/pages/Payment.tsx`: kirim `position` + harga posisi per peserta secara konsisten (termasuk saat rombongan), dan tampilkan pesan error dari database apa adanya agar mudah didiagnosis.
+### Tahap 2 — Kategori pembayaran & QRIS
+1. Buat tabel kategori pembayaran yang dikelola admin (nama, keterangan, aktif) — misalnya Kelas, Futsal, Camp. Kategori "Infaq" tetap bawaan sistem dan alurnya tidak diubah.
+2. Tabel QRIS: ganti kategori dari dua pilihan tetap menjadi rujukan ke kategori pembayaran, dengan menjaga data lama (QRIS "paid" dipetakan ke kategori umum "Pembayaran", "infaq" tetap infaq).
+3. Tabel event: tambah pilihan kategori pembayaran dan (opsional) QRIS spesifik. Event berbayar memilih kategori; event infaq tetap otomatis memakai QRIS infaq seperti sekarang.
 
-### Tahap 3 — Verifikasi
-- Uji: admin buat event futsal dengan 2 posisi → user daftar pilih posisi → bayar; dan user daftar rombongan 3 orang pada event gratis, infaq, dan berbayar. Cek baris masuk di tabel `registrations` serta muncul di dashboard Pendaftar.
+### Tahap 3 — Perapihan halaman QRIS Manager
+- Dua tab: **Kategori Pembayaran** (kelola daftar kategori) dan **Daftar QRIS**.
+- Daftar QRIS dikelompokkan per kategori, dengan filter kategori, pencarian nama, badge status aktif, dan tombol urutan naik/turun tetap ada.
+- Form tambah/edit: nama, kategori (dropdown dari kategori yang dikelola admin), keterangan, gambar QRIS, status aktif; preview seperti sekarang.
+- Peringatan bila ada kategori tanpa QRIS aktif, supaya event berbayar tidak kehabisan tujuan pembayaran.
+
+### Tahap 4 — Alur bayar user
+- Halaman bayar mengambil QRIS berdasarkan QRIS yang dipilih event, lalu kategori event, lalu fallback kategori umum. Bila tidak ada QRIS aktif, tampilkan pesan jelas — jangan layar kosong.
+- Hapus sisa pemakaian `payment_method_id` di halaman detail event dan halaman bayar.
+- Alur infaq (nominal bebas / doa terbaik / tanpa verifikasi admin) tidak diubah sama sekali.
+
+### Tahap 5 — Verifikasi
+- Buat event berkuota 2, daftarkan sampai penuh, pastikan pendaftar ketiga ditolak (termasuk lewat rombongan).
+- Buat kategori "Futsal" + QRIS-nya, buat event futsal berbayar, pastikan QRIS yang muncul sesuai kategori.
+- Pastikan event infaq masih memunculkan QRIS infaq dengan alur yang sama.
 
 ## Catatan teknis
-Perubahan database dijalankan sebagai satu migrasi; kolom `user_id` yang menjadi opsional aman karena saat ini tidak ada baris dengan `user_id` kosong (sudah dicek: 0 baris).
+Satu migrasi database: fungsi hitung pendaftar + trigger kuota, tabel `payment_categories` (dengan GRANT, publik baca / admin tulis), kolom kategori pada `qris_methods` dan `events`, serta migrasi data kategori lama. Kode yang disentuh: `src/pages/EventDetail.tsx`, `src/pages/Payment.tsx`, `src/pages/admin/QrisManager.tsx`, `src/pages/admin/Events.tsx`.
