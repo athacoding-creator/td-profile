@@ -567,10 +567,7 @@ export default function Payment() {
                   </div>
                 </>
               )}
-              <div className="text-center">
-                <p className="text-2xl font-bold text-primary">Rp {(event.price * participantCount)?.toLocaleString("id-ID")}</p>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mt-1">Nominal tetap untuk {participantCount} peserta</p>
-              </div>
+
             </div>
           ) : (
             <div className="rounded-xl bg-destructive/10 p-4 text-center text-xs text-destructive">
