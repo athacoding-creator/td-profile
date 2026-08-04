@@ -68,6 +68,7 @@ export default function EventsPage() {
 }
 
 function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; defaultPoints: number; onCreated: () => void }) {
+  // fields kategori pembayaran (kelas, futsal, dll)
   const [form, setForm] = useState<any>({ gender: "ALL", points_reward: defaultPoints, program_id: "", is_pinned: false, is_recurring: false, recurring_days: [], registration_type: "free", price: 0, min_infaq: 0, max_infaq: 50000, max_participants: "", is_online: false, youtube_url: "", episode_count: 0, episode_youtube_urls: [], event_type: "kajian" });
   useEffect(() => { setForm((f: any) => ({ ...f, points_reward: f.points_reward ?? defaultPoints })); }, [defaultPoints]);
   const [positions, setPositions] = useState(() => DEFAULT_POSITIONS.map((entry) => ({ ...entry, id: crypto.randomUUID() })));
