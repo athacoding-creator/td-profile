@@ -554,20 +554,31 @@ export default function EventDetail() {
               onCancel={() => setShowPaymentForm(false)}
             />
           ) : (
-            <Button
-              onClick={handleRegisterClick}
-              disabled={submitting}
-              className="w-full text-white text-sm sm:text-base font-bold bg-green-600 hover:bg-green-700"
-            >
-              {submitting 
-                ? "Mendaftarkan…" 
-                : !user 
-                  ? "Login untuk Daftar" 
-                  : sw.expired
-                      ? "Buka Akses Video"
-                      : "Daftar Event"
-              }
-            </Button>
+            <div className="space-y-2">
+              {!!event.max_participants && (
+                <p className={`text-xs font-semibold ${quotaFull ? "text-destructive" : "text-muted-foreground"}`}>
+                  {quotaFull
+                    ? "Kuota peserta sudah penuh"
+                    : `Kuota: ${regCount ?? 0}/${event.max_participants} terisi`}
+                </p>
+              )}
+              <Button
+                onClick={handleRegisterClick}
+                disabled={submitting || quotaFull}
+                className="w-full text-white text-sm sm:text-base font-bold bg-green-600 hover:bg-green-700"
+              >
+                {submitting
+                  ? "Mendaftarkan…"
+                  : !user
+                    ? "Login untuk Daftar"
+                    : quotaFull
+                      ? "Kuota Penuh"
+                      : sw.expired
+                        ? "Buka Akses Video"
+                        : "Daftar Event"
+                }
+              </Button>
+            </div>
           )}
         </div>
 
