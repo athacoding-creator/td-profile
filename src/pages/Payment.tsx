@@ -167,6 +167,7 @@ export default function Payment() {
   };
 
   const submitPayment = async () => {
+    // placeholder anchor
     if (!paymentForm.proofFile) return toast.error("Upload bukti pembayaran terlebih dahulu");
     
     setSubmitting(true);
