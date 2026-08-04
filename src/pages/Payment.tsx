@@ -11,6 +11,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { ChevronLeft, CreditCard, Info, MessageCircle, CheckCircle2, Heart, Coins, Star, Download, Smartphone, Wallet, Check } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { resolveEventQris } from "@/lib/resolveQris";
 
 export default function Payment() {
   const { id } = useParams();
@@ -98,43 +99,16 @@ export default function Payment() {
         }
       }
 
-      // Load payment method
-      if (eventData.payment_method_id) {
-        const { data: pmData } = await supabase
-          .from("payment_methods")
-          .select("*")
-          .eq("id", eventData.payment_method_id)
-          .maybeSingle();
-        setPaymentMethod(pmData);
-      } else {
-        const category = eventData.is_online
-          ? "infaq"
-          : eventData.registration_type === "paid"
-            ? "paid"
-            : eventData.registration_type === "infaq"
-              ? "infaq"
-              : null;
-        
-        if (category) {
-          const { data: qrisData } = await supabase
-            .from("qris_methods")
-            .select("*")
-            .eq("category", category)
-            .eq("is_active", true)
-            .order("order_index", { ascending: true })
-            .limit(1)
-            .maybeSingle();
-          
-          if (qrisData) {
-            setPaymentMethod({
-              id: qrisData.id,
-              name: qrisData.name,
-              type: "qris",
-              qr_url: qrisData.qr_url,
-              description: qrisData.description,
-            });
-          }
+      // Load QRIS: pilihan event -> kategori event -> kategori bawaan
+      try {
+        const qris = await resolveEventQris(eventData);
+        setPaymentMethod(qris);
+        if (!qris) {
+          toast.error("QRIS untuk kategori pembayaran event ini belum tersedia. Hubungi admin.");
         }
+      } catch (err) {
+        console.error("resolveEventQris error", err);
+        setPaymentMethod(null);
       }
 
       const { data: settingsData } = await supabase
