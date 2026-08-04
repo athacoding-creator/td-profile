@@ -166,8 +166,22 @@ export default function Payment() {
     }
   };
 
+  const ensureQuota = async (needed: number) => {
+    if (!event?.max_participants) return true;
+    const { data, error } = await supabase.rpc("event_registration_count", { _event_id: event.id });
+    if (error) {
+      toast.error(error.message);
+      return false;
+    }
+    const used = typeof data === "number" ? data : 0;
+    if (used + needed > event.max_participants) {
+      toast.error("Maaf, kuota peserta untuk event ini sudah penuh.");
+      return false;
+    }
+    return true;
+  };
+
   const submitPayment = async () => {
-    // placeholder anchor
     if (!paymentForm.proofFile) return toast.error("Upload bukti pembayaran terlebih dahulu");
     
     setSubmitting(true);
