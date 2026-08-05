@@ -78,20 +78,34 @@ export default function ScanLanding() {
     ran.current = true;
     (async () => {
       try {
-        // Resolve event_id rujukan: kalau hanya program QR, ambil satu event apa pun dari program tsb.
+        // Resolve event_id rujukan.
+        // QR program: cari event AKTIF milik program berdasarkan token program,
+        // bukan sembarang event (event lama/selesai bikin scan selalu gagal).
         let evId = eventId;
         if (!evId && programId) {
-          const { data: anyEv, error: lookupErr } = await supabase
-            .from("events")
-            .select("id")
-            .eq("program_id", programId)
-            .limit(1)
-            .maybeSingle();
+          const { data: activeEv, error: lookupErr } = await supabase.rpc(
+            "find_active_event_by_program_token",
+            { _token: token },
+          );
           if (lookupErr) throw lookupErr;
-          evId = anyEv?.id ?? null;
+          evId = (activeEv as string | null) ?? null;
           if (!evId) {
-            setError("Program belum memiliki event terdaftar.");
-            ran.current = false;
+            // Fallback: event terdekat dari program ini, supaya pesan errornya jelas
+            const { data: nearest } = await supabase
+              .from("events")
+              .select("id,title,starts_at")
+              .eq("program_id", programId)
+              .eq("status", "active")
+              .order("starts_at", { ascending: true })
+              .limit(1)
+              .maybeSingle();
+            if (nearest?.id) setEventIdForRetry(nearest.id);
+            setError(
+              nearest
+                ? "Belum ada jadwal program yang sedang berlangsung. Scan dibuka 6 jam sebelum acara dimulai."
+                : "Program ini belum memiliki jadwal event yang aktif.",
+            );
+            ran.current = true;
             return;
           }
         }
