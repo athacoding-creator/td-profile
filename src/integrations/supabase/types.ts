@@ -101,6 +101,7 @@ export type Database = {
           event_id: string
           id: string
           is_active: boolean | null
+          max_slots: number | null
           position: string
           price: number
         }
@@ -109,6 +110,7 @@ export type Database = {
           event_id: string
           id?: string
           is_active?: boolean | null
+          max_slots?: number | null
           position: string
           price?: number
         }
@@ -117,6 +119,7 @@ export type Database = {
           event_id?: string
           id?: string
           is_active?: boolean | null
+          max_slots?: number | null
           position?: string
           price?: number
         }
@@ -840,6 +843,10 @@ export type Database = {
       admin_get_program_qr: { Args: { _id: string }; Returns: string }
       archive_old_events: { Args: never; Returns: undefined }
       check_is_admin: { Args: never; Returns: boolean }
+      event_position_count: {
+        Args: { _event_id: string; _position: string }
+        Returns: number
+      }
       event_registration_count: { Args: { _event_id: string }; Returns: number }
       find_active_event_by_program_token: {
         Args: { _token: string }

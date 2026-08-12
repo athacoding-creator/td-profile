@@ -31,8 +31,8 @@ const buildEpisodeUrls = (urls: string[] = [], count: number) => {
 const isExpired = (ev: any) => isEventExpired(ev);
 const SPORT_EVENT_TYPES = ["futsal", "mini-soccer"];
 const DEFAULT_POSITIONS = [
-  { position: "Pemain Lapangan", price: "10000" },
-  { position: "Kiper", price: "15000" },
+  { position: "Pemain Lapangan", price: "10000", max_slots: "21" },
+  { position: "Kiper", price: "15000", max_slots: "4" },
 ];
 
 const toLocalInput = (iso?: string | null) => {
@@ -133,7 +133,7 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
     if (error) return toast.error(error.message);
     if (isSportEvent && createdEvent) {
       const { error: pricingError } = await supabase.from("event_position_pricing").insert(
-        validPositions.map((entry) => ({ event_id: createdEvent.id, position: entry.position.trim(), price: Number(entry.price) }))
+        validPositions.map((entry) => ({ event_id: createdEvent.id, position: entry.position.trim(), price: Number(entry.price), max_slots: entry.max_slots === "" || entry.max_slots == null ? null : Number(entry.max_slots) }))
       );
       if (pricingError) {
         // Jangan tinggalkan event olahraga tanpa harga posisi — batalkan pembuatan event.
@@ -190,13 +190,15 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
         )}
         {isSportEvent && (
           <div className="md:col-span-2 space-y-3 rounded-xl border border-primary/20 bg-primary/5 p-3">
-            <div><p className="text-sm font-semibold">Harga per posisi</p><p className="text-xs text-muted-foreground">Event olahraga selalu menggunakan pendaftaran wajib bayar.</p></div>
-            {positions.map((entry) => <div key={entry.id} className="grid grid-cols-[1fr_120px_auto] gap-2">
+            <div><p className="text-sm font-semibold">Harga & kuota per posisi</p><p className="text-xs text-muted-foreground">Event olahraga selalu wajib bayar. Kuota kosong = tanpa batas.</p></div>
+            <div className="grid grid-cols-[1fr_120px_100px_auto] gap-2 text-xs text-muted-foreground"><span>Posisi</span><span>Harga</span><span>Kuota</span><span /></div>
+            {positions.map((entry) => <div key={entry.id} className="grid grid-cols-[1fr_120px_100px_auto] gap-2">
               <Input value={entry.position} placeholder="Nama posisi" onChange={(e) => setPositions(positions.map((item) => item.id === entry.id ? { ...item, position: e.target.value } : item))} />
               <Input type="number" min="1" value={entry.price} placeholder="Harga" onChange={(e) => setPositions(positions.map((item) => item.id === entry.id ? { ...item, price: e.target.value } : item))} />
+              <Input type="number" min="1" value={entry.max_slots ?? ""} placeholder="Kuota" onChange={(e) => setPositions(positions.map((item) => item.id === entry.id ? { ...item, max_slots: e.target.value } : item))} />
               <Button type="button" variant="outline" size="icon" disabled={positions.length === 1} onClick={() => setPositions(positions.filter((item) => item.id !== entry.id))}><Trash2 className="h-4 w-4" /></Button>
             </div>)}
-            <Button type="button" variant="outline" size="sm" onClick={() => setPositions([...positions, { id: crypto.randomUUID(), position: "", price: "" }])}><Plus className="mr-1 h-4 w-4" />Tambah posisi</Button>
+            <Button type="button" variant="outline" size="sm" onClick={() => setPositions([...positions, { id: crypto.randomUUID(), position: "", price: "", max_slots: "" }])}><Plus className="mr-1 h-4 w-4" />Tambah posisi</Button>
           </div>
         )}
         <PaymentCategoryFields form={form} setForm={setForm} show={isSportEvent || form.registration_type === "paid"} />
@@ -505,7 +507,7 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
       (async () => {
         const { data } = await supabase.from("event_position_pricing").select("*").eq("event_id", ev.id).eq("is_active", true).order("created_at");
         if (data && data.length > 0) {
-          setPositions(data.map(p => ({ ...p, price: String(p.price) })));
+          setPositions(data.map((p: any) => ({ ...p, price: String(p.price), max_slots: p.max_slots == null ? "" : String(p.max_slots) })));
         } else {
           setPositions(DEFAULT_POSITIONS.map(p => ({ ...p, id: crypto.randomUUID() })));
         }
@@ -566,7 +568,7 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
       // Simple approach: delete old and insert new to ensure sync
       await supabase.from("event_position_pricing").delete().eq("event_id", ev.id);
       const { error: pricingError } = await supabase.from("event_position_pricing").insert(
-        validPositions.map((entry) => ({ event_id: ev.id, position: entry.position.trim(), price: Number(entry.price) }))
+        validPositions.map((entry) => ({ event_id: ev.id, position: entry.position.trim(), price: Number(entry.price), max_slots: entry.max_slots === "" || entry.max_slots == null ? null : Number(entry.max_slots) }))
       );
       if (pricingError) return toast.error(`Harga posisi gagal disimpan: ${pricingError.message}`);
     }
@@ -602,13 +604,15 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
           <div className="space-y-1.5"><Label>Venue</Label><Input value={form.venue ?? ""} onChange={(e) => setForm({ ...form, venue: e.target.value })} /></div>
           {isSportEvent && (
             <div className="md:col-span-2 space-y-3 rounded-xl border border-primary/20 bg-primary/5 p-3">
-              <div><p className="text-sm font-semibold">Harga per posisi</p><p className="text-xs text-muted-foreground">Event olahraga selalu menggunakan pendaftaran wajib bayar.</p></div>
-              {positions.map((entry) => <div key={entry.id || entry.position} className="grid grid-cols-[1fr_120px_auto] gap-2">
+              <div><p className="text-sm font-semibold">Harga & kuota per posisi</p><p className="text-xs text-muted-foreground">Event olahraga selalu wajib bayar. Kuota kosong = tanpa batas.</p></div>
+              <div className="grid grid-cols-[1fr_120px_100px_auto] gap-2 text-xs text-muted-foreground"><span>Posisi</span><span>Harga</span><span>Kuota</span><span /></div>
+              {positions.map((entry) => <div key={entry.id || entry.position} className="grid grid-cols-[1fr_120px_100px_auto] gap-2">
                 <Input value={entry.position} placeholder="Nama posisi" onChange={(e) => setPositions(positions.map((item) => (item.id === entry.id || item.position === entry.position) ? { ...item, position: e.target.value } : item))} />
                 <Input type="number" min="1" value={entry.price} placeholder="Harga" onChange={(e) => setPositions(positions.map((item) => (item.id === entry.id || item.position === entry.position) ? { ...item, price: e.target.value } : item))} />
+                <Input type="number" min="1" value={entry.max_slots ?? ""} placeholder="Kuota" onChange={(e) => setPositions(positions.map((item) => (item.id === entry.id || item.position === entry.position) ? { ...item, max_slots: e.target.value } : item))} />
                 <Button type="button" variant="outline" size="icon" disabled={positions.length === 1} onClick={() => setPositions(positions.filter((item) => (item.id !== entry.id && item.position !== entry.position)))}><Trash2 className="h-4 w-4" /></Button>
               </div>)}
-              <Button type="button" variant="outline" size="sm" onClick={() => setPositions([...positions, { id: crypto.randomUUID(), position: "", price: "" }])}><Plus className="mr-1 h-4 w-4" />Tambah posisi</Button>
+              <Button type="button" variant="outline" size="sm" onClick={() => setPositions([...positions, { id: crypto.randomUUID(), position: "", price: "", max_slots: "" }])}><Plus className="mr-1 h-4 w-4" />Tambah posisi</Button>
             </div>
           )}
           <div className="space-y-1.5 md:col-span-2"><Label>Deskripsi</Label><Textarea rows={3} value={form.description ?? ""} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
