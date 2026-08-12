@@ -34,7 +34,8 @@ export default function EventDetail() {
   const [selectedEpisode, setSelectedEpisode] = useState<number>(0);
   const [registrationChoiceOpen, setRegistrationChoiceOpen] = useState(false);
   const [positionChoiceOpen, setPositionChoiceOpen] = useState(false);
-  const [positionPricing, setPositionPricing] = useState<{ position: string; price: number }[]>([]);
+  const [positionPricing, setPositionPricing] = useState<{ position: string; price: number; max_slots?: number | null }[]>([]);
+  const [positionCounts, setPositionCounts] = useState<Record<string, number>>({});
   const [showGuestForm, setShowGuestForm] = useState(false);
   const emptyGuest = () => ({ name: "", phone: "", gender: "" });
   const [guestCount, setGuestCount] = useState(1);
@@ -86,12 +87,18 @@ export default function EventDetail() {
       if (["futsal", "mini-soccer"].includes(eventData?.event_type)) {
         const { data: pricingData, error: pricingError } = await supabase
           .from("event_position_pricing")
-          .select("position, price")
+          .select("position, price, max_slots")
           .eq("event_id", eventData.id)
           .neq("is_active", false)
           .order("created_at");
         if (pricingError) console.error("load position pricing", pricingError);
-        setPositionPricing(pricingData ?? []);
+        setPositionPricing((pricingData as any) ?? []);
+        const counts: Record<string, number> = {};
+        await Promise.all((pricingData ?? []).map(async (p: any) => {
+          const { data: c } = await supabase.rpc("event_position_count", { _event_id: eventData.id, _position: p.position });
+          counts[p.position] = typeof c === "number" ? c : 0;
+        }));
+        setPositionCounts(counts);
       }
 
       if (eventData) {
@@ -155,13 +162,22 @@ export default function EventDetail() {
     setRegistrationChoiceOpen(true);
   };
 
-  const selectPosition = async (pricing: { position: string; price: number }) => {
+  const selectPosition = async (pricing: { position: string; price: number; max_slots?: number | null }) => {
     if (quotaFull) return toast.error("Maaf, kuota peserta untuk event ini sudah penuh.");
     if (event.gender !== "ALL" && profile?.gender && profile.gender !== event.gender) {
       return toast.error(`Maaf, event ini khusus untuk ${event.gender === "L" ? "Laki-laki" : "Perempuan"}.`);
     }
     try {
       if (!(await checkQuota(1))) return;
+      if (pricing.max_slots && pricing.max_slots > 0) {
+        const { data: c, error: cErr } = await supabase.rpc("event_position_count", { _event_id: event.id, _position: pricing.position });
+        if (cErr) throw cErr;
+        const used = typeof c === "number" ? c : 0;
+        setPositionCounts((prev) => ({ ...prev, [pricing.position]: used }));
+        if (used >= pricing.max_slots) {
+          return toast.error(`Kuota posisi ${pricing.position} sudah penuh.`);
+        }
+      }
     } catch (error: any) {
       return toast.error(error.message);
     }
@@ -620,12 +636,24 @@ export default function EventDetail() {
             <DialogHeader><DialogTitle>Pilih Posisi Bermain</DialogTitle></DialogHeader>
             <p className="text-sm text-muted-foreground">Pilih posisi untuk melihat nominal pendaftaran dan melanjutkan pembayaran.</p>
             <div className="space-y-2">
-              {positionPricing.map((pricing) => (
-                <button key={pricing.position} type="button" onClick={() => selectPosition(pricing)} className="flex w-full items-center justify-between rounded-xl border p-4 text-left transition hover:border-primary hover:bg-primary/5">
-                  <span className="font-semibold">{pricing.position}</span>
-                  <span className="font-bold text-primary">Rp {Number(pricing.price).toLocaleString("id-ID")}</span>
-                </button>
-              ))}
+              {positionPricing.map((pricing) => {
+                const cap = pricing.max_slots && pricing.max_slots > 0 ? pricing.max_slots : null;
+                const used = positionCounts[pricing.position] ?? 0;
+                const full = cap !== null && used >= cap;
+                return (
+                  <button key={pricing.position} type="button" disabled={full} onClick={() => selectPosition(pricing)} className="flex w-full items-center justify-between rounded-xl border p-4 text-left transition hover:border-primary hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-border disabled:hover:bg-transparent">
+                    <span>
+                      <span className="block font-semibold">{pricing.position}</span>
+                      {cap !== null && (
+                        <span className={`block text-xs ${full ? "text-destructive" : "text-muted-foreground"}`}>
+                          {full ? "Kuota penuh" : `${used}/${cap} terisi`}
+                        </span>
+                      )}
+                    </span>
+                    <span className="font-bold text-primary">Rp {Number(pricing.price).toLocaleString("id-ID")}</span>
+                  </button>
+                );
+              })}
             </div>
           </DialogContent>
         </Dialog>
