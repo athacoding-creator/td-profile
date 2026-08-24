@@ -29,11 +29,18 @@ const buildEpisodeUrls = (urls: string[] = [], count: number) => {
 };
 
 const isExpired = (ev: any) => isEventExpired(ev);
-const SPORT_EVENT_TYPES = ["futsal", "mini-soccer"];
+const SPORT_EVENT_TYPES = POSITION_EVENT_TYPES;
 const DEFAULT_POSITIONS = [
-  { position: "Pemain Lapangan", price: "10000", max_slots: "21" },
-  { position: "Kiper", price: "15000", max_slots: "4" },
+  { position: "Pemain Lapangan", price: "10000", max_slots: "21", description: "" },
+  { position: "Kiper", price: "15000", max_slots: "4", description: "" },
 ];
+const DEFAULT_CLASSES = [
+  { position: "Class 1", price: "100000", max_slots: "50", description: "" },
+  { position: "Class 2", price: "50000", max_slots: "50", description: "" },
+  { position: "Class 3", price: "15000", max_slots: "100", description: "" },
+];
+const defaultRowsFor = (type?: string | null) =>
+  (isClassEvent(type) ? DEFAULT_CLASSES : DEFAULT_POSITIONS).map((entry) => ({ ...entry, id: crypto.randomUUID() }));
 
 const toLocalInput = (iso?: string | null) => {
   if (!iso) return "";
