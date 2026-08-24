@@ -142,17 +142,17 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
     if (error) return toast.error(error.message);
     if (isSportEvent && createdEvent) {
       const { error: pricingError } = await supabase.from("event_position_pricing").insert(
-        validPositions.map((entry) => ({ event_id: createdEvent.id, position: entry.position.trim(), price: Number(entry.price), max_slots: entry.max_slots === "" || entry.max_slots == null ? null : Number(entry.max_slots) }))
+        validPositions.map((entry) => ({ event_id: createdEvent.id, position: entry.position.trim(), price: Number(entry.price), max_slots: entry.max_slots === "" || entry.max_slots == null ? null : Number(entry.max_slots), description: (entry.description ?? "").trim() || null }))
       );
       if (pricingError) {
-        // Jangan tinggalkan event olahraga tanpa harga posisi — batalkan pembuatan event.
+        // Jangan tinggalkan event tanpa harga posisi/kelas — batalkan pembuatan event.
         await supabase.from("events").delete().eq("id", createdEvent.id);
-        return toast.error(`Harga posisi gagal disimpan, event dibatalkan: ${pricingError.message}`);
+        return toast.error(`Harga gagal disimpan, event dibatalkan: ${pricingError.message}`);
       }
     }
     toast.success("Event dibuat");
     setForm({ gender: "ALL", points_reward: defaultPoints, program_id: "", is_pinned: false, is_recurring: false, recurring_days: [], registration_type: "free", price: 0, min_infaq: 0, max_infaq: 50000, max_participants: "", is_online: false, youtube_url: "", episode_count: 0, episode_youtube_urls: [], event_type: "kajian" });
-    setPositions(DEFAULT_POSITIONS.map((entry) => ({ ...entry, id: crypto.randomUUID() })));
+    setPositions(defaultRowsFor("olahraga"));
     onCreated();
   };
 
