@@ -15,6 +15,7 @@ import { Section } from "./components";
 import { ImagePicker } from "@/components/admin/ImagePicker";
 import { isEventExpired, describeRecurring, DAY_NAMES } from "@/lib/eventSchedule";
 import { buildEventQrUrl, buildProgramQrUrl } from "@/lib/qrUrl";
+import { POSITION_EVENT_TYPES, isClassEvent } from "@/lib/eventTypes";
 
 // datetime-local value -> ISO string with local timezone offset preserved
 const localInputToISO = (v?: string | null) => {
