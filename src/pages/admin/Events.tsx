@@ -108,7 +108,7 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
     }
     const validPositions = positions.filter((entry) => entry.position.trim() && Number(entry.price) > 0);
     if (isSportEvent && validPositions.length === 0) {
-      return toast.error("Tambahkan minimal satu posisi dengan harga.");
+      return toast.error(isClass ? "Tambahkan minimal satu kelas dengan harga." : "Tambahkan minimal satu posisi dengan harga.");
     }
 
     const { data: createdEvent, error } = await supabase.from("events").insert({
