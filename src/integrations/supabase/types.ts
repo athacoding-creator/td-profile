@@ -98,6 +98,7 @@ export type Database = {
       event_position_pricing: {
         Row: {
           created_at: string | null
+          description: string | null
           event_id: string
           id: string
           is_active: boolean | null
@@ -107,6 +108,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          description?: string | null
           event_id: string
           id?: string
           is_active?: boolean | null
@@ -116,6 +118,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          description?: string | null
           event_id?: string
           id?: string
           is_active?: boolean | null

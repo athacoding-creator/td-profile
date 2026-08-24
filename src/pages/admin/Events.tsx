@@ -15,6 +15,7 @@ import { Section } from "./components";
 import { ImagePicker } from "@/components/admin/ImagePicker";
 import { isEventExpired, describeRecurring, DAY_NAMES } from "@/lib/eventSchedule";
 import { buildEventQrUrl, buildProgramQrUrl } from "@/lib/qrUrl";
+import { POSITION_EVENT_TYPES, isClassEvent } from "@/lib/eventTypes";
 
 // datetime-local value -> ISO string with local timezone offset preserved
 const localInputToISO = (v?: string | null) => {
@@ -29,11 +30,18 @@ const buildEpisodeUrls = (urls: string[] = [], count: number) => {
 };
 
 const isExpired = (ev: any) => isEventExpired(ev);
-const SPORT_EVENT_TYPES = ["futsal", "mini-soccer"];
+const SPORT_EVENT_TYPES = POSITION_EVENT_TYPES;
 const DEFAULT_POSITIONS = [
-  { position: "Pemain Lapangan", price: "10000", max_slots: "21" },
-  { position: "Kiper", price: "15000", max_slots: "4" },
+  { position: "Pemain Lapangan", price: "10000", max_slots: "21", description: "" },
+  { position: "Kiper", price: "15000", max_slots: "4", description: "" },
 ];
+const DEFAULT_CLASSES = [
+  { position: "Class 1", price: "100000", max_slots: "50", description: "" },
+  { position: "Class 2", price: "50000", max_slots: "50", description: "" },
+  { position: "Class 3", price: "15000", max_slots: "100", description: "" },
+];
+const defaultRowsFor = (type?: string | null) =>
+  (isClassEvent(type) ? DEFAULT_CLASSES : DEFAULT_POSITIONS).map((entry) => ({ ...entry, id: crypto.randomUUID() }));
 
 const toLocalInput = (iso?: string | null) => {
   if (!iso) return "";
@@ -71,13 +79,14 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
   // fields kategori pembayaran (kelas, futsal, dll)
   const [form, setForm] = useState<any>({ gender: "ALL", points_reward: defaultPoints, program_id: "", is_pinned: false, is_recurring: false, recurring_days: [], registration_type: "free", price: 0, min_infaq: 0, max_infaq: 50000, max_participants: "", is_online: false, youtube_url: "", episode_count: 0, episode_youtube_urls: [], event_type: "kajian" });
   useEffect(() => { setForm((f: any) => ({ ...f, points_reward: f.points_reward ?? defaultPoints })); }, [defaultPoints]);
-  const [positions, setPositions] = useState(() => DEFAULT_POSITIONS.map((entry) => ({ ...entry, id: crypto.randomUUID() })));
+  const [positions, setPositions] = useState(() => defaultRowsFor("olahraga"));
   const isSportEvent = SPORT_EVENT_TYPES.includes(form.event_type);
+  const isClass = isClassEvent(form.event_type);
 
   // Reset positions when event_type changes
   useEffect(() => {
     if (isSportEvent) {
-      setPositions(DEFAULT_POSITIONS.map((entry) => ({ ...entry, id: crypto.randomUUID() })));
+      setPositions(defaultRowsFor(form.event_type));
     } else {
       setPositions([]);
     }
@@ -99,7 +108,7 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
     }
     const validPositions = positions.filter((entry) => entry.position.trim() && Number(entry.price) > 0);
     if (isSportEvent && validPositions.length === 0) {
-      return toast.error("Tambahkan minimal satu posisi dengan harga.");
+      return toast.error(isClass ? "Tambahkan minimal satu kelas dengan harga." : "Tambahkan minimal satu posisi dengan harga.");
     }
 
     const { data: createdEvent, error } = await supabase.from("events").insert({
@@ -133,17 +142,17 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
     if (error) return toast.error(error.message);
     if (isSportEvent && createdEvent) {
       const { error: pricingError } = await supabase.from("event_position_pricing").insert(
-        validPositions.map((entry) => ({ event_id: createdEvent.id, position: entry.position.trim(), price: Number(entry.price), max_slots: entry.max_slots === "" || entry.max_slots == null ? null : Number(entry.max_slots) }))
+        validPositions.map((entry) => ({ event_id: createdEvent.id, position: entry.position.trim(), price: Number(entry.price), max_slots: entry.max_slots === "" || entry.max_slots == null ? null : Number(entry.max_slots), description: (entry.description ?? "").trim() || null }))
       );
       if (pricingError) {
-        // Jangan tinggalkan event olahraga tanpa harga posisi — batalkan pembuatan event.
+        // Jangan tinggalkan event tanpa harga posisi/kelas — batalkan pembuatan event.
         await supabase.from("events").delete().eq("id", createdEvent.id);
-        return toast.error(`Harga posisi gagal disimpan, event dibatalkan: ${pricingError.message}`);
+        return toast.error(`Harga gagal disimpan, event dibatalkan: ${pricingError.message}`);
       }
     }
     toast.success("Event dibuat");
     setForm({ gender: "ALL", points_reward: defaultPoints, program_id: "", is_pinned: false, is_recurring: false, recurring_days: [], registration_type: "free", price: 0, min_infaq: 0, max_infaq: 50000, max_participants: "", is_online: false, youtube_url: "", episode_count: 0, episode_youtube_urls: [], event_type: "kajian" });
-    setPositions(DEFAULT_POSITIONS.map((entry) => ({ ...entry, id: crypto.randomUUID() })));
+    setPositions(defaultRowsFor("olahraga"));
     onCreated();
   };
 
@@ -159,7 +168,7 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
             {programs.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
         </div>
-        <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Tipe</Label><select value={form.event_type ?? "kajian"} onChange={(e) => setForm({ ...form, event_type: e.target.value })} className="h-9 sm:h-10 w-full rounded-md border border-input bg-background px-3 text-xs sm:text-sm"><option value="kajian">Kajian</option><option value="futsal">Futsal</option><option value="mini-soccer">Mini Soccer</option></select></div>
+        <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Tipe</Label><select value={form.event_type ?? "kajian"} onChange={(e) => setForm({ ...form, event_type: e.target.value })} className="h-9 sm:h-10 w-full rounded-md border border-input bg-background px-3 text-xs sm:text-sm"><option value="kajian">Kajian</option><option value="olahraga">Olahraga</option><option value="kelas-kajian">Kelas Kajian</option></select></div>
         <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Venue</Label><Input required value={form.venue ?? ""} onChange={(e) => setForm({ ...form, venue: e.target.value })} className="text-sm h-9 sm:h-10" /></div>
         <div className="space-y-1.5 md:col-span-2"><Label className="text-xs sm:text-sm">Deskripsi</Label><Textarea rows={3} value={form.description ?? ""} onChange={(e) => setForm({ ...form, description: e.target.value })} className="text-sm" /></div>
         <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Kota</Label><Input value={form.city ?? ""} onChange={(e) => setForm({ ...form, city: e.target.value })} className="text-sm h-9 sm:h-10" /></div>
@@ -190,15 +199,22 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
         )}
         {isSportEvent && (
           <div className="md:col-span-2 space-y-3 rounded-xl border border-primary/20 bg-primary/5 p-3">
-            <div><p className="text-sm font-semibold">Harga & kuota per posisi</p><p className="text-xs text-muted-foreground">Event olahraga selalu wajib bayar. Kuota kosong = tanpa batas.</p></div>
-            <div className="grid grid-cols-[1fr_120px_100px_auto] gap-2 text-xs text-muted-foreground"><span>Posisi</span><span>Harga</span><span>Kuota</span><span /></div>
-            {positions.map((entry) => <div key={entry.id} className="grid grid-cols-[1fr_120px_100px_auto] gap-2">
-              <Input value={entry.position} placeholder="Nama posisi" onChange={(e) => setPositions(positions.map((item) => item.id === entry.id ? { ...item, position: e.target.value } : item))} />
-              <Input type="number" min="1" value={entry.price} placeholder="Harga" onChange={(e) => setPositions(positions.map((item) => item.id === entry.id ? { ...item, price: e.target.value } : item))} />
-              <Input type="number" min="1" value={entry.max_slots ?? ""} placeholder="Kuota" onChange={(e) => setPositions(positions.map((item) => item.id === entry.id ? { ...item, max_slots: e.target.value } : item))} />
-              <Button type="button" variant="outline" size="icon" disabled={positions.length === 1} onClick={() => setPositions(positions.filter((item) => item.id !== entry.id))}><Trash2 className="h-4 w-4" /></Button>
+            <div>
+              <p className="text-sm font-semibold">{isClass ? "Daftar kelas & harga" : "Harga & kuota per posisi"}</p>
+              <p className="text-xs text-muted-foreground">{isClass ? "Kelas kajian selalu wajib bayar. Kuota kosong = tanpa batas." : "Event olahraga selalu wajib bayar. Kuota kosong = tanpa batas."}</p>
+            </div>
+            {positions.map((entry) => <div key={entry.id} className="space-y-2 rounded-lg border border-border/60 bg-background/70 p-2">
+              <div className="grid grid-cols-[1fr_120px_100px_auto] gap-2">
+                <Input value={entry.position} placeholder={isClass ? "Nama kelas" : "Nama posisi"} onChange={(e) => setPositions(positions.map((item) => item.id === entry.id ? { ...item, position: e.target.value } : item))} />
+                <Input type="number" min="1" value={entry.price} placeholder="Harga" onChange={(e) => setPositions(positions.map((item) => item.id === entry.id ? { ...item, price: e.target.value } : item))} />
+                <Input type="number" min="1" value={entry.max_slots ?? ""} placeholder="Kuota" onChange={(e) => setPositions(positions.map((item) => item.id === entry.id ? { ...item, max_slots: e.target.value } : item))} />
+                <Button type="button" variant="outline" size="icon" disabled={positions.length === 1} onClick={() => setPositions(positions.filter((item) => item.id !== entry.id))}><Trash2 className="h-4 w-4" /></Button>
+              </div>
+              {isClass && (
+                <Textarea rows={2} value={entry.description ?? ""} placeholder="Benefit kelas ini (contoh: modul, sertifikat, konsumsi)" onChange={(e) => setPositions(positions.map((item) => item.id === entry.id ? { ...item, description: e.target.value } : item))} className="text-sm" />
+              )}
             </div>)}
-            <Button type="button" variant="outline" size="sm" onClick={() => setPositions([...positions, { id: crypto.randomUUID(), position: "", price: "", max_slots: "" }])}><Plus className="mr-1 h-4 w-4" />Tambah posisi</Button>
+            <Button type="button" variant="outline" size="sm" onClick={() => setPositions([...positions, { id: crypto.randomUUID(), position: "", price: "", max_slots: "", description: "" }])}><Plus className="mr-1 h-4 w-4" />{isClass ? "Tambah kelas" : "Tambah posisi"}</Button>
           </div>
         )}
         <PaymentCategoryFields form={form} setForm={setForm} show={isSportEvent || form.registration_type === "paid"} />
@@ -604,15 +620,22 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
           <div className="space-y-1.5"><Label>Venue</Label><Input value={form.venue ?? ""} onChange={(e) => setForm({ ...form, venue: e.target.value })} /></div>
           {isSportEvent && (
             <div className="md:col-span-2 space-y-3 rounded-xl border border-primary/20 bg-primary/5 p-3">
-              <div><p className="text-sm font-semibold">Harga & kuota per posisi</p><p className="text-xs text-muted-foreground">Event olahraga selalu wajib bayar. Kuota kosong = tanpa batas.</p></div>
-              <div className="grid grid-cols-[1fr_120px_100px_auto] gap-2 text-xs text-muted-foreground"><span>Posisi</span><span>Harga</span><span>Kuota</span><span /></div>
-              {positions.map((entry) => <div key={entry.id || entry.position} className="grid grid-cols-[1fr_120px_100px_auto] gap-2">
-                <Input value={entry.position} placeholder="Nama posisi" onChange={(e) => setPositions(positions.map((item) => (item.id === entry.id || item.position === entry.position) ? { ...item, position: e.target.value } : item))} />
-                <Input type="number" min="1" value={entry.price} placeholder="Harga" onChange={(e) => setPositions(positions.map((item) => (item.id === entry.id || item.position === entry.position) ? { ...item, price: e.target.value } : item))} />
-                <Input type="number" min="1" value={entry.max_slots ?? ""} placeholder="Kuota" onChange={(e) => setPositions(positions.map((item) => (item.id === entry.id || item.position === entry.position) ? { ...item, max_slots: e.target.value } : item))} />
-                <Button type="button" variant="outline" size="icon" disabled={positions.length === 1} onClick={() => setPositions(positions.filter((item) => (item.id !== entry.id && item.position !== entry.position)))}><Trash2 className="h-4 w-4" /></Button>
+              <div>
+                <p className="text-sm font-semibold">{isClass ? "Daftar kelas & harga" : "Harga & kuota per posisi"}</p>
+                <p className="text-xs text-muted-foreground">{isClass ? "Kelas kajian selalu wajib bayar. Kuota kosong = tanpa batas." : "Event olahraga selalu wajib bayar. Kuota kosong = tanpa batas."}</p>
+              </div>
+              {positions.map((entry) => <div key={entry.id || entry.position} className="space-y-2 rounded-lg border border-border/60 bg-background/70 p-2">
+                <div className="grid grid-cols-[1fr_120px_100px_auto] gap-2">
+                  <Input value={entry.position} placeholder={isClass ? "Nama kelas" : "Nama posisi"} onChange={(e) => setPositions(positions.map((item) => (item.id === entry.id || item.position === entry.position) ? { ...item, position: e.target.value } : item))} />
+                  <Input type="number" min="1" value={entry.price} placeholder="Harga" onChange={(e) => setPositions(positions.map((item) => (item.id === entry.id || item.position === entry.position) ? { ...item, price: e.target.value } : item))} />
+                  <Input type="number" min="1" value={entry.max_slots ?? ""} placeholder="Kuota" onChange={(e) => setPositions(positions.map((item) => (item.id === entry.id || item.position === entry.position) ? { ...item, max_slots: e.target.value } : item))} />
+                  <Button type="button" variant="outline" size="icon" disabled={positions.length === 1} onClick={() => setPositions(positions.filter((item) => (item.id !== entry.id && item.position !== entry.position)))}><Trash2 className="h-4 w-4" /></Button>
+                </div>
+                {isClass && (
+                  <Textarea rows={2} value={entry.description ?? ""} placeholder="Benefit kelas ini (contoh: modul, sertifikat, konsumsi)" onChange={(e) => setPositions(positions.map((item) => (item.id === entry.id || item.position === entry.position) ? { ...item, description: e.target.value } : item))} className="text-sm" />
+                )}
               </div>)}
-              <Button type="button" variant="outline" size="sm" onClick={() => setPositions([...positions, { id: crypto.randomUUID(), position: "", price: "", max_slots: "" }])}><Plus className="mr-1 h-4 w-4" />Tambah posisi</Button>
+              <Button type="button" variant="outline" size="sm" onClick={() => setPositions([...positions, { id: crypto.randomUUID(), position: "", price: "", max_slots: "", description: "" }])}><Plus className="mr-1 h-4 w-4" />{isClass ? "Tambah kelas" : "Tambah posisi"}</Button>
             </div>
           )}
           <div className="space-y-1.5 md:col-span-2"><Label>Deskripsi</Label><Textarea rows={3} value={form.description ?? ""} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
