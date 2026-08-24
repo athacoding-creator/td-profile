@@ -620,15 +620,22 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
           <div className="space-y-1.5"><Label>Venue</Label><Input value={form.venue ?? ""} onChange={(e) => setForm({ ...form, venue: e.target.value })} /></div>
           {isSportEvent && (
             <div className="md:col-span-2 space-y-3 rounded-xl border border-primary/20 bg-primary/5 p-3">
-              <div><p className="text-sm font-semibold">Harga & kuota per posisi</p><p className="text-xs text-muted-foreground">Event olahraga selalu wajib bayar. Kuota kosong = tanpa batas.</p></div>
-              <div className="grid grid-cols-[1fr_120px_100px_auto] gap-2 text-xs text-muted-foreground"><span>Posisi</span><span>Harga</span><span>Kuota</span><span /></div>
-              {positions.map((entry) => <div key={entry.id || entry.position} className="grid grid-cols-[1fr_120px_100px_auto] gap-2">
-                <Input value={entry.position} placeholder="Nama posisi" onChange={(e) => setPositions(positions.map((item) => (item.id === entry.id || item.position === entry.position) ? { ...item, position: e.target.value } : item))} />
-                <Input type="number" min="1" value={entry.price} placeholder="Harga" onChange={(e) => setPositions(positions.map((item) => (item.id === entry.id || item.position === entry.position) ? { ...item, price: e.target.value } : item))} />
-                <Input type="number" min="1" value={entry.max_slots ?? ""} placeholder="Kuota" onChange={(e) => setPositions(positions.map((item) => (item.id === entry.id || item.position === entry.position) ? { ...item, max_slots: e.target.value } : item))} />
-                <Button type="button" variant="outline" size="icon" disabled={positions.length === 1} onClick={() => setPositions(positions.filter((item) => (item.id !== entry.id && item.position !== entry.position)))}><Trash2 className="h-4 w-4" /></Button>
+              <div>
+                <p className="text-sm font-semibold">{isClass ? "Daftar kelas & harga" : "Harga & kuota per posisi"}</p>
+                <p className="text-xs text-muted-foreground">{isClass ? "Kelas kajian selalu wajib bayar. Kuota kosong = tanpa batas." : "Event olahraga selalu wajib bayar. Kuota kosong = tanpa batas."}</p>
+              </div>
+              {positions.map((entry) => <div key={entry.id || entry.position} className="space-y-2 rounded-lg border border-border/60 bg-background/70 p-2">
+                <div className="grid grid-cols-[1fr_120px_100px_auto] gap-2">
+                  <Input value={entry.position} placeholder={isClass ? "Nama kelas" : "Nama posisi"} onChange={(e) => setPositions(positions.map((item) => (item.id === entry.id || item.position === entry.position) ? { ...item, position: e.target.value } : item))} />
+                  <Input type="number" min="1" value={entry.price} placeholder="Harga" onChange={(e) => setPositions(positions.map((item) => (item.id === entry.id || item.position === entry.position) ? { ...item, price: e.target.value } : item))} />
+                  <Input type="number" min="1" value={entry.max_slots ?? ""} placeholder="Kuota" onChange={(e) => setPositions(positions.map((item) => (item.id === entry.id || item.position === entry.position) ? { ...item, max_slots: e.target.value } : item))} />
+                  <Button type="button" variant="outline" size="icon" disabled={positions.length === 1} onClick={() => setPositions(positions.filter((item) => (item.id !== entry.id && item.position !== entry.position)))}><Trash2 className="h-4 w-4" /></Button>
+                </div>
+                {isClass && (
+                  <Textarea rows={2} value={entry.description ?? ""} placeholder="Benefit kelas ini (contoh: modul, sertifikat, konsumsi)" onChange={(e) => setPositions(positions.map((item) => (item.id === entry.id || item.position === entry.position) ? { ...item, description: e.target.value } : item))} className="text-sm" />
+                )}
               </div>)}
-              <Button type="button" variant="outline" size="sm" onClick={() => setPositions([...positions, { id: crypto.randomUUID(), position: "", price: "", max_slots: "" }])}><Plus className="mr-1 h-4 w-4" />Tambah posisi</Button>
+              <Button type="button" variant="outline" size="sm" onClick={() => setPositions([...positions, { id: crypto.randomUUID(), position: "", price: "", max_slots: "", description: "" }])}><Plus className="mr-1 h-4 w-4" />{isClass ? "Tambah kelas" : "Tambah posisi"}</Button>
             </div>
           )}
           <div className="space-y-1.5 md:col-span-2"><Label>Deskripsi</Label><Textarea rows={3} value={form.description ?? ""} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
