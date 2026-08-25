@@ -398,7 +398,7 @@ export default function Payment() {
               <h2 className="font-display text-xl font-bold flex items-center gap-2">
                 <CreditCard className="h-5 w-5 text-rose-500" /> Pendaftaran: {event.title}
               </h2>
-              {selectedPosition && <p className="mt-1 text-sm text-muted-foreground">Posisi: {selectedPosition}</p>}
+              {selectedPosition && <p className="mt-1 text-sm text-muted-foreground">{pickLabel}: {selectedPosition}</p>}
               {isGuestRegistration && <p className="mt-1 text-sm text-muted-foreground">Peserta: {guests.map((guest) => `${guest.guest_name} (${guest.guest_phone})`).join(", ")}</p>}
               <p className="text-xs text-muted-foreground mt-1">
                 {isOnline 
