@@ -283,7 +283,7 @@ export default function Payment() {
         <CheckCircle2 className="mx-auto h-14 w-14 text-green-600" />
         <h1 className="font-display text-xl font-bold text-green-800">Pendaftaran Berhasil!</h1>
         <p className="text-sm text-green-700">Bukti pembayaran telah diunggah dan menunggu verifikasi admin.</p>
-        {selectedPosition && <p className="text-sm">Posisi: <strong>{selectedPosition}</strong> · Rp {paymentForm.amount.toLocaleString("id-ID")}</p>}
+        {selectedPosition && <p className="text-sm">{pickLabel}: <strong>{selectedPosition}</strong> · Rp {paymentForm.amount.toLocaleString("id-ID")}</p>}
         <a href={settings.pendingWhatsappUrl} target="_blank" rel="noopener noreferrer"><Button className="w-full bg-green-600 hover:bg-green-700"><MessageCircle className="mr-2 h-4 w-4" />Konfirmasi via WhatsApp</Button></a>
         <Button variant="outline" className="w-full" onClick={() => navigate(`/event/${id}`)}>Kembali ke detail event</Button>
       </div>
