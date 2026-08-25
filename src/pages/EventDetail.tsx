@@ -399,7 +399,7 @@ export default function EventDetail() {
               {event.registration_type !== "free" && (
             <div className="flex items-center gap-2 pt-2 text-accent font-semibold">
               {event.registration_type === "paid" 
-                ? (["futsal", "mini-soccer"].includes(event.event_type) ? "💰 Wajib Bayar — pilih posisi untuk melihat harga" : `💰 Wajib Bayar: Rp ${event.price.toLocaleString("id-ID")}`)
+                ? (isPositionEvent(event.event_type) ? `💰 Wajib Bayar — pilih ${isClassEvent(event.event_type) ? "kelas" : "posisi"} untuk melihat harga` : `💰 Wajib Bayar: Rp ${event.price.toLocaleString("id-ID")}`)
                 : `🤝 Berinfaq: Rp ${event.min_infaq.toLocaleString("id-ID")} - Rp ${event.max_infaq.toLocaleString("id-ID")}`
               }
             </div>
