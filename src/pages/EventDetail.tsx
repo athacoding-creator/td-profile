@@ -184,7 +184,7 @@ export default function EventDetail() {
       return toast.error(error.message);
     }
     setPositionChoiceOpen(false);
-    navigate(`/event/${event.id}/bayar`, { state: { position: pricing.position, positionPrice: Number(pricing.price) } });
+    navigate(`/event/${event.id}/bayar`, { state: { position: pricing.position, positionPrice: Number(pricing.price), isClass: isClassEvent(event?.event_type) } });
   };
 
   const register = async (includeSelf: boolean, includeGuests = false) => {
