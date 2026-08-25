@@ -35,6 +35,8 @@ export default function Payment() {
   const [settings, setSettings] = useState<any>({});
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const selectedPosition = paymentState?.position;
+  const [isClassPick, setIsClassPick] = useState<boolean>(!!(paymentState as any)?.isClass);
+  const pickLabel = isClassPick ? "Kelas" : "Posisi";
 
   useEffect(() => {
     (async () => {
