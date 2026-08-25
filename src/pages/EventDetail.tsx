@@ -17,6 +17,8 @@ import { id as idLocale } from "date-fns/locale";
 import { computeScanWindow, isRecurring, describeRecurring } from "@/lib/eventSchedule";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { resolveEventQris } from "@/lib/resolveQris";
+import { isPositionEvent, isClassEvent } from "@/lib/eventTypes";
+
 
 export default function EventDetail() {
   const { id } = useParams();
@@ -34,7 +36,7 @@ export default function EventDetail() {
   const [selectedEpisode, setSelectedEpisode] = useState<number>(0);
   const [registrationChoiceOpen, setRegistrationChoiceOpen] = useState(false);
   const [positionChoiceOpen, setPositionChoiceOpen] = useState(false);
-  const [positionPricing, setPositionPricing] = useState<{ position: string; price: number; max_slots?: number | null }[]>([]);
+  const [positionPricing, setPositionPricing] = useState<{ position: string; price: number; max_slots?: number | null; description?: string | null }[]>([]);
   const [positionCounts, setPositionCounts] = useState<Record<string, number>>({});
   const [showGuestForm, setShowGuestForm] = useState(false);
   const emptyGuest = () => ({ name: "", phone: "", gender: "" });
@@ -84,10 +86,10 @@ export default function EventDetail() {
       }
       setEvent(eventData);
 
-      if (["futsal", "mini-soccer"].includes(eventData?.event_type)) {
+      if (isPositionEvent(eventData?.event_type)) {
         const { data: pricingData, error: pricingError } = await supabase
           .from("event_position_pricing")
-          .select("position, price, max_slots")
+          .select("position, price, max_slots, description")
           .eq("event_id", eventData.id)
           .neq("is_active", false)
           .order("created_at");
@@ -153,8 +155,8 @@ export default function EventDetail() {
 
   const handleRegisterClick = () => {
     if (!user) return navigate("/auth");
-    if (["futsal", "mini-soccer"].includes(event?.event_type)) {
-      if (!positionPricing.length) return toast.error("Pilihan posisi belum dikonfigurasi oleh admin.");
+    if (isPositionEvent(event?.event_type)) {
+      if (!positionPricing.length) return toast.error(`Pilihan ${isClassEvent(event?.event_type) ? "kelas" : "posisi"} belum dikonfigurasi oleh admin.`);
       setPositionChoiceOpen(true);
       return;
     }
@@ -162,7 +164,7 @@ export default function EventDetail() {
     setRegistrationChoiceOpen(true);
   };
 
-  const selectPosition = async (pricing: { position: string; price: number; max_slots?: number | null }) => {
+  const selectPosition = async (pricing: { position: string; price: number; max_slots?: number | null; description?: string | null }) => {
     if (quotaFull) return toast.error("Maaf, kuota peserta untuk event ini sudah penuh.");
     if (event.gender !== "ALL" && profile?.gender && profile.gender !== event.gender) {
       return toast.error(`Maaf, event ini khusus untuk ${event.gender === "L" ? "Laki-laki" : "Perempuan"}.`);
@@ -175,14 +177,14 @@ export default function EventDetail() {
         const used = typeof c === "number" ? c : 0;
         setPositionCounts((prev) => ({ ...prev, [pricing.position]: used }));
         if (used >= pricing.max_slots) {
-          return toast.error(`Kuota posisi ${pricing.position} sudah penuh.`);
+          return toast.error(`Kuota ${isClassEvent(event?.event_type) ? "kelas" : "posisi"} ${pricing.position} sudah penuh.`);
         }
       }
     } catch (error: any) {
       return toast.error(error.message);
     }
     setPositionChoiceOpen(false);
-    navigate(`/event/${event.id}/bayar`, { state: { position: pricing.position, positionPrice: Number(pricing.price) } });
+    navigate(`/event/${event.id}/bayar`, { state: { position: pricing.position, positionPrice: Number(pricing.price), isClass: isClassEvent(event?.event_type) } });
   };
 
   const register = async (includeSelf: boolean, includeGuests = false) => {
@@ -397,7 +399,7 @@ export default function EventDetail() {
               {event.registration_type !== "free" && (
             <div className="flex items-center gap-2 pt-2 text-accent font-semibold">
               {event.registration_type === "paid" 
-                ? (["futsal", "mini-soccer"].includes(event.event_type) ? "💰 Wajib Bayar — pilih posisi untuk melihat harga" : `💰 Wajib Bayar: Rp ${event.price.toLocaleString("id-ID")}`)
+                ? (isPositionEvent(event.event_type) ? `💰 Wajib Bayar — pilih ${isClassEvent(event.event_type) ? "kelas" : "posisi"} untuk melihat harga` : `💰 Wajib Bayar: Rp ${event.price.toLocaleString("id-ID")}`)
                 : `🤝 Berinfaq: Rp ${event.min_infaq.toLocaleString("id-ID")} - Rp ${event.max_infaq.toLocaleString("id-ID")}`
               }
             </div>
@@ -633,24 +635,27 @@ export default function EventDetail() {
         </Dialog>
         <Dialog open={positionChoiceOpen} onOpenChange={setPositionChoiceOpen}>
           <DialogContent className="max-w-md">
-            <DialogHeader><DialogTitle>Pilih Posisi Bermain</DialogTitle></DialogHeader>
-            <p className="text-sm text-muted-foreground">Pilih posisi untuk melihat nominal pendaftaran dan melanjutkan pembayaran.</p>
+            <DialogHeader><DialogTitle>{isClassEvent(event.event_type) ? "Pilih Kelas" : "Pilih Posisi Bermain"}</DialogTitle></DialogHeader>
+            <p className="text-sm text-muted-foreground">Pilih {isClassEvent(event.event_type) ? "kelas" : "posisi"} untuk melihat nominal pendaftaran dan melanjutkan pembayaran.</p>
             <div className="space-y-2">
               {positionPricing.map((pricing) => {
                 const cap = pricing.max_slots && pricing.max_slots > 0 ? pricing.max_slots : null;
                 const used = positionCounts[pricing.position] ?? 0;
                 const full = cap !== null && used >= cap;
                 return (
-                  <button key={pricing.position} type="button" disabled={full} onClick={() => selectPosition(pricing)} className="flex w-full items-center justify-between rounded-xl border p-4 text-left transition hover:border-primary hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-border disabled:hover:bg-transparent">
+                  <button key={pricing.position} type="button" disabled={full} onClick={() => selectPosition(pricing)} className="flex w-full items-start justify-between gap-3 rounded-xl border p-4 text-left transition hover:border-primary hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-border disabled:hover:bg-transparent">
                     <span>
                       <span className="block font-semibold">{pricing.position}</span>
+                      {isClassEvent(event.event_type) && pricing.description && (
+                        <span className="mt-1 block whitespace-pre-line text-xs text-muted-foreground">{pricing.description}</span>
+                      )}
                       {cap !== null && (
-                        <span className={`block text-xs ${full ? "text-destructive" : "text-muted-foreground"}`}>
+                        <span className={`mt-1 block text-xs ${full ? "text-destructive" : "text-muted-foreground"}`}>
                           {full ? "Kuota penuh" : `${used}/${cap} terisi`}
                         </span>
                       )}
                     </span>
-                    <span className="font-bold text-primary">Rp {Number(pricing.price).toLocaleString("id-ID")}</span>
+                    <span className="shrink-0 font-bold text-primary">Rp {Number(pricing.price).toLocaleString("id-ID")}</span>
                   </button>
                 );
               })}

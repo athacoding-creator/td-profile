@@ -12,6 +12,7 @@ import { ChevronLeft, CreditCard, Info, MessageCircle, CheckCircle2, Heart, Coin
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { resolveEventQris } from "@/lib/resolveQris";
+import { isPositionEvent, isClassEvent } from "@/lib/eventTypes";
 
 export default function Payment() {
   const { id } = useParams();
@@ -34,6 +35,8 @@ export default function Payment() {
   const [settings, setSettings] = useState<any>({});
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const selectedPosition = paymentState?.position;
+  const [isClassPick, setIsClassPick] = useState<boolean>(!!(paymentState as any)?.isClass);
+  const pickLabel = isClassPick ? "Kelas" : "Posisi";
 
   useEffect(() => {
     (async () => {
@@ -52,9 +55,11 @@ export default function Payment() {
       }
       setEvent(eventData);
       let sportPositionPrice: number | null = null;
-      if (["futsal", "mini-soccer"].includes(eventData.event_type)) {
+      if (isPositionEvent(eventData.event_type)) {
+        const isCls = isClassEvent(eventData.event_type);
+        setIsClassPick(isCls);
         if (!selectedPosition) {
-          toast.error("Pilih posisi terlebih dahulu.");
+          toast.error(`Pilih ${isCls ? "kelas" : "posisi"} terlebih dahulu.`);
           navigate(`/event/${id}`);
           return;
         }
@@ -66,7 +71,7 @@ export default function Payment() {
           .eq("is_active", true)
           .maybeSingle();
         if (!positionData) {
-          toast.error("Posisi yang dipilih tidak tersedia.");
+          toast.error(`${isCls ? "Kelas" : "Posisi"} yang dipilih tidak tersedia.`);
           navigate(`/event/${id}`);
           return;
         }
@@ -235,7 +240,7 @@ export default function Payment() {
         : (settings.admin_wa_number_infaq || "+6285171577665");
       const template = settings.wa_verification_template || "Halo Admin, saya sudah melakukan pembayaran untuk event {{event_title}}. Berikut bukti pembayarannya. Mohon bantuannya untuk diverifikasi. Terima kasih.";
       const whatsappMessage = selectedPosition
-        ? `Halo Admin, saya ${profile?.full_name || "peserta"} sudah melakukan pembayaran untuk event ${event.title}. Posisi: ${selectedPosition}. Nominal: Rp ${paymentForm.amount.toLocaleString("id-ID")}. Mohon diverifikasi. Terima kasih.`
+        ? `Halo Admin, saya ${profile?.full_name || "peserta"} sudah melakukan pembayaran untuk event ${event.title}. ${pickLabel}: ${selectedPosition}. Nominal: Rp ${paymentForm.amount.toLocaleString("id-ID")}. Mohon diverifikasi. Terima kasih.`
         : template.replace("{{event_title}}", event.title);
       setSettings((current: any) => ({ ...current, pendingWhatsappUrl: `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}` }));
       setPaymentSuccess(true);
@@ -278,7 +283,7 @@ export default function Payment() {
         <CheckCircle2 className="mx-auto h-14 w-14 text-green-600" />
         <h1 className="font-display text-xl font-bold text-green-800">Pendaftaran Berhasil!</h1>
         <p className="text-sm text-green-700">Bukti pembayaran telah diunggah dan menunggu verifikasi admin.</p>
-        {selectedPosition && <p className="text-sm">Posisi: <strong>{selectedPosition}</strong> · Rp {paymentForm.amount.toLocaleString("id-ID")}</p>}
+        {selectedPosition && <p className="text-sm">{pickLabel}: <strong>{selectedPosition}</strong> · Rp {paymentForm.amount.toLocaleString("id-ID")}</p>}
         <a href={settings.pendingWhatsappUrl} target="_blank" rel="noopener noreferrer"><Button className="w-full bg-green-600 hover:bg-green-700"><MessageCircle className="mr-2 h-4 w-4" />Konfirmasi via WhatsApp</Button></a>
         <Button variant="outline" className="w-full" onClick={() => navigate(`/event/${id}`)}>Kembali ke detail event</Button>
       </div>
@@ -393,7 +398,7 @@ export default function Payment() {
               <h2 className="font-display text-xl font-bold flex items-center gap-2">
                 <CreditCard className="h-5 w-5 text-rose-500" /> Pendaftaran: {event.title}
               </h2>
-              {selectedPosition && <p className="mt-1 text-sm text-muted-foreground">Posisi: {selectedPosition}</p>}
+              {selectedPosition && <p className="mt-1 text-sm text-muted-foreground">{pickLabel}: {selectedPosition}</p>}
               {isGuestRegistration && <p className="mt-1 text-sm text-muted-foreground">Peserta: {guests.map((guest) => `${guest.guest_name} (${guest.guest_phone})`).join(", ")}</p>}
               <p className="text-xs text-muted-foreground mt-1">
                 {isOnline 
