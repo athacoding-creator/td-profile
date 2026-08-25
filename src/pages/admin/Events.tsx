@@ -484,6 +484,7 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
   const [form, setForm] = useState<any>({});
   const [positions, setPositions] = useState<any[]>([]);
   const isSportEvent = SPORT_EVENT_TYPES.includes(form.event_type);
+  const isClass = isClassEvent(form.event_type);
 
   useEffect(() => {
     if (!ev) return;
