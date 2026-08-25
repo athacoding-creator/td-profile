@@ -86,10 +86,10 @@ export default function EventDetail() {
       }
       setEvent(eventData);
 
-      if (["futsal", "mini-soccer"].includes(eventData?.event_type)) {
+      if (isPositionEvent(eventData?.event_type)) {
         const { data: pricingData, error: pricingError } = await supabase
           .from("event_position_pricing")
-          .select("position, price, max_slots")
+          .select("position, price, max_slots, description")
           .eq("event_id", eventData.id)
           .neq("is_active", false)
           .order("created_at");
