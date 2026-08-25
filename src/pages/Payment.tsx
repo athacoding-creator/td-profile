@@ -12,6 +12,7 @@ import { ChevronLeft, CreditCard, Info, MessageCircle, CheckCircle2, Heart, Coin
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { resolveEventQris } from "@/lib/resolveQris";
+import { isPositionEvent, isClassEvent } from "@/lib/eventTypes";
 
 export default function Payment() {
   const { id } = useParams();
