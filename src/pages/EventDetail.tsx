@@ -635,24 +635,27 @@ export default function EventDetail() {
         </Dialog>
         <Dialog open={positionChoiceOpen} onOpenChange={setPositionChoiceOpen}>
           <DialogContent className="max-w-md">
-            <DialogHeader><DialogTitle>Pilih Posisi Bermain</DialogTitle></DialogHeader>
-            <p className="text-sm text-muted-foreground">Pilih posisi untuk melihat nominal pendaftaran dan melanjutkan pembayaran.</p>
+            <DialogHeader><DialogTitle>{isClassEvent(event.event_type) ? "Pilih Kelas" : "Pilih Posisi Bermain"}</DialogTitle></DialogHeader>
+            <p className="text-sm text-muted-foreground">Pilih {isClassEvent(event.event_type) ? "kelas" : "posisi"} untuk melihat nominal pendaftaran dan melanjutkan pembayaran.</p>
             <div className="space-y-2">
               {positionPricing.map((pricing) => {
                 const cap = pricing.max_slots && pricing.max_slots > 0 ? pricing.max_slots : null;
                 const used = positionCounts[pricing.position] ?? 0;
                 const full = cap !== null && used >= cap;
                 return (
-                  <button key={pricing.position} type="button" disabled={full} onClick={() => selectPosition(pricing)} className="flex w-full items-center justify-between rounded-xl border p-4 text-left transition hover:border-primary hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-border disabled:hover:bg-transparent">
+                  <button key={pricing.position} type="button" disabled={full} onClick={() => selectPosition(pricing)} className="flex w-full items-start justify-between gap-3 rounded-xl border p-4 text-left transition hover:border-primary hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-border disabled:hover:bg-transparent">
                     <span>
                       <span className="block font-semibold">{pricing.position}</span>
+                      {isClassEvent(event.event_type) && pricing.description && (
+                        <span className="mt-1 block whitespace-pre-line text-xs text-muted-foreground">{pricing.description}</span>
+                      )}
                       {cap !== null && (
-                        <span className={`block text-xs ${full ? "text-destructive" : "text-muted-foreground"}`}>
+                        <span className={`mt-1 block text-xs ${full ? "text-destructive" : "text-muted-foreground"}`}>
                           {full ? "Kuota penuh" : `${used}/${cap} terisi`}
                         </span>
                       )}
                     </span>
-                    <span className="font-bold text-primary">Rp {Number(pricing.price).toLocaleString("id-ID")}</span>
+                    <span className="shrink-0 font-bold text-primary">Rp {Number(pricing.price).toLocaleString("id-ID")}</span>
                   </button>
                 );
               })}
