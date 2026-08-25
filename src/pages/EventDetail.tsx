@@ -155,8 +155,8 @@ export default function EventDetail() {
 
   const handleRegisterClick = () => {
     if (!user) return navigate("/auth");
-    if (["futsal", "mini-soccer"].includes(event?.event_type)) {
-      if (!positionPricing.length) return toast.error("Pilihan posisi belum dikonfigurasi oleh admin.");
+    if (isPositionEvent(event?.event_type)) {
+      if (!positionPricing.length) return toast.error(`Pilihan ${isClassEvent(event?.event_type) ? "kelas" : "posisi"} belum dikonfigurasi oleh admin.`);
       setPositionChoiceOpen(true);
       return;
     }
