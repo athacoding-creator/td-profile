@@ -55,9 +55,11 @@ export default function Payment() {
       }
       setEvent(eventData);
       let sportPositionPrice: number | null = null;
-      if (["futsal", "mini-soccer"].includes(eventData.event_type)) {
+      if (isPositionEvent(eventData.event_type)) {
+        const isCls = isClassEvent(eventData.event_type);
+        setIsClassPick(isCls);
         if (!selectedPosition) {
-          toast.error("Pilih posisi terlebih dahulu.");
+          toast.error(`Pilih ${isCls ? "kelas" : "posisi"} terlebih dahulu.`);
           navigate(`/event/${id}`);
           return;
         }
@@ -69,7 +71,7 @@ export default function Payment() {
           .eq("is_active", true)
           .maybeSingle();
         if (!positionData) {
-          toast.error("Posisi yang dipilih tidak tersedia.");
+          toast.error(`${isCls ? "Kelas" : "Posisi"} yang dipilih tidak tersedia.`);
           navigate(`/event/${id}`);
           return;
         }
