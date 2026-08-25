@@ -177,7 +177,7 @@ export default function EventDetail() {
         const used = typeof c === "number" ? c : 0;
         setPositionCounts((prev) => ({ ...prev, [pricing.position]: used }));
         if (used >= pricing.max_slots) {
-          return toast.error(`Kuota posisi ${pricing.position} sudah penuh.`);
+          return toast.error(`Kuota ${isClassEvent(event?.event_type) ? "kelas" : "posisi"} ${pricing.position} sudah penuh.`);
         }
       }
     } catch (error: any) {
