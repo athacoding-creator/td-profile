@@ -240,7 +240,7 @@ export default function Payment() {
         : (settings.admin_wa_number_infaq || "+6285171577665");
       const template = settings.wa_verification_template || "Halo Admin, saya sudah melakukan pembayaran untuk event {{event_title}}. Berikut bukti pembayarannya. Mohon bantuannya untuk diverifikasi. Terima kasih.";
       const whatsappMessage = selectedPosition
-        ? `Halo Admin, saya ${profile?.full_name || "peserta"} sudah melakukan pembayaran untuk event ${event.title}. Posisi: ${selectedPosition}. Nominal: Rp ${paymentForm.amount.toLocaleString("id-ID")}. Mohon diverifikasi. Terima kasih.`
+        ? `Halo Admin, saya ${profile?.full_name || "peserta"} sudah melakukan pembayaran untuk event ${event.title}. ${pickLabel}: ${selectedPosition}. Nominal: Rp ${paymentForm.amount.toLocaleString("id-ID")}. Mohon diverifikasi. Terima kasih.`
         : template.replace("{{event_title}}", event.title);
       setSettings((current: any) => ({ ...current, pendingWhatsappUrl: `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}` }));
       setPaymentSuccess(true);
