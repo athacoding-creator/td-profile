@@ -17,6 +17,8 @@ import { id as idLocale } from "date-fns/locale";
 import { computeScanWindow, isRecurring, describeRecurring } from "@/lib/eventSchedule";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { resolveEventQris } from "@/lib/resolveQris";
+import { isPositionEvent, isClassEvent } from "@/lib/eventTypes";
+
 
 export default function EventDetail() {
   const { id } = useParams();
