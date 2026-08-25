@@ -526,7 +526,7 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
         if (data && data.length > 0) {
           setPositions(data.map((p: any) => ({ ...p, price: String(p.price), max_slots: p.max_slots == null ? "" : String(p.max_slots), description: p.description ?? "" })));
         } else {
-          setPositions(defaultRows(ev.event_type));
+          setPositions(defaultRowsFor(ev.event_type));
         }
       })();
     }
