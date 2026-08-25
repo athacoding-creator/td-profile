@@ -524,9 +524,9 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
       (async () => {
         const { data } = await supabase.from("event_position_pricing").select("*").eq("event_id", ev.id).eq("is_active", true).order("created_at");
         if (data && data.length > 0) {
-          setPositions(data.map((p: any) => ({ ...p, price: String(p.price), max_slots: p.max_slots == null ? "" : String(p.max_slots) })));
+          setPositions(data.map((p: any) => ({ ...p, price: String(p.price), max_slots: p.max_slots == null ? "" : String(p.max_slots), description: p.description ?? "" })));
         } else {
-          setPositions(DEFAULT_POSITIONS.map(p => ({ ...p, id: crypto.randomUUID() })));
+          setPositions(defaultRows(ev.event_type));
         }
       })();
     }
@@ -585,7 +585,7 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
       // Simple approach: delete old and insert new to ensure sync
       await supabase.from("event_position_pricing").delete().eq("event_id", ev.id);
       const { error: pricingError } = await supabase.from("event_position_pricing").insert(
-        validPositions.map((entry) => ({ event_id: ev.id, position: entry.position.trim(), price: Number(entry.price), max_slots: entry.max_slots === "" || entry.max_slots == null ? null : Number(entry.max_slots) }))
+        validPositions.map((entry) => ({ event_id: ev.id, position: entry.position.trim(), price: Number(entry.price), max_slots: entry.max_slots === "" || entry.max_slots == null ? null : Number(entry.max_slots), description: entry.description?.trim() || null }))
       );
       if (pricingError) return toast.error(`Harga posisi gagal disimpan: ${pricingError.message}`);
     }
@@ -617,7 +617,7 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
               {programs.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           </div>
-          <div className="space-y-1.5"><Label>Tipe</Label><select value={form.event_type ?? "kajian"} onChange={(e) => setForm({ ...form, event_type: e.target.value })} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"><option value="kajian">Kajian</option><option value="futsal">Futsal</option><option value="mini-soccer">Mini Soccer</option></select></div>
+          <div className="space-y-1.5"><Label>Tipe</Label><select value={form.event_type ?? "kajian"} onChange={(e) => setForm({ ...form, event_type: e.target.value })} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"><option value="kajian">Kajian</option><option value="olahraga">Olahraga</option><option value="kelas-kajian">Kelas Kajian</option></select></div>
           <div className="space-y-1.5"><Label>Venue</Label><Input value={form.venue ?? ""} onChange={(e) => setForm({ ...form, venue: e.target.value })} /></div>
           {isSportEvent && (
             <div className="md:col-span-2 space-y-3 rounded-xl border border-primary/20 bg-primary/5 p-3">
