@@ -36,7 +36,7 @@ export default function EventDetail() {
   const [selectedEpisode, setSelectedEpisode] = useState<number>(0);
   const [registrationChoiceOpen, setRegistrationChoiceOpen] = useState(false);
   const [positionChoiceOpen, setPositionChoiceOpen] = useState(false);
-  const [positionPricing, setPositionPricing] = useState<{ position: string; price: number; max_slots?: number | null }[]>([]);
+  const [positionPricing, setPositionPricing] = useState<{ position: string; price: number; max_slots?: number | null; description?: string | null }[]>([]);
   const [positionCounts, setPositionCounts] = useState<Record<string, number>>({});
   const [showGuestForm, setShowGuestForm] = useState(false);
   const emptyGuest = () => ({ name: "", phone: "", gender: "" });
