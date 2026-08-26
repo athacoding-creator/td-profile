@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
 import { Check, Clock } from "lucide-react";
+import { isPositionEvent, isClassEvent } from "@/lib/eventTypes";
 
 export default function Riwayat() {
   const { user } = useAuth();
@@ -15,7 +16,7 @@ export default function Riwayat() {
     (async () => {
       const { data: regs } = await supabase
         .from("registrations")
-        .select("id, created_at, payment_status, events(*)")
+        .select("id, created_at, payment_status, position, events(*)")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       const { data: atts } = await supabase.from("attendance").select("event_id").eq("user_id", user.id);
@@ -43,6 +44,11 @@ export default function Riwayat() {
               <div className="flex-1">
                 <h3 className="line-clamp-1 font-semibold">{it.events.title}</h3>
                 <p className="text-xs text-muted-foreground">{it.events.venue}</p>
+                {it.position && isPositionEvent(it.events.event_type) && (
+                  <p className="mt-1 text-xs font-medium text-accent">
+                    {isClassEvent(it.events.event_type) ? "Kelas" : "Posisi"}: {it.position}
+                  </p>
+                )}
               </div>
               <div className="flex flex-col items-end gap-1">
                 {it.attended ? (

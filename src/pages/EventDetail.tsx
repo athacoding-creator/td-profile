@@ -460,6 +460,20 @@ export default function EventDetail() {
                     {showVideoUnlockPrompt && " (Belum Berinfaq)"}
                   </>
                 )}
+
+                {isPositionEvent(event.event_type) && registration.position && (
+                  <div className="mt-3 rounded-lg border border-accent/20 bg-background p-3 text-left">
+                    <p className="text-xs text-muted-foreground">
+                      {isClassEvent(event.event_type) ? "Kelas yang dipilih" : "Posisi yang dipilih"}
+                    </p>
+                    <p className="font-semibold text-foreground">{registration.position}</p>
+                    {isClassEvent(event.event_type) && (
+                      <p className="mt-1 whitespace-pre-line text-xs text-muted-foreground">
+                        {positionPricing.find((p) => p.position === registration.position)?.description || "Tidak ada keterangan benefit"}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Konten Video Online (Hanya jika unlocked) */}
