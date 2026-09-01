@@ -29,7 +29,7 @@ export function useAdminData(): AdminData {
   const loadEvents = async () => {
     const { data, error } = await supabase
       .from("events")
-      .select("id,title,description,venue,city,starts_at,ends_at,status,gender,event_type,poster_url,group_link,points_reward,program_id,created_by,created_at,updated_at,success_message,is_pinned,is_recurring,recurring_days,recurring_start_time,recurring_end_time,recurring_until,registration_type,price,min_infaq,max_infaq,max_participants,payment_category_id,qris_method_id,speaker,is_online,youtube_url,episode_count,episode_youtube_urls, programs(id, name, code)")
+      .select("id,title,description,venue,city,starts_at,ends_at,status,gender,event_type,poster_url,group_link,points_reward,program_id,created_by,created_at,updated_at,success_message,is_pinned,allow_group_registration,is_recurring,recurring_days,recurring_start_time,recurring_end_time,recurring_until,registration_type,price,min_infaq,max_infaq,max_participants,payment_category_id,qris_method_id,speaker,is_online,youtube_url,episode_count,episode_youtube_urls, programs(id, name, code)")
       .order("status", { ascending: true }) // active < finished < archived
       .order("is_pinned", { ascending: false })
       .order("starts_at", { ascending: false });
