@@ -325,6 +325,11 @@ function RecurringPinFields({ form, setForm }: { form: any; setForm: (f: any) =>
         <Pin className="h-4 w-4 text-primary" /> Sematkan event (tampil paling depan)
       </label>
       <label className="flex items-center gap-2 text-xs sm:text-sm font-medium cursor-pointer">
+        <input type="checkbox" checked={form.allow_group_registration !== false} onChange={(e) => setForm({ ...form, allow_group_registration: e.target.checked })} />
+        Izinkan daftar rombongan (jika dimatikan, user hanya bisa daftar diri sendiri)
+      </label>
+
+      <label className="flex items-center gap-2 text-xs sm:text-sm font-medium cursor-pointer">
         <input type="checkbox" checked={!!form.is_recurring} onChange={(e) => setForm({ ...form, is_recurring: e.target.checked })} />
         <Repeat className="h-4 w-4 text-primary" /> Event berkelanjutan (mingguan, tidak expired)
       </label>
