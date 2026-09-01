@@ -77,7 +77,7 @@ export default function EventsPage() {
 
 function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; defaultPoints: number; onCreated: () => void }) {
   // fields kategori pembayaran (kelas, futsal, dll)
-  const [form, setForm] = useState<any>({ gender: "ALL", points_reward: defaultPoints, program_id: "", is_pinned: false, is_recurring: false, recurring_days: [], registration_type: "free", price: 0, min_infaq: 0, max_infaq: 50000, max_participants: "", is_online: false, youtube_url: "", episode_count: 0, episode_youtube_urls: [], event_type: "kajian" });
+  const [form, setForm] = useState<any>({ gender: "ALL", points_reward: defaultPoints, program_id: "", is_pinned: false, allow_group_registration: true, is_recurring: false, recurring_days: [], registration_type: "free", price: 0, min_infaq: 0, max_infaq: 50000, max_participants: "", is_online: false, youtube_url: "", episode_count: 0, episode_youtube_urls: [], event_type: "kajian" });
   useEffect(() => { setForm((f: any) => ({ ...f, points_reward: f.points_reward ?? defaultPoints })); }, [defaultPoints]);
   const [positions, setPositions] = useState(() => defaultRowsFor("olahraga"));
   const isSportEvent = SPORT_EVENT_TYPES.includes(form.event_type);
@@ -120,6 +120,7 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
       success_message: form.success_message || null,
       speaker: form.speaker || null,
       is_pinned: !!form.is_pinned,
+      allow_group_registration: form.allow_group_registration !== false,
       is_recurring: !!form.is_recurring,
       recurring_days: form.is_recurring ? (form.recurring_days ?? []) : [],
       recurring_start_time: form.is_recurring ? form.recurring_start_time : null,
@@ -151,7 +152,7 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
       }
     }
     toast.success("Event dibuat");
-    setForm({ gender: "ALL", points_reward: defaultPoints, program_id: "", is_pinned: false, is_recurring: false, recurring_days: [], registration_type: "free", price: 0, min_infaq: 0, max_infaq: 50000, max_participants: "", is_online: false, youtube_url: "", episode_count: 0, episode_youtube_urls: [], event_type: "kajian" });
+    setForm({ gender: "ALL", points_reward: defaultPoints, program_id: "", is_pinned: false, allow_group_registration: true, is_recurring: false, recurring_days: [], registration_type: "free", price: 0, min_infaq: 0, max_infaq: 50000, max_participants: "", is_online: false, youtube_url: "", episode_count: 0, episode_youtube_urls: [], event_type: "kajian" });
     setPositions(defaultRowsFor("olahraga"));
     onCreated();
   };
@@ -324,6 +325,11 @@ function RecurringPinFields({ form, setForm }: { form: any; setForm: (f: any) =>
         <input type="checkbox" checked={!!form.is_pinned} onChange={(e) => setForm({ ...form, is_pinned: e.target.checked })} />
         <Pin className="h-4 w-4 text-primary" /> Sematkan event (tampil paling depan)
       </label>
+      <label className="flex items-center gap-2 text-xs sm:text-sm font-medium cursor-pointer">
+        <input type="checkbox" checked={form.allow_group_registration !== false} onChange={(e) => setForm({ ...form, allow_group_registration: e.target.checked })} />
+        Izinkan daftar rombongan (jika dimatikan, user hanya bisa daftar diri sendiri)
+      </label>
+
       <label className="flex items-center gap-2 text-xs sm:text-sm font-medium cursor-pointer">
         <input type="checkbox" checked={!!form.is_recurring} onChange={(e) => setForm({ ...form, is_recurring: e.target.checked })} />
         <Repeat className="h-4 w-4 text-primary" /> Event berkelanjutan (mingguan, tidak expired)
@@ -506,6 +512,7 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
       speaker: ev.speaker ?? "",
       max_participants: ev.max_participants ?? "",
       is_pinned: !!ev.is_pinned,
+      allow_group_registration: ev.allow_group_registration !== false,
       is_recurring: !!ev.is_recurring,
       recurring_days: ev.recurring_days ?? [],
       recurring_start_time: (ev.recurring_start_time ?? "").slice(0, 5),
@@ -564,6 +571,7 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
       success_message: form.success_message || null,
       speaker: form.speaker || null,
       is_pinned: !!form.is_pinned,
+      allow_group_registration: form.allow_group_registration !== false,
       is_recurring: !!form.is_recurring,
       recurring_days: form.is_recurring ? (form.recurring_days ?? []) : [],
       recurring_start_time: form.is_recurring ? form.recurring_start_time : null,
