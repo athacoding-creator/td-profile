@@ -77,7 +77,7 @@ export default function EventsPage() {
 
 function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; defaultPoints: number; onCreated: () => void }) {
   // fields kategori pembayaran (kelas, futsal, dll)
-  const [form, setForm] = useState<any>({ gender: "ALL", points_reward: defaultPoints, program_id: "", is_pinned: false, allow_group_registration: true, is_recurring: false, recurring_days: [], registration_type: "free", price: 0, min_infaq: 0, max_infaq: 50000, max_participants: "", is_online: false, youtube_url: "", episode_count: 0, episode_youtube_urls: [], event_type: "kajian" });
+  const [form, setForm] = useState<any>({ gender: "ALL", points_reward: defaultPoints, program_id: "", is_pinned: false, allow_group_registration: false, is_recurring: false, recurring_days: [], registration_type: "free", price: 0, min_infaq: 0, max_infaq: 50000, max_participants: "", is_online: false, youtube_url: "", episode_count: 0, episode_youtube_urls: [], event_type: "kajian" });
   useEffect(() => { setForm((f: any) => ({ ...f, points_reward: f.points_reward ?? defaultPoints })); }, [defaultPoints]);
   const [positions, setPositions] = useState(() => defaultRowsFor("olahraga"));
   const isSportEvent = SPORT_EVENT_TYPES.includes(form.event_type);
@@ -152,7 +152,8 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
       }
     }
     toast.success("Event dibuat");
-    setForm({ gender: "ALL", points_reward: defaultPoints, program_id: "", is_pinned: false, allow_group_registration: true, is_recurring: false, recurring_days: [], registration_type: "free", price: 0, min_infaq: 0, max_infaq: 50000, max_participants: "", is_online: false, youtube_url: "", episode_count: 0, episode_youtube_urls: [], event_type: "kajian" });
+    setForm({ gender: "ALL", points_reward: defaultPoints, program_id: "", is_pinned: false, allow_group_registration: false
+    , is_recurring: false, recurring_days: [], registration_type: "free", price: 0, min_infaq: 0, max_infaq: 50000, max_participants: "", is_online: false, youtube_url: "", episode_count: 0, episode_youtube_urls: [], event_type: "kajian" });
     setPositions(defaultRowsFor("olahraga"));
     onCreated();
   };
@@ -327,7 +328,7 @@ function RecurringPinFields({ form, setForm }: { form: any; setForm: (f: any) =>
       </label>
       <label className="flex items-center gap-2 text-xs sm:text-sm font-medium cursor-pointer">
         <input type="checkbox" checked={form.allow_group_registration !== false} onChange={(e) => setForm({ ...form, allow_group_registration: e.target.checked })} />
-        Izinkan daftar rombongan (jika dimatikan, user hanya bisa daftar diri sendiri)
+        Daftar rombongan (lebih dari 1 orang sekaligus)
       </label>
 
       <label className="flex items-center gap-2 text-xs sm:text-sm font-medium cursor-pointer">
