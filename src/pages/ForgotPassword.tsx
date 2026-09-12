@@ -13,7 +13,9 @@ export default function ForgotPassword() {
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
 
-  const submit = async (e: React.FormEvent) => {
+  const ADMIN_WA = "6285111514040";
+
+  const submit = (e: React.FormEvent) => {
     e.preventDefault();
     const normalized = normalizePhone(phone);
     if (!isValidPhone(normalized)) {
@@ -21,18 +23,14 @@ export default function ForgotPassword() {
       return;
     }
     setLoading(true);
-    try {
-      const { error } = await supabase.functions.invoke("reset-password-wa", {
-        body: { phone: normalized },
-      });
-      if (error) throw error;
-      setDone(true);
-      toast.success("Permintaan diproses");
-    } catch (err: any) {
-      toast.error(err.message || "Gagal memproses permintaan");
-    } finally {
-      setLoading(false);
-    }
+    const message =
+      `Assalamu'alaikum Admin Teras Dakwah,\n\n` +
+      `Saya ingin reset password akun saya.\n` +
+      `No. WhatsApp terdaftar: +${normalized}\n\n` +
+      `Mohon bantuannya, terima kasih.`;
+    window.open(`https://wa.me/${ADMIN_WA}?text=${encodeURIComponent(message)}`, "_blank");
+    setDone(true);
+    setLoading(false);
   };
 
   return (
