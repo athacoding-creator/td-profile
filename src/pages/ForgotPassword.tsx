@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,9 @@ export default function ForgotPassword() {
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
 
-  const submit = async (e: React.FormEvent) => {
+  const ADMIN_WA = "6285111514040";
+
+  const submit = (e: React.FormEvent) => {
     e.preventDefault();
     const normalized = normalizePhone(phone);
     if (!isValidPhone(normalized)) {
@@ -21,18 +23,14 @@ export default function ForgotPassword() {
       return;
     }
     setLoading(true);
-    try {
-      const { error } = await supabase.functions.invoke("reset-password-wa", {
-        body: { phone: normalized },
-      });
-      if (error) throw error;
-      setDone(true);
-      toast.success("Permintaan diproses");
-    } catch (err: any) {
-      toast.error(err.message || "Gagal memproses permintaan");
-    } finally {
-      setLoading(false);
-    }
+    const message =
+      `Assalamu'alaikum Admin Teras Dakwah,\n\n` +
+      `Saya ingin reset password akun saya.\n` +
+      `No. WhatsApp terdaftar: +${normalized}\n\n` +
+      `Mohon bantuannya, terima kasih.`;
+    window.open(`https://wa.me/${ADMIN_WA}?text=${encodeURIComponent(message)}`, "_blank");
+    setDone(true);
+    setLoading(false);
   };
 
   return (
@@ -41,12 +39,21 @@ export default function ForgotPassword() {
       <main className="container max-w-md py-12">
         <h1 className="font-display text-3xl font-bold text-foreground">Lupa password</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Fitur ini sedang dalam masalah. Mohon maaf atas ketidaknyamanannya. Silakan hubungi admin untuk reset password.
+          Masukkan nomor WhatsApp Anda, lalu Anda akan diarahkan ke WhatsApp admin untuk konfirmasi reset password.
         </p>
         {done ? (
           <div className="mt-8 space-y-4">
             <div className="rounded-lg border border-border bg-muted/40 p-4 text-sm text-foreground">
-              Permintaan diproses. Jika nomor terdaftar, password baru akan dikirim via WhatsApp.
+              Anda diarahkan ke WhatsApp admin. Jika tidak terbuka otomatis,{" "}
+              <a
+                href={`https://wa.me/${ADMIN_WA}`}
+                target="_blank"
+                rel="noreferrer"
+                className="font-semibold text-primary underline"
+              >
+                klik di sini
+              </a>
+              .
             </div>
             <Link to="/auth" className="block text-center text-sm text-muted-foreground hover:underline">
               ← Kembali ke Masuk
@@ -67,7 +74,7 @@ export default function ForgotPassword() {
               />
             </div>
             <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground">
-              {loading ? "Memproses…" : "Kirim password baru"}
+              {loading ? "Membuka WhatsApp…" : "Hubungi admin via WhatsApp"}
             </Button>
             <Link to="/auth" className="block text-center text-sm text-muted-foreground hover:underline">
               ← Kembali ke Masuk
