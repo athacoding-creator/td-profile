@@ -90,6 +90,9 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
     } else {
       setPositions([]);
     }
+    if (isGroupClassEvent(form.event_type)) {
+      setForm((f: any) => (f.allow_group_registration === true ? f : { ...f, allow_group_registration: true }));
+    }
   }, [form.event_type, isSportEvent]);
 
   const create = async (e: React.FormEvent) => {
