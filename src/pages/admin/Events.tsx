@@ -9,13 +9,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import QRCode from "qrcode";
-import { QrCode as QrIcon, Trash2, Pencil, Lock, Pin, Repeat, Camera, Plus } from "lucide-react";
+import { QrCode as QrIcon, Trash2, Pencil, Lock, Pin, Repeat, Camera, Plus, Users } from "lucide-react";
 import { useAdmin } from "./AdminLayout";
 import { Section } from "./components";
 import { ImagePicker } from "@/components/admin/ImagePicker";
 import { isEventExpired, describeRecurring, DAY_NAMES } from "@/lib/eventSchedule";
 import { buildEventQrUrl, buildProgramQrUrl } from "@/lib/qrUrl";
-import { POSITION_EVENT_TYPES, isClassEvent } from "@/lib/eventTypes";
+import { POSITION_EVENT_TYPES, EVENT_TYPE_OPTIONS, isClassEvent, isGroupClassEvent } from "@/lib/eventTypes";
 
 // datetime-local value -> ISO string with local timezone offset preserved
 const localInputToISO = (v?: string | null) => {
@@ -170,7 +170,7 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
             {programs.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
         </div>
-        <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Tipe</Label><select value={form.event_type ?? "kajian"} onChange={(e) => setForm({ ...form, event_type: e.target.value })} className="h-9 sm:h-10 w-full rounded-md border border-input bg-background px-3 text-xs sm:text-sm"><option value="kajian">Kajian</option><option value="olahraga">Olahraga</option><option value="kelas-kajian">Kelas Kajian</option></select></div>
+        <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Tipe</Label><select value={form.event_type ?? "kajian"} onChange={(e) => setForm({ ...form, event_type: e.target.value })} className="h-9 sm:h-10 w-full rounded-md border border-input bg-background px-3 text-xs sm:text-sm">{EVENT_TYPE_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}</select></div>
         <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Venue</Label><Input required value={form.venue ?? ""} onChange={(e) => setForm({ ...form, venue: e.target.value })} className="text-sm h-9 sm:h-10" /></div>
         <div className="space-y-1.5 md:col-span-2"><Label className="text-xs sm:text-sm">Deskripsi</Label><Textarea rows={3} value={form.description ?? ""} onChange={(e) => setForm({ ...form, description: e.target.value })} className="text-sm" /></div>
         <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Kota</Label><Input value={form.city ?? ""} onChange={(e) => setForm({ ...form, city: e.target.value })} className="text-sm h-9 sm:h-10" /></div>
@@ -328,7 +328,7 @@ function RecurringPinFields({ form, setForm }: { form: any; setForm: (f: any) =>
       </label>
       <label className="flex items-center gap-2 text-xs sm:text-sm font-medium cursor-pointer">
         <input type="checkbox" checked={form.allow_group_registration !== false} onChange={(e) => setForm({ ...form, allow_group_registration: e.target.checked })} />
-        Daftar rombongan (lebih dari 1 orang sekaligus)
+        <Users className="h-4 w-4 text-primary" /> Daftar rombongan (lebih dari 1 orang sekaligus)
       </label>
 
       <label className="flex items-center gap-2 text-xs sm:text-sm font-medium cursor-pointer">
@@ -626,7 +626,7 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
               {programs.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           </div>
-          <div className="space-y-1.5"><Label>Tipe</Label><select value={form.event_type ?? "kajian"} onChange={(e) => setForm({ ...form, event_type: e.target.value })} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"><option value="kajian">Kajian</option><option value="olahraga">Olahraga</option><option value="kelas-kajian">Kelas Kajian</option></select></div>
+          <div className="space-y-1.5"><Label>Tipe</Label><select value={form.event_type ?? "kajian"} onChange={(e) => setForm({ ...form, event_type: e.target.value })} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">{EVENT_TYPE_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}</select></div>
           <div className="space-y-1.5"><Label>Venue</Label><Input value={form.venue ?? ""} onChange={(e) => setForm({ ...form, venue: e.target.value })} /></div>
           {isSportEvent && (
             <div className="md:col-span-2 space-y-3 rounded-xl border border-primary/20 bg-primary/5 p-3">
