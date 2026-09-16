@@ -15,7 +15,7 @@ import { Section } from "./components";
 import { ImagePicker } from "@/components/admin/ImagePicker";
 import { isEventExpired, describeRecurring, DAY_NAMES } from "@/lib/eventSchedule";
 import { buildEventQrUrl, buildProgramQrUrl } from "@/lib/qrUrl";
-import { POSITION_EVENT_TYPES, EVENT_TYPE_OPTIONS, isClassEvent, isGroupClassEvent } from "@/lib/eventTypes";
+import { POSITION_EVENT_TYPES, EVENT_TYPE_OPTIONS, isClassEvent } from "@/lib/eventTypes";
 
 // datetime-local value -> ISO string with local timezone offset preserved
 const localInputToISO = (v?: string | null) => {
@@ -120,7 +120,7 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
       success_message: form.success_message || null,
       speaker: form.speaker || null,
       is_pinned: !!form.is_pinned,
-      allow_group_registration: isGroupClassEvent(form.event_type) ? true : form.allow_group_registration !== false,
+      allow_group_registration: form.allow_group_registration !== false,
 
       is_recurring: !!form.is_recurring,
       recurring_days: form.is_recurring ? (form.recurring_days ?? []) : [],
