@@ -123,7 +123,8 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
       success_message: form.success_message || null,
       speaker: form.speaker || null,
       is_pinned: !!form.is_pinned,
-      allow_group_registration: form.allow_group_registration !== false,
+      allow_group_registration: isGroupClassEvent(form.event_type) ? true : form.allow_group_registration !== false,
+
       is_recurring: !!form.is_recurring,
       recurring_days: form.is_recurring ? (form.recurring_days ?? []) : [],
       recurring_start_time: form.is_recurring ? form.recurring_start_time : null,
