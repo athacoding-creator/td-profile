@@ -38,6 +38,8 @@ export default function EventDetail() {
   const [positionChoiceOpen, setPositionChoiceOpen] = useState(false);
   const [positionPricing, setPositionPricing] = useState<{ position: string; price: number; max_slots?: number | null; description?: string | null }[]>([]);
   const [positionCounts, setPositionCounts] = useState<Record<string, number>>({});
+  const [pendingPricing, setPendingPricing] = useState<{ position: string; price: number; max_slots?: number | null } | null>(null);
+  const [positionGroupOpen, setPositionGroupOpen] = useState(false);
   const [showGuestForm, setShowGuestForm] = useState(false);
   const emptyGuest = () => ({ name: "", phone: "", gender: "" });
   const [guestCount, setGuestCount] = useState(1);
