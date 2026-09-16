@@ -2,14 +2,16 @@
 // "futsal" & "mini-soccer" dipertahankan untuk kompatibilitas data lama.
 export const CLASS_EVENT_TYPES = [
   "kelas-kajian",
+  "event",
+  // legacy
   "bedah-buku",
   "ruqyah",
   "bedah-buku-ruqyah",
   "mini-soccer",
 ];
 
-// Tipe kelas yang secara default mengizinkan pendaftaran rombongan.
-export const GROUP_CLASS_EVENT_TYPES = ["bedah-buku", "ruqyah", "bedah-buku-ruqyah"];
+// Tipe yang secara default (dan wajib) mengizinkan pendaftaran rombongan.
+export const GROUP_CLASS_EVENT_TYPES = ["event", "bedah-buku", "ruqyah", "bedah-buku-ruqyah"];
 
 export const POSITION_EVENT_TYPES = ["olahraga", "futsal", ...CLASS_EVENT_TYPES];
 
@@ -17,10 +19,9 @@ export const EVENT_TYPE_OPTIONS: { value: string; label: string }[] = [
   { value: "kajian", label: "Kajian" },
   { value: "olahraga", label: "Olahraga" },
   { value: "kelas-kajian", label: "Kelas Kajian" },
-  { value: "bedah-buku", label: "Bedah Buku" },
-  { value: "ruqyah", label: "Ruqyah" },
-  { value: "bedah-buku-ruqyah", label: "Bedah Buku & Ruqyah" },
+  { value: "event", label: "Event" },
 ];
+
 
 export const isPositionEvent = (type?: string | null) => POSITION_EVENT_TYPES.includes(type ?? "");
 
