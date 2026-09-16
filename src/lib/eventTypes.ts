@@ -10,8 +10,6 @@ export const CLASS_EVENT_TYPES = [
   "mini-soccer",
 ];
 
-// Tipe yang secara default (dan wajib) mengizinkan pendaftaran rombongan.
-export const GROUP_CLASS_EVENT_TYPES = ["event", "bedah-buku", "ruqyah", "bedah-buku-ruqyah"];
 
 export const POSITION_EVENT_TYPES = ["olahraga", "futsal", ...CLASS_EVENT_TYPES];
 
@@ -27,6 +25,5 @@ export const isPositionEvent = (type?: string | null) => POSITION_EVENT_TYPES.in
 
 export const isClassEvent = (type?: string | null) => CLASS_EVENT_TYPES.includes(type ?? "");
 
-export const isGroupClassEvent = (type?: string | null) => GROUP_CLASS_EVENT_TYPES.includes(type ?? "");
 
 export const positionLabel = (type?: string | null) => (isClassEvent(type) ? "Kelas" : "Posisi");
