@@ -123,7 +123,8 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
       success_message: form.success_message || null,
       speaker: form.speaker || null,
       is_pinned: !!form.is_pinned,
-      allow_group_registration: form.allow_group_registration !== false,
+      allow_group_registration: isGroupClassEvent(form.event_type) ? true : form.allow_group_registration !== false,
+
       is_recurring: !!form.is_recurring,
       recurring_days: form.is_recurring ? (form.recurring_days ?? []) : [],
       recurring_start_time: form.is_recurring ? form.recurring_start_time : null,
@@ -330,9 +331,16 @@ function RecurringPinFields({ form, setForm }: { form: any; setForm: (f: any) =>
         <Pin className="h-4 w-4 text-primary" /> Sematkan event (tampil paling depan)
       </label>
       <label className="flex items-center gap-2 text-xs sm:text-sm font-medium cursor-pointer">
-        <input type="checkbox" checked={form.allow_group_registration !== false} onChange={(e) => setForm({ ...form, allow_group_registration: e.target.checked })} />
+        <input
+          type="checkbox"
+          disabled={isGroupClassEvent(form.event_type)}
+          checked={isGroupClassEvent(form.event_type) ? true : form.allow_group_registration !== false}
+          onChange={(e) => setForm({ ...form, allow_group_registration: e.target.checked })}
+        />
         <Users className="h-4 w-4 text-primary" /> Daftar rombongan (lebih dari 1 orang sekaligus)
+        {isGroupClassEvent(form.event_type) && <span className="text-[11px] text-muted-foreground">(wajib untuk tipe Event)</span>}
       </label>
+
 
       <label className="flex items-center gap-2 text-xs sm:text-sm font-medium cursor-pointer">
         <input type="checkbox" checked={!!form.is_recurring} onChange={(e) => setForm({ ...form, is_recurring: e.target.checked })} />
@@ -575,7 +583,7 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
       success_message: form.success_message || null,
       speaker: form.speaker || null,
       is_pinned: !!form.is_pinned,
-      allow_group_registration: form.allow_group_registration !== false,
+      allow_group_registration: isGroupClassEvent(form.event_type) ? true : form.allow_group_registration !== false,
       is_recurring: !!form.is_recurring,
       recurring_days: form.is_recurring ? (form.recurring_days ?? []) : [],
       recurring_start_time: form.is_recurring ? form.recurring_start_time : null,
