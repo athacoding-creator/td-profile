@@ -729,6 +729,41 @@ export default function EventDetail() {
             </div>
           </DialogContent>
         </Dialog>
+        <Dialog open={positionGroupOpen} onOpenChange={(open) => { setPositionGroupOpen(open); if (!open) { setPendingPricing(null); setShowGuestForm(false); } }}>
+          <DialogContent className="max-h-[85vh] max-w-md overflow-y-auto">
+            <DialogHeader><DialogTitle>Pilih peserta</DialogTitle></DialogHeader>
+            {pendingPricing && (
+              <p className="rounded-md bg-muted p-2 text-xs text-muted-foreground">
+                {isClassEvent(event.event_type) ? "Kelas" : "Posisi"}: <span className="font-medium text-foreground">{pendingPricing.position}</span> · Rp {Number(pendingPricing.price).toLocaleString("id-ID")}/peserta
+              </p>
+            )}
+            <div className="space-y-4">
+              {!showGuestForm ? <>
+                <Button className="w-full" disabled={submitting} onClick={() => proceedWithPosition(false)}>
+                  Daftar Diri Sendiri
+                </Button>
+                <Button className="w-full" variant="outline" disabled={submitting} onClick={() => setShowGuestForm(true)}>
+                  Daftarkan Rombongan
+                </Button>
+              </> : <div className="space-y-3 rounded-lg border p-3">
+                <div className="flex items-center justify-between gap-3"><p className="text-sm font-medium">Rombongan</p><Button type="button" size="sm" variant="ghost" onClick={() => setShowGuestForm(false)}>Kembali</Button></div>
+                <p className="rounded-md bg-muted p-2 text-xs text-muted-foreground">Data akun kamu akan otomatis didaftarkan: <span className="font-medium text-foreground">{profile?.full_name || "Akun kamu"}</span>{profile?.phone ? ` (${profile.phone})` : ""}</p>
+                <p className="text-sm font-medium">Data orang lain</p>
+                <div className="space-y-1"><Label>Jumlah peserta</Label><Input type="number" min="1" value={guestCount} onChange={(e) => { const count = Math.max(1, Number(e.target.value) || 1); setGuestCount(count); setGuests((current) => Array.from({ length: count }, (_, index) => current[index] ?? emptyGuest())); }} /></div>
+                {guests.map((guest, index) => (
+                  <div key={index} className="space-y-3 rounded-md bg-muted/40 p-3">
+                    <p className="text-sm font-medium">Peserta {index + 1}</p>
+                    <div className="space-y-1"><Label>Nama Lengkap</Label><Input value={guest.name} onChange={(e) => setGuests((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, name: e.target.value } : item))} /></div>
+                    <div className="space-y-1"><Label>Nomor WhatsApp</Label><Input type="tel" value={guest.phone} onChange={(e) => setGuests((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, phone: e.target.value } : item))} /></div>
+                    <div className="space-y-1"><Label>Gender</Label><select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={guest.gender} onChange={(e) => setGuests((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, gender: e.target.value } : item))}><option value="">Pilih gender</option><option value="L">Laki-laki</option><option value="P">Perempuan</option></select></div>
+                  </div>
+                ))}
+                <Button className="w-full" disabled={submitting} onClick={() => proceedWithPosition(true)}>Daftarkan Saya & {guestCount} Orang Lain</Button>
+              </div>
+              }
+            </div>
+          </DialogContent>
+        </Dialog>
       </main>
       <BottomNav />
     </div>
