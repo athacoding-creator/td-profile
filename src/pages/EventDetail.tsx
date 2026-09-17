@@ -190,7 +190,54 @@ export default function EventDetail() {
       return toast.error(error.message);
     }
     setPositionChoiceOpen(false);
+    if (event?.allow_group_registration !== false) {
+      setPendingPricing(pricing);
+      setPositionGroupOpen(true);
+      return;
+    }
     navigate(`/event/${event.id}/bayar`, { state: { position: pricing.position, positionPrice: Number(pricing.price), isClass: isClassEvent(event?.event_type) } });
+  };
+
+  const proceedWithPosition = async (withGuests: boolean) => {
+    if (!pendingPricing || !event) return;
+    if (withGuests && guests.some((guest) => !guest.name.trim() || !guest.phone.trim() || !guest.gender)) {
+      return toast.error("Lengkapi nama, nomor WhatsApp, dan gender semua peserta.");
+    }
+    const total = withGuests ? 1 + guests.length : 1;
+    const participantGenders = [profile?.gender, ...(withGuests ? guests.map((guest) => guest.gender) : [])];
+    if (event.gender !== "ALL" && participantGenders.some((gender) => gender !== event.gender)) {
+      return toast.error(`Maaf, event ini khusus untuk ${event.gender === "L" ? "Laki-laki" : "Perempuan"}.`);
+    }
+    setSubmitting(true);
+    try {
+      if (!(await checkQuota(total))) { setSubmitting(false); return; }
+      if (pendingPricing.max_slots && pendingPricing.max_slots > 0) {
+        const { data: c, error: cErr } = await supabase.rpc("event_position_count", { _event_id: event.id, _position: pendingPricing.position });
+        if (cErr) throw cErr;
+        const used = typeof c === "number" ? c : 0;
+        setPositionCounts((prev) => ({ ...prev, [pendingPricing.position]: used }));
+        if (used + total > pendingPricing.max_slots) {
+          setSubmitting(false);
+          return toast.error(`Sisa kuota ${isClassEvent(event?.event_type) ? "kelas" : "posisi"} ${pendingPricing.position} hanya ${Math.max(pendingPricing.max_slots - used, 0)} peserta.`);
+        }
+      }
+      setPositionGroupOpen(false);
+      const guestData = withGuests
+        ? guests.map((guest) => ({ guest_name: guest.name.trim(), guest_phone: guest.phone.trim(), guest_gender: guest.gender, registered_by: user.id }))
+        : undefined;
+      navigate(`/event/${event.id}/bayar`, {
+        state: {
+          position: pendingPricing.position,
+          positionPrice: Number(pendingPricing.price),
+          isClass: isClassEvent(event?.event_type),
+          ...(guestData ? { guests: guestData, includeSelf: true } : {}),
+        },
+      });
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const register = async (includeSelf: boolean, includeGuests = false) => {
