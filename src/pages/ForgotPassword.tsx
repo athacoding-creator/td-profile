@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { normalizePhone, isValidPhone } from "@/lib/phone";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function ForgotPassword() {
   const [phone, setPhone] = useState("");
@@ -15,7 +16,7 @@ export default function ForgotPassword() {
 
   const ADMIN_WA = "6285111514040";
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const normalized = normalizePhone(phone);
     if (!isValidPhone(normalized)) {
@@ -23,9 +24,19 @@ export default function ForgotPassword() {
       return;
     }
     setLoading(true);
+    try {
+      // Buat password baru di server & catat ke dashboard admin
+      const { error } = await supabase.functions.invoke("reset-password-wa", {
+        body: { phone: normalized },
+      });
+      if (error) console.error("reset-password-wa error:", error);
+    } catch (err) {
+      console.error("reset-password-wa invoke failed:", err);
+    }
+
     const message =
       `Assalamu'alaikum Admin Teras Dakwah,\n\n` +
-      `Saya ingin reset password akun saya.\n` +
+      `Saya ingin konfirmasi reset password akun saya.\n` +
       `No. WhatsApp terdaftar: +${normalized}\n\n` +
       `Mohon bantuannya, terima kasih.`;
     window.open(`https://wa.me/${ADMIN_WA}?text=${encodeURIComponent(message)}`, "_blank");
@@ -39,7 +50,7 @@ export default function ForgotPassword() {
       <main className="container max-w-md py-12">
         <h1 className="font-display text-3xl font-bold text-foreground">Lupa password</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Masukkan nomor WhatsApp Anda, lalu Anda akan diarahkan ke WhatsApp admin untuk konfirmasi reset password.
+          Masukkan nomor WhatsApp Anda, lalu tekan Konfirmasi — password baru akan dibuat dan Anda akan diarahkan ke WhatsApp admin.
         </p>
         {done ? (
           <div className="mt-8 space-y-4">
@@ -74,7 +85,7 @@ export default function ForgotPassword() {
               />
             </div>
             <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground">
-              {loading ? "Membuka WhatsApp…" : "Hubungi admin via WhatsApp"}
+              {loading ? "Memproses…" : "Konfirmasi"}
             </Button>
             <Link to="/auth" className="block text-center text-sm text-muted-foreground hover:underline">
               ← Kembali ke Masuk
