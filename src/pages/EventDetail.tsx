@@ -190,7 +190,54 @@ export default function EventDetail() {
       return toast.error(error.message);
     }
     setPositionChoiceOpen(false);
+    if (event?.allow_group_registration !== false) {
+      setPendingPricing(pricing);
+      setPositionGroupOpen(true);
+      return;
+    }
     navigate(`/event/${event.id}/bayar`, { state: { position: pricing.position, positionPrice: Number(pricing.price), isClass: isClassEvent(event?.event_type) } });
+  };
+
+  const proceedWithPosition = async (withGuests: boolean) => {
+    if (!pendingPricing || !event) return;
+    if (withGuests && guests.some((guest) => !guest.name.trim() || !guest.phone.trim() || !guest.gender)) {
+      return toast.error("Lengkapi nama, nomor WhatsApp, dan gender semua peserta.");
+    }
+    const total = withGuests ? 1 + guests.length : 1;
+    const participantGenders = [profile?.gender, ...(withGuests ? guests.map((guest) => guest.gender) : [])];
+    if (event.gender !== "ALL" && participantGenders.some((gender) => gender !== event.gender)) {
+      return toast.error(`Maaf, event ini khusus untuk ${event.gender === "L" ? "Laki-laki" : "Perempuan"}.`);
+    }
+    setSubmitting(true);
+    try {
+      if (!(await checkQuota(total))) { setSubmitting(false); return; }
+      if (pendingPricing.max_slots && pendingPricing.max_slots > 0) {
+        const { data: c, error: cErr } = await supabase.rpc("event_position_count", { _event_id: event.id, _position: pendingPricing.position });
+        if (cErr) throw cErr;
+        const used = typeof c === "number" ? c : 0;
+        setPositionCounts((prev) => ({ ...prev, [pendingPricing.position]: used }));
+        if (used + total > pendingPricing.max_slots) {
+          setSubmitting(false);
+          return toast.error(`Sisa kuota ${isClassEvent(event?.event_type) ? "kelas" : "posisi"} ${pendingPricing.position} hanya ${Math.max(pendingPricing.max_slots - used, 0)} peserta.`);
+        }
+      }
+      setPositionGroupOpen(false);
+      const guestData = withGuests
+        ? guests.map((guest) => ({ guest_name: guest.name.trim(), guest_phone: guest.phone.trim(), guest_gender: guest.gender, registered_by: user.id }))
+        : undefined;
+      navigate(`/event/${event.id}/bayar`, {
+        state: {
+          position: pendingPricing.position,
+          positionPrice: Number(pendingPricing.price),
+          isClass: isClassEvent(event?.event_type),
+          ...(guestData ? { guests: guestData, includeSelf: true } : {}),
+        },
+      });
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const register = async (includeSelf: boolean, includeGuests = false) => {
@@ -679,6 +726,41 @@ export default function EventDetail() {
                   </button>
                 );
               })}
+            </div>
+          </DialogContent>
+        </Dialog>
+        <Dialog open={positionGroupOpen} onOpenChange={(open) => { setPositionGroupOpen(open); if (!open) { setPendingPricing(null); setShowGuestForm(false); } }}>
+          <DialogContent className="max-h-[85vh] max-w-md overflow-y-auto">
+            <DialogHeader><DialogTitle>Pilih peserta</DialogTitle></DialogHeader>
+            {pendingPricing && (
+              <p className="rounded-md bg-muted p-2 text-xs text-muted-foreground">
+                {isClassEvent(event.event_type) ? "Kelas" : "Posisi"}: <span className="font-medium text-foreground">{pendingPricing.position}</span> · Rp {Number(pendingPricing.price).toLocaleString("id-ID")}/peserta
+              </p>
+            )}
+            <div className="space-y-4">
+              {!showGuestForm ? <>
+                <Button className="w-full" disabled={submitting} onClick={() => proceedWithPosition(false)}>
+                  Daftar Diri Sendiri
+                </Button>
+                <Button className="w-full" variant="outline" disabled={submitting} onClick={() => setShowGuestForm(true)}>
+                  Daftarkan Rombongan
+                </Button>
+              </> : <div className="space-y-3 rounded-lg border p-3">
+                <div className="flex items-center justify-between gap-3"><p className="text-sm font-medium">Rombongan</p><Button type="button" size="sm" variant="ghost" onClick={() => setShowGuestForm(false)}>Kembali</Button></div>
+                <p className="rounded-md bg-muted p-2 text-xs text-muted-foreground">Data akun kamu akan otomatis didaftarkan: <span className="font-medium text-foreground">{profile?.full_name || "Akun kamu"}</span>{profile?.phone ? ` (${profile.phone})` : ""}</p>
+                <p className="text-sm font-medium">Data orang lain</p>
+                <div className="space-y-1"><Label>Jumlah peserta</Label><Input type="number" min="1" value={guestCount} onChange={(e) => { const count = Math.max(1, Number(e.target.value) || 1); setGuestCount(count); setGuests((current) => Array.from({ length: count }, (_, index) => current[index] ?? emptyGuest())); }} /></div>
+                {guests.map((guest, index) => (
+                  <div key={index} className="space-y-3 rounded-md bg-muted/40 p-3">
+                    <p className="text-sm font-medium">Peserta {index + 1}</p>
+                    <div className="space-y-1"><Label>Nama Lengkap</Label><Input value={guest.name} onChange={(e) => setGuests((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, name: e.target.value } : item))} /></div>
+                    <div className="space-y-1"><Label>Nomor WhatsApp</Label><Input type="tel" value={guest.phone} onChange={(e) => setGuests((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, phone: e.target.value } : item))} /></div>
+                    <div className="space-y-1"><Label>Gender</Label><select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={guest.gender} onChange={(e) => setGuests((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, gender: e.target.value } : item))}><option value="">Pilih gender</option><option value="L">Laki-laki</option><option value="P">Perempuan</option></select></div>
+                  </div>
+                ))}
+                <Button className="w-full" disabled={submitting} onClick={() => proceedWithPosition(true)}>Daftarkan Saya & {guestCount} Orang Lain</Button>
+              </div>
+              }
             </div>
           </DialogContent>
         </Dialog>
