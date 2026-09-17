@@ -99,6 +99,32 @@ export default function PasswordResetsPage() {
   const totalPages = Math.max(1, Math.ceil(totalCount / ITEMS_PER_PAGE));
   const isSearching = debouncedQuery.length > 0;
 
+  const [resetPhone, setResetPhone] = useState("");
+  const [resetting, setResetting] = useState(false);
+  const [resetResult, setResetResult] = useState<{ phone: string; name: string | null; password: string; delivered: boolean; delivery_error: string | null } | null>(null);
+
+  const generateNewPassword = async () => {
+    const phone = resetPhone.trim();
+    if (!phone) return toast.error("Isi nomor WhatsApp user terlebih dahulu");
+    setResetting(true);
+    setResetResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-reset-password", { body: { phone } });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setResetResult(data);
+      toast.success(`Password baru untuk ${data.name || formatPhoneDisplay(data.phone)} berhasil dibuat`);
+      loadResets(0, debouncedQuery, dateFrom, dateTo);
+    } catch (err: any) {
+      toast.error(err?.message ?? "Gagal membuat password baru");
+    } finally {
+      setResetting(false);
+    }
+  };
+
+  const waMessageForResult = (r: { name: string | null; password: string }) =>
+    `Halo ${r.name || "Sahabat"},\n\nPassword baru akun Teras Dakwah Anda: *${r.password}*\n\nSilakan login dengan nomor WhatsApp dan password baru ini. Jika ada kendala, hubungi admin.`;
+
   return (
     <>
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
