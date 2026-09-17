@@ -50,7 +50,7 @@ export default function ForgotPassword() {
       <main className="container max-w-md py-12">
         <h1 className="font-display text-3xl font-bold text-foreground">Lupa password</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Masukkan nomor WhatsApp Anda, lalu Anda akan diarahkan ke WhatsApp admin untuk konfirmasi reset password.
+          Masukkan nomor WhatsApp Anda, lalu tekan Konfirmasi — password baru akan dibuat dan Anda akan diarahkan ke WhatsApp admin.
         </p>
         {done ? (
           <div className="mt-8 space-y-4">
@@ -85,7 +85,7 @@ export default function ForgotPassword() {
               />
             </div>
             <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground">
-              {loading ? "Membuka WhatsApp…" : "Hubungi admin via WhatsApp"}
+              {loading ? "Memproses…" : "Konfirmasi"}
             </Button>
             <Link to="/auth" className="block text-center text-sm text-muted-foreground hover:underline">
               ← Kembali ke Masuk
