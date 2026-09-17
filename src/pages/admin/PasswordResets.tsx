@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Section } from "./components";
-import { Search, Copy, CheckCircle2, AlertCircle, MessageCircle } from "lucide-react";
+import { Search, Copy, CheckCircle2, AlertCircle, MessageCircle, KeyRound } from "lucide-react";
 import { formatPhoneDisplay } from "@/lib/phone";
 import { toast } from "sonner";
 
@@ -133,6 +133,56 @@ export default function PasswordResetsPage() {
           <p className="text-sm text-muted-foreground">Kelola permintaan reset password dari user</p>
         </div>
       </div>
+
+      <Section title="Buat Password Baru untuk User">
+        <p className="mb-3 text-xs text-muted-foreground">
+          Masukkan nomor WhatsApp user yang lupa password. Sistem akan membuat password baru, mengganti password akunnya, lalu kamu bisa menyalin atau mengirimnya langsung ke WhatsApp user.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Input
+            value={resetPhone}
+            onChange={(e) => setResetPhone(e.target.value)}
+            placeholder="Contoh: 08123456789"
+            className="text-sm"
+            inputMode="tel"
+          />
+          <Button onClick={generateNewPassword} disabled={resetting} className="shrink-0">
+            <KeyRound className="mr-2 h-4 w-4" />
+            {resetting ? "Memproses…" : "Buat Password Baru"}
+          </Button>
+        </div>
+        {resetResult && (
+          <div className="mt-4 space-y-3 rounded-lg border border-green-200 bg-green-50 p-4">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-green-600" />
+              <p className="text-sm font-semibold text-green-800">
+                Password baru untuk {resetResult.name || formatPhoneDisplay(resetResult.phone)}
+              </p>
+            </div>
+            <p className="rounded-md bg-white px-3 py-2 text-center font-mono text-lg font-bold tracking-widest text-foreground border">
+              {resetResult.password}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {resetResult.delivered
+                ? "Password juga sudah dikirim otomatis via WhatsApp gateway."
+                : "WhatsApp gateway tidak mengirim otomatis — kirim manual lewat tombol di bawah."}
+              {resetResult.delivery_error ? ` (${resetResult.delivery_error})` : ""}
+            </p>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" className="flex-1" onClick={() => copyToClipboard(resetResult.password)}>
+                <Copy className="mr-2 h-4 w-4" /> Salin Password
+              </Button>
+              <Button
+                size="sm"
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                onClick={() => window.open(`https://wa.me/${resetResult.phone}?text=${encodeURIComponent(waMessageForResult(resetResult))}`, "_blank")}
+              >
+                <MessageCircle className="mr-2 h-4 w-4" /> Kirim via WA
+              </Button>
+            </div>
+          </div>
+        )}
+      </Section>
 
       <Section title={`Permintaan Reset Password (${isSearching ? "Hasil: " : "Total: "}${totalCount})`}>
         <div className="mb-3 flex flex-col gap-3">
