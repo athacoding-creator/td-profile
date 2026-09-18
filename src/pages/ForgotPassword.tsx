@@ -24,6 +24,17 @@ export default function ForgotPassword() {
       return;
     }
     setLoading(true);
+
+    // Buka tab baru SEKARANG (masih dalam gestur klik user) supaya tidak
+    // diblokir popup blocker; alamatnya diisi setelah password selesai dibuat.
+    const waTab = window.open("", "_blank");
+    const message =
+      `Assalamu'alaikum Admin Teras Dakwah,\n\n` +
+      `Saya ingin konfirmasi reset password akun saya.\n` +
+      `No. WhatsApp terdaftar: +${normalized}\n\n` +
+      `Mohon bantuannya, terima kasih.`;
+    const waUrl = `https://wa.me/${ADMIN_WA}?text=${encodeURIComponent(message)}`;
+
     try {
       // Buat password baru di server & catat ke dashboard admin
       const { error } = await supabase.functions.invoke("reset-password-wa", {
@@ -34,12 +45,12 @@ export default function ForgotPassword() {
       console.error("reset-password-wa invoke failed:", err);
     }
 
-    const message =
-      `Assalamu'alaikum Admin Teras Dakwah,\n\n` +
-      `Saya ingin konfirmasi reset password akun saya.\n` +
-      `No. WhatsApp terdaftar: +${normalized}\n\n` +
-      `Mohon bantuannya, terima kasih.`;
-    window.open(`https://wa.me/${ADMIN_WA}?text=${encodeURIComponent(message)}`, "_blank");
+    if (waTab) {
+      waTab.location.href = waUrl;
+    } else {
+      // Popup tetap terblokir: arahkan tab ini langsung
+      window.location.href = waUrl;
+    }
     setDone(true);
     setLoading(false);
   };
