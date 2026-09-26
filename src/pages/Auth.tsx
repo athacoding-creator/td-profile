@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Header } from "@/components/Header";
 import { normalizePhone, isValidPhone, phoneToEmail } from "@/lib/phone";
+import { PhoneInput } from "@/components/PhoneInput";
 import { Eye, EyeOff, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -208,18 +209,9 @@ export default function Auth() {
                 <Label className="text-sm font-medium text-foreground">
                   No. WhatsApp <span className="text-accent">*</span>
                 </Label>
-                <Input
-                  type="tel"
-                  inputMode="tel"
-                  placeholder="081234567890 / +60123456789"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  required
-                  maxLength={20}
-                  className="bg-card/50 border-accent/20 placeholder:text-muted-foreground text-foreground focus:border-accent focus:ring-accent/50"
-                />
+                <PhoneInput value={phone} onChange={setPhone} required />
                 <p className="text-xs text-muted-foreground">
-                  Luar negeri? Awali dengan kode negara, contoh: +60 (Malaysia), +81 (Jepang)
+                  Pilih kode negara Anda, lalu ketik nomor tanpa awalan kode negara.
                 </p>
               </div>
 
