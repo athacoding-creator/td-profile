@@ -72,12 +72,12 @@ export function PhoneInput({ value, onChange, required, className }: PhoneInputP
       <select
         value={dialCode}
         onChange={(e) => handleCode(e.target.value)}
-        className="h-10 w-[130px] shrink-0 rounded-md border border-accent/20 bg-card/50 px-2 text-sm text-foreground focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/50"
+        className="h-10 w-[150px] shrink-0 rounded-md border border-accent/20 bg-card/50 px-2 text-sm text-foreground focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/50"
         aria-label="Kode negara"
       >
         {COUNTRIES.map((c) => (
           <option key={c.code} value={c.code}>
-            {c.flag} +{c.code}
+            {c.flag} {c.name} (+{c.code})
           </option>
         ))}
       </select>
