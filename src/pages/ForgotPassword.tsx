@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { normalizePhone, isValidPhone } from "@/lib/phone";
+import { PhoneInput } from "@/components/PhoneInput";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function ForgotPassword() {
@@ -85,15 +86,7 @@ export default function ForgotPassword() {
           <form onSubmit={submit} className="mt-8 space-y-4">
             <div className="space-y-1.5">
               <Label>No. WhatsApp</Label>
-              <Input
-                type="tel"
-                inputMode="tel"
-                placeholder="081234567890 / +60123456789"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                required
-                maxLength={20}
-              />
+              <PhoneInput value={phone} onChange={setPhone} required />
             </div>
             <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground">
               {loading ? "Memproses…" : "Konfirmasi"}
