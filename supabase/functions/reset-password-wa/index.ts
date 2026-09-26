@@ -10,16 +10,20 @@ const corsHeaders = {
 };
 
 function normalizePhone(raw: string): string {
-  const d = (raw || "").replace(/\D/g, "");
+  const r = (raw || "").trim();
+  const d = r.replace(/\D/g, "");
   if (!d) return "";
-  if (d.startsWith("62")) return d;
+  if (r.startsWith("+") || r.startsWith("00")) {
+    return r.startsWith("00") ? d.slice(2) : d;
+  }
   if (d.startsWith("0")) return "62" + d.slice(1);
-  if (d.startsWith("8")) return "62" + d;
+  if (d.startsWith("8") && d.length >= 9 && d.length <= 12) return "62" + d;
   return d;
 }
 
 function isValidPhone(p: string): boolean {
-  return /^628\d{7,12}$/.test(p);
+  // International format: any country code, 8-15 digits
+  return /^[1-9]\d{7,14}$/.test(p);
 }
 
 function randomPassword(len = 10): string {
