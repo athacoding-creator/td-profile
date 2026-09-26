@@ -2,11 +2,16 @@
 // Accepts Indonesian local inputs (08xxx, 8xxx) and international numbers
 // with any country code (+60 Malaysia, +81 Japan, +62 Indonesia, dll).
 export function normalizePhone(input: string): string {
-  const digits = (input || "").replace(/\D/g, "");
+  const raw = (input || "").trim();
+  const digits = raw.replace(/\D/g, "");
   if (!digits) return "";
+  // Explicit international input ("+60...", "0060...") — keep country code as-is
+  if (raw.startsWith("+") || raw.startsWith("00")) {
+    return raw.startsWith("00") ? digits.slice(2) : digits;
+  }
   // Local Indonesian formats without country code
   if (digits.startsWith("0")) return "62" + digits.slice(1);
-  if (digits.startsWith("8") && digits.length >= 9 && digits.length <= 13) return "62" + digits;
+  if (digits.startsWith("8") && digits.length >= 9 && digits.length <= 12) return "62" + digits;
   return digits;
 }
 
