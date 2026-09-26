@@ -73,7 +73,7 @@ export default function Auth() {
     e.preventDefault();
     const normalized = normalizePhone(phone);
     if (!isValidPhone(normalized)) {
-      toast.error("Nomor WhatsApp tidak valid. Contoh: 081234567890");
+      toast.error("Nomor WhatsApp tidak valid. Contoh: 081234567890 atau +60123456789");
       return;
     }
     setLoading(true);
@@ -210,14 +210,17 @@ export default function Auth() {
                 </Label>
                 <Input
                   type="tel"
-                  inputMode="numeric"
-                  placeholder="081234567890"
+                  inputMode="tel"
+                  placeholder="081234567890 / +60123456789"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   required
                   maxLength={20}
                   className="bg-card/50 border-accent/20 placeholder:text-muted-foreground text-foreground focus:border-accent focus:ring-accent/50"
                 />
+                <p className="text-xs text-muted-foreground">
+                  Luar negeri? Awali dengan kode negara, contoh: +60 (Malaysia), +81 (Jepang)
+                </p>
               </div>
 
               <AnimatePresence mode="wait">

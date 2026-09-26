@@ -87,8 +87,8 @@ export default function ForgotPassword() {
               <Label>No. WhatsApp</Label>
               <Input
                 type="tel"
-                inputMode="numeric"
-                placeholder="081234567890"
+                inputMode="tel"
+                placeholder="081234567890 / +60123456789"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 required
