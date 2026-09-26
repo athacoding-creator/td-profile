@@ -210,9 +210,6 @@ export default function Auth() {
                   No. WhatsApp <span className="text-accent">*</span>
                 </Label>
                 <PhoneInput value={phone} onChange={setPhone} required />
-                <p className="text-xs text-muted-foreground">
-                  Pilih kode negara Anda, lalu ketik nomor tanpa awalan kode negara.
-                </p>
               </div>
 
               <AnimatePresence mode="wait">

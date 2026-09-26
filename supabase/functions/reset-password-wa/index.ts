@@ -134,7 +134,7 @@ Deno.serve(async (req) => {
     if (updErr) throw updErr;
 
     const message =
-      `Halo ${targetName || "Sahabat"},\n\n` +
+      `Assalammualaikum ${targetName || "Sahabat"},\n\n` +
       `Password baru akun Teras Dakwah Anda: *${newPassword}*\n\n` +
       `fitur reset password ini masih dalam tahap percobaan, jika Anda mengalami kendala silakan hubungi admin.`;
 

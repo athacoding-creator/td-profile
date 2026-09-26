@@ -3,36 +3,35 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 // Daftar kode negara umum (utamanya yang sering dipakai jamaah)
-const COUNTRIES: { code: string; name: string; flag: string }[] = [
-  { code: "62", name: "Indonesia", flag: "🇮🇩" },
-  { code: "60", name: "Malaysia", flag: "🇲🇾" },
-  { code: "65", name: "Singapura", flag: "🇸🇬" },
-  { code: "673", name: "Brunei", flag: "🇧🇳" },
-  { code: "66", name: "Thailand", flag: "🇹🇭" },
-  { code: "63", name: "Filipina", flag: "🇵🇭" },
-  { code: "84", name: "Vietnam", flag: "🇻🇳" },
-  { code: "95", name: "Myanmar", flag: "🇲🇲" },
-  { code: "855", name: "Kamboja", flag: "🇰🇭" },
-  { code: "856", name: "Laos", flag: "🇱🇦" },
-  { code: "81", name: "Jepang", flag: "🇯🇵" },
-  { code: "82", name: "Korea Selatan", flag: "🇰🇷" },
-  { code: "86", name: "Tiongkok", flag: "🇨🇳" },
-  { code: "886", name: "Taiwan", flag: "🇹🇼" },
-  { code: "852", name: "Hong Kong", flag: "🇭🇰" },
-  { code: "91", name: "India", flag: "🇮🇳" },
-  { code: "92", name: "Pakistan", flag: "🇵🇰" },
-  { code: "880", name: "Bangladesh", flag: "🇧🇩" },
-  { code: "966", name: "Arab Saudi", flag: "🇸🇦" },
-  { code: "971", name: "Uni Emirat Arab", flag: "🇦🇪" },
-  { code: "974", name: "Qatar", flag: "🇶🇦" },
-  { code: "965", name: "Kuwait", flag: "🇰🇼" },
-  { code: "90", name: "Turki", flag: "🇹🇷" },
-  { code: "44", name: "Inggris", flag: "🇬🇧" },
-  { code: "49", name: "Jerman", flag: "🇩🇪" },
-  { code: "31", name: "Belanda", flag: "🇳🇱" },
-  { code: "33", name: "Prancis", flag: "🇫🇷" },
-  { code: "61", name: "Australia", flag: "🇦🇺" },
-  { code: "1", name: "Amerika/Kanada", flag: "🇺🇸" },
+const COUNTRIES: { code: string; flag: string }[] = [
+  { code: "62", flag: "🇮🇩" },
+  { code: "60", flag: "🇲🇾" },
+  { code: "65", flag: "🇸🇬" },
+  { code: "673", flag: "🇧🇳" },
+  { code: "66", flag: "🇵🇭" },
+  { code: "84", flag: "🇻🇳" },
+  { code: "95", flag: "🇲🇲" },
+  { code: "855", flag: "🇰🇭" },
+  { code: "856", flag: "🇱🇦" },
+  { code: "81", flag: "🇯🇵" },
+  { code: "82", flag: "🇰🇷" },
+  { code: "86", flag: "🇨🇳" },
+  { code: "886", flag: "🇹🇼" },
+  { code: "852", flag: "🇭🇰" },
+  { code: "91", flag: "🇮🇳" },
+  { code: "92", flag: "🇵🇰" },
+  { code: "880", flag: "🇧🇩" },
+  { code: "966", flag: "🇸🇦" },
+  { code: "971", flag: "🇦🇪" },
+  { code: "974", flag: "🇶🇦" },
+  { code: "965", flag: "🇰🇼" },
+  { code: "90", flag: "🇹🇷" },
+  { code: "44", flag: "🇬🇧" },
+  { code: "49",flag: "🇩🇪" },
+  { code: "31", flag: "🇳🇱" },
+  { code: "33", flag: "🇫🇷" },
+  { code: "61", flag: "🇦🇺" },
+  { code: "1", flag: "🇺🇸" },
 ];
 
 interface PhoneInputProps {
@@ -72,19 +71,19 @@ export function PhoneInput({ value, onChange, required, className }: PhoneInputP
       <select
         value={dialCode}
         onChange={(e) => handleCode(e.target.value)}
-        className="h-10 w-[150px] shrink-0 rounded-md border border-accent/20 bg-card/50 px-2 text-sm text-foreground focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/50"
+        className="h-10 w-[100px] shrink-0 rounded-md border border-accent/20 bg-card/50 px-2 text-sm text-foreground focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/50"
         aria-label="Kode negara"
       >
         {COUNTRIES.map((c) => (
           <option key={c.code} value={c.code}>
-            {c.flag} {c.name} (+{c.code})
+            {c.flag} (+{c.code})
           </option>
         ))}
       </select>
       <Input
         type="tel"
         inputMode="tel"
-        placeholder={dialCode === "62" ? "81234567890" : "Nomor tanpa kode negara"}
+        placeholder={dialCode === "62" ? "81234567890" : "1234567890"}
         value={local}
         onChange={(e) => handleLocal(e.target.value)}
         required={required}
