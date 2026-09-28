@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS country_code text DEFAULT 'ID', ADD COLUMN IF NOT EXISTS country_name text DEFAULT 'Indonesia';
