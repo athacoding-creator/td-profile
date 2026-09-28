@@ -1,3 +1,4 @@
+import { useT } from "@/i18n";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,6 +12,7 @@ import { getReasonLabel } from "@/utils/pointReasons";
 import { AlertCircle } from "lucide-react";
 
 export default function Poin() {
+  const { t } = useT();
   const { user, profile, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const [rewards, setRewards] = useState<any[]>([]);
@@ -50,13 +52,13 @@ export default function Poin() {
   const redeem = async (r: any) => {
     if (!user) return;
     if (!profile?.is_complete) {
-      toast.error("Lengkapi profil dulu");
+      toast.error(t("Lengkapi profil dulu"));
       return navigate("/profil");
     }
     if (onCooldown) {
       return toast.error(`Kamu sudah menukar bulan ini. Coba lagi setelah ${cooldownUntil!.toLocaleDateString("id-ID")}`);
     }
-    if ((profile?.points ?? 0) < r.cost_points) return toast.error("Poin tidak cukup");
+    if ((profile?.points ?? 0) < r.cost_points) return toast.error(t("Poin tidak cukup"));
     const { error } = await supabase.from("redemptions").insert({
       user_id: user.id,
       reward_id: r.id,
@@ -66,7 +68,7 @@ export default function Poin() {
     if (error) return toast.error(error.message);
     await refreshProfile();
     await loadRedeems();
-    toast.success("Penukaran diproses!");
+    toast.success(t("Penukaran diproses!"));
   };
 
   return (
@@ -74,7 +76,7 @@ export default function Poin() {
       <Header />
       <main className="container py-8">
         <div className="rounded-2xl p-8 text-center bg-primary text-primary-foreground">
-          <p className="text-sm opacity-80">Poin kamu</p>
+          <p className="text-sm opacity-80">{t("Poin kamu")}</p>
           <p className="mt-2 font-display text-5xl font-black">{profile?.points ?? 0}</p>
         </div>
 
@@ -87,7 +89,7 @@ export default function Poin() {
           </div>
         )}
 
-        <h2 className="mt-8 font-display text-lg font-semibold">Tukar Reward</h2>
+        <h2 className="mt-8 font-display text-lg font-semibold">{t("Tukar Reward")}</h2>
         <div className="mt-3 grid grid-cols-2 gap-3">
           {rewards.map((r) => (
             <div key={r.id} className="rounded-2xl bg-card p-3" style={{ boxShadow: "var(--shadow-card)" }}>
@@ -96,14 +98,14 @@ export default function Poin() {
               <p className="text-xs text-muted-foreground line-clamp-2">{r.description}</p>
               <div className="mt-2 flex items-center justify-between gap-1">
                 <span className="text-xs font-bold text-accent">{r.cost_points} pts</span>
-                <Button size="sm" disabled={!!onCooldown} onClick={() => redeem(r)}>Tukar</Button>
+                <Button size="sm" disabled={!!onCooldown} onClick={() => redeem(r)}>{t("Tukar")}</Button>
               </div>
             </div>
           ))}
-          {!rewards.length && <p className="col-span-2 text-sm text-muted-foreground">Belum ada reward.</p>}
+          {!rewards.length && <p className="col-span-2 text-sm text-muted-foreground">{t("Belum ada reward.")}</p>}
         </div>
 
-        <h2 className="mt-10 font-display text-xl font-semibold">Riwayat Poin</h2>
+        <h2 className="mt-10 font-display text-xl font-semibold">{t("Riwayat Poin")}</h2>
         <div className="mt-4 space-y-2">
           {txns.map((t) => (
             <div key={t.id} className="flex items-center justify-between rounded-xl bg-card p-3 text-sm">
@@ -113,7 +115,7 @@ export default function Poin() {
               </span>
             </div>
           ))}
-          {!txns.length && <p className="text-sm text-muted-foreground">Belum ada transaksi.</p>}
+          {!txns.length && <p className="text-sm text-muted-foreground">{t("Belum ada transaksi.")}</p>}
         </div>
       </main>
 
@@ -124,32 +126,32 @@ export default function Poin() {
             <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-accent/20">
               <AlertCircle className="h-6 w-6 text-accent" />
             </div>
-            <DialogTitle className="text-xl font-bold">Syarat Penukaran</DialogTitle>
+            <DialogTitle className="text-xl font-bold">{t("Syarat Penukaran")}</DialogTitle>
             <DialogDescription className="mt-2 text-sm text-foreground/80">
-              Mohon baca dan pahami syarat penukaran reward berikut
+              {t("Mohon baca dan pahami syarat penukaran reward berikut")}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-2.5 py-4">
             <div className="flex gap-2.5">
               <span className="shrink-0 mt-1 h-2 w-2 rounded-full bg-accent" />
-              <span className="text-sm text-foreground/80">Mengambil di Teras Dakwah setelah kajian berlangsung</span>
+              <span className="text-sm text-foreground/80">{t("Mengambil di Teras Dakwah setelah kajian berlangsung")}</span>
             </div>
             <div className="flex gap-2.5">
               <span className="shrink-0 mt-1 h-2 w-2 rounded-full bg-accent" />
-              <span className="text-sm text-foreground/80">Bersedia untuk didokumentasikan</span>
+              <span className="text-sm text-foreground/80">{t("Bersedia untuk didokumentasikan")}</span>
             </div>
             <div className="flex gap-2.5">
               <span className="shrink-0 mt-1 h-2 w-2 rounded-full bg-accent" />
-              <span className="text-sm text-foreground/80">Menunjukkan akun</span>
+              <span className="text-sm text-foreground/80">{t("Menunjukkan akun")}</span>
             </div>
             <div className="flex gap-2.5">
               <span className="shrink-0 mt-1 h-2 w-2 rounded-full bg-accent" />
-              <span className="text-sm text-foreground/80">Story Instagram dan tag Teras Dakwah</span>
+              <span className="text-sm text-foreground/80">{t("Story Instagram dan tag Teras Dakwah")}</span>
             </div>
             <div className="flex gap-2.5">
               <span className="shrink-0 mt-1 h-2 w-2 rounded-full bg-accent" />
-              <span className="text-sm text-foreground/80">Sebulan hanya bisa menukar 1 jenis item</span>
+              <span className="text-sm text-foreground/80">{t("Sebulan hanya bisa menukar 1 jenis item")}</span>
             </div>
           </div>
 
@@ -159,7 +161,7 @@ export default function Poin() {
               className="flex-1"
               onClick={() => setShowTermsDialog(false)}
             >
-              Mengerti
+              {t("Mengerti")}
             </Button>
           </div>
         </DialogContent>

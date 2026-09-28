@@ -1,3 +1,4 @@
+import { useT } from "@/i18n";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +9,7 @@ import { Check, Clock } from "lucide-react";
 import { isPositionEvent, isClassEvent } from "@/lib/eventTypes";
 
 export default function Riwayat() {
+  const { t } = useT();
   const { user } = useAuth();
   const [items, setItems] = useState<any[]>([]);
 
@@ -29,7 +31,7 @@ export default function Riwayat() {
     <div className="min-h-screen bg-background pb-24">
       <Header />
       <main className="container py-8">
-        <h1 className="font-display text-2xl font-bold">Event Saya</h1>
+        <h1 className="font-display text-2xl font-bold">{t("Event Saya")}</h1>
         <div className="mt-6 space-y-3">
           {items.map((it) => (
             <Link
@@ -46,33 +48,33 @@ export default function Riwayat() {
                 <p className="text-xs text-muted-foreground">{it.events.venue}</p>
                 {it.position && isPositionEvent(it.events.event_type) && (
                   <p className="mt-1 text-xs font-medium text-accent">
-                    {isClassEvent(it.events.event_type) ? "Kelas" : "Posisi"}: {it.position}
+                    {t(isClassEvent(it.events.event_type) ? "Kelas" : "Posisi")}: {it.position}
                   </p>
                 )}
               </div>
               <div className="flex flex-col items-end gap-1">
                 {it.attended ? (
                   <span className="flex items-center gap-1 text-xs font-medium text-accent">
-                    <Check className="h-3.5 w-3.5" /> Hadir
+                    <Check className="h-3.5 w-3.5" /> {t("Hadir")}
                   </span>
                 ) : (
                   <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Clock className="h-3.5 w-3.5" /> Terdaftar
+                    <Clock className="h-3.5 w-3.5" /> {t("Terdaftar")}
                   </span>
                 )}
                 {it.payment_status === "pending" && (
-                  <span className="text-[10px] text-amber-600 font-medium bg-amber-50 px-1.5 py-0.5 rounded">Menunggu Verifikasi</span>
+                  <span className="text-[10px] text-amber-600 font-medium bg-amber-50 px-1.5 py-0.5 rounded">{t("Menunggu Verifikasi")}</span>
                 )}
                 {it.payment_status === "rejected" && (
-                  <span className="text-[10px] text-destructive font-medium bg-destructive/5 px-1.5 py-0.5 rounded">Ditolak</span>
+                  <span className="text-[10px] text-destructive font-medium bg-destructive/5 px-1.5 py-0.5 rounded">{t("Ditolak")}</span>
                 )}
                 {it.payment_status === "approved" && (
-                  <span className="text-[10px] text-blue-600 font-medium bg-blue-50 px-1.5 py-0.5 rounded">Lunas</span>
+                  <span className="text-[10px] text-blue-600 font-medium bg-blue-50 px-1.5 py-0.5 rounded">{t("Lunas")}</span>
                 )}
               </div>
             </Link>
           ))}
-          {!items.length && <p className="text-sm text-muted-foreground">Belum ada event.</p>}
+          {!items.length && <p className="text-sm text-muted-foreground">{t("Belum ada event.")}</p>}
         </div>
       </main>
       <BottomNav />

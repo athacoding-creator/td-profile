@@ -1,3 +1,4 @@
+import { useT } from "@/i18n";
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -50,6 +51,7 @@ const AccentBar = () => {
 };
 
 export default function Auth() {
+  const { t } = useT();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
@@ -74,7 +76,7 @@ export default function Auth() {
     e.preventDefault();
     const normalized = normalizePhone(phone);
     if (!isValidPhone(normalized)) {
-      toast.error("Nomor WhatsApp tidak valid. Contoh: 081234567890 atau +60123456789");
+      toast.error(t("Nomor WhatsApp tidak valid. Contoh: 081234567890 atau +60123456789"));
       return;
     }
     setLoading(true);
@@ -82,12 +84,12 @@ export default function Auth() {
       const email = phoneToEmail(normalized);
       if (mode === "signup") {
         if (!name.trim()) {
-          toast.error("Nama wajib diisi");
+          toast.error(t("Nama wajib diisi"));
           setLoading(false);
           return;
         }
         if (!birthDate) {
-          toast.error("Tanggal lahir wajib diisi");
+          toast.error(t("Tanggal lahir wajib diisi"));
           setLoading(false);
           return;
         }
@@ -105,7 +107,7 @@ export default function Auth() {
           }
           throw error;
         }
-        toast.success("Akun dibuat!");
+        toast.success(t("Akun dibuat!"));
         navigate(consumeRedirect("/onboarding"));
       } else {
         let { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -191,14 +193,14 @@ export default function Auth() {
                     className="space-y-2"
                   >
                     <Label className="text-sm font-medium text-foreground">
-                      Nama Lengkap <span className="text-accent">*</span>
+                      {t("Nama Lengkap")} <span className="text-accent">*</span>
                     </Label>
                     <Input
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       required
                       maxLength={100}
-                      placeholder="Masukkan nama lengkap Anda"
+                      placeholder={t("Masukkan nama lengkap Anda")}
                       className="bg-card/50 border-accent/20 placeholder:text-muted-foreground text-foreground focus:border-accent focus:ring-accent/50"
                     />
                   </motion.div>
@@ -207,7 +209,7 @@ export default function Auth() {
 
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-foreground">
-                  No. WhatsApp <span className="text-accent">*</span>
+                  {t("No. WhatsApp")} <span className="text-accent">*</span>
                 </Label>
                 <PhoneInput value={phone} onChange={setPhone} required />
               </div>
@@ -223,7 +225,7 @@ export default function Auth() {
                     className="space-y-2"
                   >
                     <Label className="text-sm font-medium text-foreground">
-                      Tanggal Lahir <span className="text-accent">*</span>
+                      {t("Tanggal Lahir")} <span className="text-accent">*</span>
                     </Label>
                     <Input
                       type="date"
@@ -248,7 +250,7 @@ export default function Auth() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     minLength={6}
-                    placeholder="Minimal 6 karakter"
+                    placeholder={t("Minimal 6 karakter")}
                     className="bg-card/50 border-accent/20 placeholder:text-muted-foreground text-foreground pr-10 focus:border-accent focus:ring-accent/50"
                   />
                   <button
@@ -276,7 +278,7 @@ export default function Auth() {
                     to="/forgot-password"
                     className="text-xs text-muted-foreground hover:text-accent transition-colors"
                   >
-                    Lupa password?
+                    {t("Lupa password?")}
                   </Link>
                 </motion.div>
               )}
@@ -294,7 +296,7 @@ export default function Auth() {
                   {loading ? (
                     <span className="flex items-center gap-2">
                       <span className="h-4 w-4 border-2 border-accent-foreground border-t-transparent rounded-full animate-spin" />
-                      Memproses…
+                      {t("Memproses…")}
                     </span>
                   ) : mode === "signin" ? (
                     "Masuk"

@@ -34,6 +34,8 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
+import { useT } from "@/i18n";
+import { getCountries, guessCountryFromPhone } from "@/lib/countries";
 import { Link } from "react-router-dom";
 import { formatPhoneDisplay } from "@/lib/phone";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -61,6 +63,8 @@ type View = "menu" | "edit" | "password";
 function ProfilContent() {
   const { user, profile, refreshProfile, signOut, isAdmin } = useAuth();
   const { theme, setTheme } = useTheme();
+  const { t, lang, setLang } = useT();
+  const countries = useMemo(() => getCountries(lang), [lang]);
   const [view, setView] = useState<View>("menu");
   const [form, setForm] = useState<any>({});
   const [loading, setLoading] = useState(false);
@@ -76,7 +80,7 @@ function ProfilContent() {
 
   useEffect(() => {
     if (profile) {
-      setForm(profile);
+      setForm({ ...profile, country_code: (profile as any).country_code || guessCountryFromPhone(profile.phone) });
       // Check if we should show the profile completion popup
       const shouldShow = sessionStorage.getItem("showProfileCompletionPopup");
       if (shouldShow === "true") {
@@ -122,6 +126,8 @@ function ProfilContent() {
           district_code: form.district_code || null,
           district_name: form.district_name || null,
           city: form.regency_name || form.city || null,
+          country_code: form.country_code || "ID",
+          country_name: countries.find((c) => c.code === (form.country_code || "ID"))?.name ?? null,
           occupation: form.occupation || null,
           instansi: form.instansi || null,
           hobi: form.hobi || null,
@@ -137,9 +143,9 @@ function ProfilContent() {
         .eq("id", user.id)
         .maybeSingle();
       if (!wasComplete && fresh?.is_complete) {
-        toast.success("Profil lengkap! Bonus poin diberikan 🎉");
+        toast.success(t("Profil lengkap! Bonus poin diberikan 🎉"));
       } else {
-        toast.success("Tersimpan");
+        toast.success(t("Tersimpan"));
       }
       setView("menu");
     } catch (e) {
@@ -151,13 +157,13 @@ function ProfilContent() {
 
   const changePassword = async () => {
     if (!user) return;
-    if (pw.newPw.length < 6) return toast.error("Password baru minimal 6 karakter");
-    if (pw.newPw !== pw.confirmPw) return toast.error("Konfirmasi password tidak cocok");
+    if (pw.newPw.length < 6) return toast.error(t("Password minimal 6 karakter"));
+    if (pw.newPw !== pw.confirmPw) return toast.error(t("Konfirmasi password tidak cocok"));
     setPwLoading(true);
     try {
       const { error } = await supabase.auth.updateUser({ password: pw.newPw });
       if (error) return toast.error(error.message);
-      toast.success("Password berhasil diubah");
+      toast.success(t("Password berhasil diubah"));
       setPw({ newPw: "", confirmPw: "" });
       setView("menu");
     } catch (e) {
@@ -202,17 +208,17 @@ function ProfilContent() {
               </div>
             </div>
             <h2 className="mb-2 text-center text-lg font-bold text-foreground">
-              Lengkapi Data Diri Anda
+              {t("Lengkapi Data Diri Anda")}
             </h2>
             <p className="mb-6 text-center text-sm text-muted-foreground">
-              Lengkapi profil Anda untuk mendapatkan akses penuh ke semua fitur dan bonus poin.
+              {t("Lengkapi profil Anda untuk mendapatkan akses penuh ke semua fitur dan bonus poin.")}
             </p>
             <div className="flex gap-3">
               <button
                 onClick={handleProfileCompletionClose}
                 className="flex-1 rounded-lg border border-border bg-background px-4 py-2.5 text-sm font-medium text-foreground transition hover:bg-muted"
               >
-                Nanti
+                {t("Nanti")}
               </button>
               <button
                 onClick={() => {
@@ -221,7 +227,7 @@ function ProfilContent() {
                 }}
                 className="flex-1 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-accent-foreground transition hover:bg-accent/90"
               >
-                Lengkapi Sekarang
+                {t("Lengkapi Sekarang")}
               </button>
             </div>
           </div>
@@ -238,13 +244,22 @@ function ProfilContent() {
                 </div>
                 <div className="min-w-0">
                   <p className="truncate font-display text-xl font-bold text-foreground">
-                    {profile?.full_name || "Pengguna"}
+                    {profile?.full_name || t("Pengguna")}
                   </p>
                   <p className="truncate text-sm text-muted-foreground">
                     {profile?.phone ? formatPhoneDisplay(profile.phone) : ""}
                   </p>
                 </div>
               </div>
+              <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setLang(lang === "id" ? "en" : "id")}
+                aria-label={t("Bahasa")}
+                className="h-10 rounded-full border-accent/20 bg-background px-3 text-xs font-bold text-foreground shadow-sm hover:bg-accent/5"
+              >
+                {lang === "id" ? "ID" : "EN"}
+              </Button>
               <Button
                 variant="outline"
                 size="icon"
@@ -258,11 +273,12 @@ function ProfilContent() {
                 )}
                 <span className="sr-only">Toggle theme</span>
               </Button>
+              </div>
             </div>
 
             <h2 className="mt-8 flex items-center gap-2 font-display text-lg font-bold text-foreground">
               <span className="h-4 w-1.5 rounded-sm bg-accent" />
-              Data pribadi
+              {t("Data pribadi")}
             </h2>
 
             <ul className="mt-3 divide-y divide-border/70 border-y border-border/70">
@@ -271,7 +287,7 @@ function ProfilContent() {
                   <>
                     <span className="flex items-center gap-3">
                       <Icon className="h-5 w-5 text-muted-foreground" />
-                      <span className="text-foreground">{label}</span>
+                      <span className="text-foreground">{t(label)}</span>
                       {badge && (
                         <span className="ml-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                           {badge}
@@ -316,7 +332,7 @@ function ProfilContent() {
                 >
                   <span className="flex items-center gap-3">
                     <XCircle className="h-5 w-5" />
-                    Keluar akun
+                    {t("Keluar akun")}
                   </span>
                   <ChevronRight className="h-5 w-5" />
                 </button>
@@ -334,16 +350,16 @@ function ProfilContent() {
               onClick={() => setView("menu")}
               className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
             >
-              <ChevronLeft className="h-4 w-4" /> Kembali
+              <ChevronLeft className="h-4 w-4" /> {t("Kembali")}
             </button>
-            <h1 className="font-display text-2xl font-bold">Ubah password</h1>
+            <h1 className="font-display text-2xl font-bold">{t("Ubah password")}</h1>
             <div className="mt-6 space-y-4">
               <div className="space-y-1.5">
-                <Label>Password baru</Label>
+                <Label>{t("Password baru")}</Label>
                 <Input type="password" value={pw.newPw} onChange={(e) => setPw({ ...pw, newPw: e.target.value })} minLength={6} />
               </div>
               <div className="space-y-1.5">
-                <Label>Konfirmasi password baru</Label>
+                <Label>{t("Konfirmasi password baru")}</Label>
                 <Input type="password" value={pw.confirmPw} onChange={(e) => setPw({ ...pw, confirmPw: e.target.value })} minLength={6} />
               </div>
               <Button onClick={changePassword} disabled={pwLoading} className="w-full bg-primary text-primary-foreground">
@@ -359,9 +375,9 @@ function ProfilContent() {
               onClick={() => setView("menu")}
               className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
             >
-              <ChevronLeft className="h-4 w-4" /> Kembali
+              <ChevronLeft className="h-4 w-4" /> {t("Kembali")}
             </button>
-            <h1 className="font-display text-2xl font-bold">Ubah data akun</h1>
+            <h1 className="font-display text-2xl font-bold">{t("Ubah data akun")}</h1>
             
             {dataError && (
               <div className="mt-4 flex items-start gap-2 rounded-lg bg-yellow-500/10 p-3 text-sm text-yellow-600 dark:text-yellow-500">
@@ -372,16 +388,16 @@ function ProfilContent() {
 
             <div className="mt-6 space-y-4">
               <div className="space-y-1.5">
-                <Label>Nama lengkap</Label>
+                <Label>{t("Nama lengkap")}</Label>
                 <Input value={form.full_name ?? ""} onChange={(e) => setForm({ ...form, full_name: e.target.value })} maxLength={100} />
               </div>
               <div className="space-y-1.5">
-                <Label>No. WhatsApp</Label>
+                <Label>{t("No. WhatsApp")}</Label>
                 <Input value={formatPhoneDisplay(form.phone ?? "")} readOnly disabled />
-                <p className="text-xs text-muted-foreground">Nomor WhatsApp tidak dapat diubah karena digunakan sebagai identitas akun.</p>
+                <p className="text-xs text-muted-foreground">{t("Nomor WhatsApp tidak dapat diubah karena digunakan sebagai identitas akun.")}</p>
               </div>
               <div className="space-y-1.5">
-                <Label>Gender</Label>
+                <Label>{t("Gender")}</Label>
                 <div className="flex gap-2">
                   {(["L", "P"] as const).map((g) => (
                     <button
@@ -392,20 +408,35 @@ function ProfilContent() {
                         form.gender === g ? "border-accent bg-accent/5" : "border-border"
                       }`}
                     >
-                      {g === "L" ? "Laki-laki" : "Perempuan"}
+                      {t(g === "L" ? "Laki-laki" : "Perempuan")}
                     </button>
                   ))}
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label>Tanggal lahir</Label>
+                <Label>{t("Tanggal lahir")}</Label>
                 <Input type="date" value={form.birth_date ?? ""} onChange={(e) => setForm({ ...form, birth_date: e.target.value })} />
               </div>
 
               {/* Domisili */}
               <div className="space-y-1.5">
+                <Label>{t("Negara")}</Label>
+                <Select
+                  value={form.country_code ?? "ID"}
+                  onValueChange={(v) => setForm({ ...form, country_code: v, province_code: null, province_name: null, regency_code: null, regency_name: null, district_code: null, district_name: null, city: null })}
+                >
+                  <SelectTrigger><SelectValue placeholder={t("Pilih negara")} /></SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    {countries.map((c) => <SelectItem key={c.code} value={c.code}>{c.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {(form.country_code ?? "ID") === "ID" ? (
+              <>
+              <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <Label>Provinsi</Label>
+                  <Label>{t("Provinsi")}</Label>
                   {isDataLoading && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
                 </div>
                 {provinces.length > 0 ? (
@@ -426,7 +457,7 @@ function ProfilContent() {
                     }}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Pilih provinsi" />
+                      <SelectValue placeholder={t("Pilih provinsi")} />
                     </SelectTrigger>
                     <SelectContent className="max-h-72">
                       {provinces.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
@@ -443,7 +474,7 @@ function ProfilContent() {
               </div>
 
               <div className="space-y-1.5">
-                <Label>Kabupaten / Kota</Label>
+                <Label>{t("Kabupaten / Kota")}</Label>
                 {regencies.length > 0 ? (
                   <Select
                     value={form.regency_code ?? ""}
@@ -462,7 +493,7 @@ function ProfilContent() {
                   >
                     <SelectTrigger>
                       <SelectValue placeholder={
-                        form.province_code || provinces.length === 0 ? "Pilih kabupaten/kota" : "Pilih provinsi dulu"
+                        t(form.province_code || provinces.length === 0 ? "Pilih kabupaten/kota" : "Pilih provinsi dulu")
                       } />
                     </SelectTrigger>
                     <SelectContent className="max-h-72">
@@ -486,7 +517,7 @@ function ProfilContent() {
               </div>
 
               <div className="space-y-1.5">
-                <Label>Kecamatan</Label>
+                <Label>{t("Kecamatan")}</Label>
                 {districts.length > 0 ? (
                   <Select
                     value={form.district_code ?? ""}
@@ -499,7 +530,7 @@ function ProfilContent() {
                   >
                     <SelectTrigger>
                       <SelectValue placeholder={
-                        form.regency_code || regencies.length === 0 ? "Pilih kecamatan" : "Pilih kabupaten/kota dulu"
+                        t(form.regency_code || regencies.length === 0 ? "Pilih kecamatan" : "Pilih kabupaten/kota dulu")
                       } />
                     </SelectTrigger>
                     <SelectContent className="max-h-72">
@@ -522,21 +553,35 @@ function ProfilContent() {
                 )}
               </div>
 
+              </>
+              ) : (
+              <>
+                <div className="space-y-1.5">
+                  <Label>{t("Provinsi / Negara bagian")}</Label>
+                  <Input value={form.province_name ?? ""} onChange={(e) => setForm({ ...form, province_name: e.target.value, province_code: null })} maxLength={100} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>{t("Kota")}</Label>
+                  <Input value={form.regency_name ?? form.city ?? ""} onChange={(e) => setForm({ ...form, regency_name: e.target.value, regency_code: null, city: e.target.value })} maxLength={100} />
+                </div>
+              </>
+              )}
+
               <div className="space-y-1.5">
-                <Label>Alamat lengkap</Label>
+                <Label>{t("Alamat lengkap")}</Label>
                 <Input value={form.address ?? ""} onChange={(e) => setForm({ ...form, address: e.target.value })} maxLength={250} />
               </div>
 
               <div className="space-y-1.5">
-                <Label>Pekerjaan</Label>
+                <Label>{t("Pekerjaan")}</Label>
                 <Select value={form.occupation ?? ""} onValueChange={(v) => setForm({ ...form, occupation: v })}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Pilih pekerjaan" />
+                    <SelectValue placeholder={t("Pilih pekerjaan")} />
                   </SelectTrigger>
                   <SelectContent className="max-h-72">
                     {OCCUPATIONS.map((occ) => (
                       <SelectItem key={occ} value={occ}>
-                        {occ}
+                        {t(occ)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -544,12 +589,12 @@ function ProfilContent() {
               </div>
 
               <div className="space-y-1.5">
-                <Label>Instansi / Perusahaan</Label>
+                <Label>{t("Instansi / Perusahaan")}</Label>
                 <Input value={form.instansi ?? ""} onChange={(e) => setForm({ ...form, instansi: e.target.value })} maxLength={100} />
               </div>
 
               <div className="space-y-1.5">
-                <Label>Hobi</Label>
+                <Label>{t("Hobi")}</Label>
                 <Input value={form.hobi ?? ""} onChange={(e) => setForm({ ...form, hobi: e.target.value })} maxLength={100} />
               </div>
 

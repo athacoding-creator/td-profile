@@ -1,3 +1,4 @@
+import { useT } from "@/i18n";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { MapPin, Lock, CheckCircle2, Search, X, AlertTriangle } from "lucide-react";
@@ -28,6 +29,7 @@ type Ev = {
 };
 
 export default function Events() {
+  const { t } = useT();
   const { profile } = useAuth();
   const [events, setEvents] = useState<Ev[]>([]);
   const [loading, setLoading] = useState(true);
@@ -146,17 +148,17 @@ export default function Events() {
               </div>
             </div>
             <h2 className="mb-2 text-center text-lg font-bold text-foreground">
-              Profil Belum Lengkap
+              {t("Profil Belum Lengkap")}
             </h2>
             <p className="mb-6 text-center text-sm text-muted-foreground">
-              Profil Anda belum lengkap. Lengkapi data diri Anda sekarang untuk mendapatkan akses penuh.
+              {t("Profil Anda belum lengkap. Lengkapi data diri Anda sekarang untuk mendapatkan akses penuh.")}
             </p>
             <div className="flex gap-3">
               <button
                 onClick={handleClosePopup}
                 className="flex-1 rounded-lg border border-border bg-background px-4 py-2.5 text-sm font-medium text-foreground transition hover:bg-muted"
               >
-                Nanti
+                {t("Nanti")}
               </button>
               <Link
                 to="/profil"
@@ -166,7 +168,7 @@ export default function Events() {
                 }}
                 className="flex-1 rounded-lg bg-accent px-4 py-2.5 text-center text-sm font-medium text-accent-foreground transition hover:bg-accent/90"
               >
-                Lengkapi Data
+                {t("Lengkapi Data")}
               </Link>
             </div>
           </div>
@@ -174,8 +176,8 @@ export default function Events() {
       )}
       
       <main className="container py-6">
-        <h1 className="font-display text-2xl font-bold text-foreground">Event</h1>
-        <p className="text-sm text-muted-foreground">Semua event mendatang dan yang telah selesai.</p>
+        <h1 className="font-display text-2xl font-bold text-foreground">{t("Event")}</h1>
+        <p className="text-sm text-muted-foreground">{t("Semua event mendatang dan yang telah selesai.")}</p>
 
         {/* Search and Filter Section */}
         <section className="mt-6 space-y-4">
@@ -183,7 +185,7 @@ export default function Events() {
             <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
             <Input
               type="text"
-              placeholder="Cari event..."
+              placeholder={t("Cari event...")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 pr-8"
@@ -207,7 +209,7 @@ export default function Events() {
         </section>
 
         <section className="mt-6">
-          <h2 className="font-display text-lg font-semibold text-foreground">Event Mendatang</h2>
+          <h2 className="font-display text-lg font-semibold text-foreground">{t("Event Mendatang")}</h2>
           <div className="mt-3 grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6">
             {loading ? (
               Array.from({ length: 4 }).map((_, i) => (
@@ -223,7 +225,7 @@ export default function Events() {
               <>
                 {upcoming.map((e) => <Card key={e.id} e={e} isFinished={false} />)}
                 {!upcoming.length && (
-                  <p className="col-span-full py-8 text-center text-sm text-muted-foreground">Belum ada event mendatang.</p>
+                  <p className="col-span-full py-8 text-center text-sm text-muted-foreground">{t("Belum ada event mendatang.")}</p>
                 )}
               </>
             )}
@@ -231,7 +233,7 @@ export default function Events() {
         </section>
 
         <section className="mt-10">
-          <h2 className="font-display text-lg font-semibold text-foreground">Event Selesai (Tonton Ulang)</h2>
+          <h2 className="font-display text-lg font-semibold text-foreground">{t("Event Selesai (Tonton Ulang)")}</h2>
           <div className="mt-3 grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6">
             {loading ? (
               Array.from({ length: 2 }).map((_, i) => (
@@ -247,7 +249,7 @@ export default function Events() {
               <>
                 {finished.map((e) => <Card key={e.id} e={e} isFinished={true} />)}
                 {!finished.length && (
-                  <p className="col-span-full py-8 text-center text-sm text-muted-foreground">Belum ada event selesai.</p>
+                  <p className="col-span-full py-8 text-center text-sm text-muted-foreground">{t("Belum ada event selesai.")}</p>
                 )}
               </>
             )}

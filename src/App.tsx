@@ -8,6 +8,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "./hooks/useAuth";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ThemeProvider } from "@/components/theme-provider";
+import { LanguageProvider } from "@/i18n";
 import { RequireAuth } from "@/components/RequireAuth";
 import { Analytics } from "@vercel/analytics/react";
 import Index from "./pages/Index";
@@ -75,6 +76,7 @@ const App = () => (
   <HelmetProvider>
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="light" storageKey="td-ui-theme">
+        <LanguageProvider>
         <TooltipProvider>
           <Toaster />
           <Sonner />
@@ -124,6 +126,7 @@ const App = () => (
           </BrowserRouter>
           <Analytics />
         </TooltipProvider>
+        </LanguageProvider>
       </ThemeProvider>
     </QueryClientProvider>
   </HelmetProvider>

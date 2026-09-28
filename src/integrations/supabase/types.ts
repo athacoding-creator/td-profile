@@ -507,6 +507,8 @@ export type Database = {
           birth_date: string | null
           bonus_awarded: boolean
           city: string | null
+          country_code: string | null
+          country_name: string | null
           created_at: string
           district_code: string | null
           district_name: string | null
@@ -534,6 +536,8 @@ export type Database = {
           birth_date?: string | null
           bonus_awarded?: boolean
           city?: string | null
+          country_code?: string | null
+          country_name?: string | null
           created_at?: string
           district_code?: string | null
           district_name?: string | null
@@ -561,6 +565,8 @@ export type Database = {
           birth_date?: string | null
           bonus_awarded?: boolean
           city?: string | null
+          country_code?: string | null
+          country_name?: string | null
           created_at?: string
           district_code?: string | null
           district_name?: string | null
