@@ -12,6 +12,7 @@ import { getReasonLabel } from "@/utils/pointReasons";
 import { AlertCircle } from "lucide-react";
 
 export default function Poin() {
+  const { t } = useT();
   const { user, profile, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const [rewards, setRewards] = useState<any[]>([]);

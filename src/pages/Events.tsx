@@ -29,6 +29,7 @@ type Ev = {
 };
 
 export default function Events() {
+  const { t } = useT();
   const { profile } = useAuth();
   const [events, setEvents] = useState<Ev[]>([]);
   const [loading, setLoading] = useState(true);

@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 
 export default function Index() {
+  const { t } = useT();
   const { profile, user } = useAuth();
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);

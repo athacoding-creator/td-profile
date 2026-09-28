@@ -12,6 +12,7 @@ import { PhoneInput } from "@/components/PhoneInput";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function ForgotPassword() {
+  const { t } = useT();
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);

@@ -51,6 +51,7 @@ const AccentBar = () => {
 };
 
 export default function Auth() {
+  const { t } = useT();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");

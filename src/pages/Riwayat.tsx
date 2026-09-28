@@ -9,6 +9,7 @@ import { Check, Clock } from "lucide-react";
 import { isPositionEvent, isClassEvent } from "@/lib/eventTypes";
 
 export default function Riwayat() {
+  const { t } = useT();
   const { user } = useAuth();
   const [items, setItems] = useState<any[]>([]);
 
@@ -47,7 +48,7 @@ export default function Riwayat() {
                 <p className="text-xs text-muted-foreground">{it.events.venue}</p>
                 {it.position && isPositionEvent(it.events.event_type) && (
                   <p className="mt-1 text-xs font-medium text-accent">
-                    {isClassEvent(it.events.event_type) ? "Kelas" : "Posisi"}: {it.position}
+                    {t(isClassEvent(it.events.event_type) ? "Kelas" : "Posisi")}: {it.position}
                   </p>
                 )}
               </div>
