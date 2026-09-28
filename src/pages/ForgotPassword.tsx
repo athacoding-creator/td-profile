@@ -1,3 +1,4 @@
+import { useT } from "@/i18n";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -21,7 +22,7 @@ export default function ForgotPassword() {
     e.preventDefault();
     const normalized = normalizePhone(phone);
     if (!isValidPhone(normalized)) {
-      toast.error("Nomor WhatsApp tidak valid");
+      toast.error(t("Nomor WhatsApp tidak valid"));
       return;
     }
     setLoading(true);
@@ -60,7 +61,7 @@ export default function ForgotPassword() {
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container max-w-md py-12">
-        <h1 className="font-display text-3xl font-bold text-foreground">Lupa password</h1>
+        <h1 className="font-display text-3xl font-bold text-foreground">{t("Lupa password")}</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Masukkan nomor WhatsApp Anda, lalu tekan Konfirmasi — password baru akan dibuat dan Anda akan diarahkan ke WhatsApp admin.
         </p>
@@ -74,7 +75,7 @@ export default function ForgotPassword() {
                 rel="noreferrer"
                 className="font-semibold text-primary underline"
               >
-                klik di sini
+                {t("klik di sini")}
               </a>
               .
             </div>
@@ -85,7 +86,7 @@ export default function ForgotPassword() {
         ) : (
           <form onSubmit={submit} className="mt-8 space-y-4">
             <div className="space-y-1.5">
-              <Label>No. WhatsApp</Label>
+              <Label>{t("No. WhatsApp")}</Label>
               <PhoneInput value={phone} onChange={setPhone} required />
             </div>
             <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground">

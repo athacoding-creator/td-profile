@@ -1,3 +1,4 @@
+import { useT } from "@/i18n";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { MapPin, Lock, CheckCircle2, UserCircle, CreditCard as CreditCardIcon } from "lucide-react";
@@ -57,8 +58,8 @@ export default function Index() {
 
         <section className="container mt-4 md:mt-6">
           <div className="flex items-end justify-between">
-            <h2 className="font-display text-2xl md:text-3xl font-semibold text-foreground">Event terbaru</h2>
-            <Link to="/event" className="text-sm text-accent hover:underline">Lihat semua →</Link>
+            <h2 className="font-display text-2xl md:text-3xl font-semibold text-foreground">{t("Event terbaru")}</h2>
+            <Link to="/event" className="text-sm text-accent hover:underline">{t("Lihat semua →")}</Link>
           </div>
 
           <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6">
@@ -109,7 +110,7 @@ export default function Index() {
                   );
                 })}
                 {!events.length && (
-                  <p className="col-span-full py-12 text-center text-sm text-muted-foreground">Belum ada event.</p>
+                  <p className="col-span-full py-12 text-center text-sm text-muted-foreground">{t("Belum ada event.")}</p>
                 )}
               </>
             )}
@@ -124,7 +125,7 @@ export default function Index() {
               rel="noopener noreferrer"
               className="text-xs font-semibold text-foreground hover:text-accent transition-colors"
             >
-              Tentang Kami
+              {t("Tentang Kami")}
             </a>
             <a 
               href="https://sedekah.terasdakwah.com" 
@@ -132,7 +133,7 @@ export default function Index() {
               rel="noopener noreferrer"
               className="text-xs font-semibold text-foreground hover:text-accent transition-colors"
             >
-              Program Kebaikan
+              {t("Program Kebaikan")}
             </a>
           </div>
           
