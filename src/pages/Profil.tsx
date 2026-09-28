@@ -40,8 +40,6 @@ import { Link } from "react-router-dom";
 import { formatPhoneDisplay } from "@/lib/phone";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import provincesData from "@/data/provinces.json";
-import regenciesData from "@/data/regencies.json";
-import districtsData from "@/data/districts.json";
 
 const OCCUPATIONS = [
   "Pelajar",
@@ -73,9 +71,17 @@ function ProfilContent() {
   const [showProfileCompletionPopup, setShowProfileCompletionPopup] = useState(false);
   
   const [provinces] = useState<Wilayah[]>(provincesData as Wilayah[]);
-  const [regencies] = useState<Wilayah[]>(regenciesData as Wilayah[]);
-  const [districts] = useState<Wilayah[]>(districtsData as Wilayah[]);
-  const [isDataLoading] = useState(false);
+  const [regencies, setRegencies] = useState<Wilayah[]>([]);
+  const [districts, setDistricts] = useState<Wilayah[]>([]);
+  const [isDataLoading, setIsDataLoading] = useState(false);
+  // Load heavy location data only when the edit form is opened
+  useEffect(() => {
+    if (view !== "edit" || regencies.length) return;
+    setIsDataLoading(true);
+    Promise.all([import("@/data/regencies.json"), import("@/data/districts.json")])
+      .then(([r, d]) => { setRegencies(r.default as Wilayah[]); setDistricts(d.default as Wilayah[]); })
+      .finally(() => setIsDataLoading(false));
+  }, [view, regencies.length]);
   const [dataError] = useState<string | null>(null);
 
   useEffect(() => {

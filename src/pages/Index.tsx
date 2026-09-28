@@ -89,7 +89,7 @@ export default function Index() {
                     >
                       <div className="aspect-[3/4] overflow-hidden">
                         {e.poster_url ? (
-                          <img src={e.poster_url} alt={e.title} loading="lazy" className={`h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 ${locked ? "grayscale" : ""}`} />
+                          <img src={e.poster_url} alt={e.title} loading="lazy" decoding="async" className={`h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 ${locked ? "grayscale" : ""}`} />
                         ) : (
                           <div className="flex h-full items-center justify-center bg-muted text-muted-foreground">No poster</div>
                         )}
