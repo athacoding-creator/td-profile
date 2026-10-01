@@ -20,7 +20,7 @@ const notifyUserWA = (registration: any, event: any, status: string) => {
     toast.message("User tidak punya nomor WhatsApp — notifikasi dilewati");
     return;
   }
-  const name = registration?.profiles?.full_name ?? "Kak";
+  const name = registration?.guest_name || registration?.profiles?.full_name || "Kak";
   const eventTitle = event?.title ?? "event";
   const nominal = registration?.amount_paid
     ? `Rp ${Number(registration.amount_paid).toLocaleString("id-ID")}`
@@ -55,6 +55,7 @@ export default function DonationsPage() {
         const query = searchQuery.toLowerCase();
         return (
           r.profiles?.full_name?.toLowerCase().includes(query) ||
+          r.guest_name?.toLowerCase().includes(query) ||
           r.profiles?.phone?.includes(query) ||
           event.title?.toLowerCase().includes(query)
         );
@@ -273,7 +274,7 @@ function DonationTableRow({ registration, event, onChanged }: { registration: an
             : "—"}
         </td>
         <td className="px-4 py-3 text-sm font-medium">
-          {registration.profiles?.full_name ?? "User"}
+          {registration.guest_name || registration.profiles?.full_name || "User"}
         </td>
         <td className="px-4 py-3 text-sm text-muted-foreground">
           <div>{event?.title ?? "Event"}</div>
@@ -377,7 +378,7 @@ function DonationMobileCard({ registration, event, onChanged }: { registration: 
           <p className="text-xs text-muted-foreground">
             {registration.paid_at ? new Date(registration.paid_at).toLocaleDateString("id-ID") : "—"}
           </p>
-          <h3 className="font-semibold text-sm truncate">{registration.profiles?.full_name ?? registration.guest_name ?? "User"}</h3>
+          <h3 className="font-semibold text-sm truncate">{registration.guest_name || registration.profiles?.full_name || "User"}</h3>
           <p className="text-xs text-muted-foreground line-clamp-1">{event?.title ?? "Event"}</p>
           {registration.position && <span className="mt-1 inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-medium text-blue-700">{registration.position}</span>}
         </div>
