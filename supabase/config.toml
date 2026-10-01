@@ -6,3 +6,5 @@ double_confirm_changes = false
 
 [functions.reset-password-wa]
 verify_jwt = false
+[functions.sync-sheets]
+verify_jwt = false
