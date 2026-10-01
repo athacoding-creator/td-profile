@@ -103,7 +103,7 @@ export function exportStatsXLSX(opts: {
       Nama: (r.guest_name || r.profiles?.full_name || "-"),
       WhatsApp: r.guest_phone || r.profiles?.phone || "-",
       Email: r.profiles?.email ?? "-",
-      Gender: r.profiles?.gender === "L" ? "Laki-laki" : r.profiles?.gender === "P" ? "Perempuan" : (r.profiles?.gender ?? "-"),
+      Gender: (r.guest_gender || r.profiles?.gender) === "L" ? "Laki-laki" : (r.guest_gender || r.profiles?.gender) === "P" ? "Perempuan" : ((r.guest_gender || r.profiles?.gender) ?? "-"),
       Kota: r.profiles?.city ?? "-",
       Event: r.events?.title ?? (eventTitle ?? "-"),
       Program: r.events?.programs?.name ?? "-",
