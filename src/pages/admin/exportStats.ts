@@ -100,7 +100,8 @@ export function exportStatsXLSX(opts: {
     registrations.map((r, i) => ({
       No: i + 1,
       "Tanggal Daftar": new Date(r.created_at).toLocaleString("id-ID"),
-      Nama: r.profiles?.full_name ?? "-",
+      Nama: (r.guest_name || r.profiles?.full_name || "-"),
+      WhatsApp: r.guest_phone || r.profiles?.phone || "-",
       Email: r.profiles?.email ?? "-",
       Gender: r.profiles?.gender === "L" ? "Laki-laki" : r.profiles?.gender === "P" ? "Perempuan" : (r.profiles?.gender ?? "-"),
       Kota: r.profiles?.city ?? "-",

@@ -53,16 +53,17 @@ export default function PendaftarPage() {
     const rows = filtered.map((r, i) => ({
       No: i + 1,
       "Tanggal Daftar": new Date(r.created_at).toLocaleString("id-ID"),
-      Nama: r.profiles?.full_name ?? "-",
-      WhatsApp: r.profiles?.phone ?? "-",
+      Nama: (r.guest_name || r.profiles?.full_name || "-"),
+      WhatsApp: r.guest_phone || r.profiles?.phone || "-",
       Gender:
-        r.profiles?.gender === "L"
+        (r.guest_gender || r.profiles?.gender) === "L"
           ? "Laki-laki"
-          : r.profiles?.gender === "P"
+          : (r.guest_gender || r.profiles?.gender) === "P"
           ? "Perempuan"
           : (r.profiles?.gender ?? "-"),
       Kota: r.profiles?.city ?? "-",
       Email: r.profiles?.email ?? "-",
+      "Didaftarkan oleh": r.user_id ? "-" : (r.registrant?.full_name ?? "-"),
       Event: r.events?.title ?? (eventFilter ? "-" : "Semua Event"),
       Nominal: r.amount_paid && r.amount_paid > 0 ? Number(r.amount_paid) : 0,
       "Pesan Doa": r.donor_message ?? "",
