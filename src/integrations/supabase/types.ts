@@ -825,6 +825,30 @@ export type Database = {
         }
         Relationships: []
       }
+      sheet_sync_config: {
+        Row: {
+          id: number
+          last_error: string | null
+          last_synced_at: string | null
+          spreadsheet_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          last_error?: string | null
+          last_synced_at?: string | null
+          spreadsheet_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          last_error?: string | null
+          last_synced_at?: string | null
+          spreadsheet_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
