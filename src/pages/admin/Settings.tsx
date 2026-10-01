@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Save, Info } from "lucide-react";
 import { useAdmin } from "./AdminLayout";
 import { Section } from "./components";
+import { SheetSyncSection } from "./SheetSyncSection";
 
 export default function SettingsPage() {
   const navigate = useNavigate();
@@ -59,6 +60,8 @@ export default function SettingsPage() {
         <h1 className="font-display text-3xl font-bold">Pengaturan</h1>
         <p className="text-sm text-muted-foreground">Atur poin & konfigurasi global</p>
       </div>
+      <SheetSyncSection />
+
       <Section title="Pengaturan Poin">
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-1.5">
