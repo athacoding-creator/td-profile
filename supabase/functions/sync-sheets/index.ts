@@ -158,6 +158,19 @@ Deno.serve(async (req) => {
       return json(await runAndRecord(cfg.spreadsheet_id));
     }
 
+    // Unauthenticated connectivity check: verifies the service account key
+    // can obtain a Google access token. Reveals only ok/error.
+    if (action === "ping") {
+      const sa = serviceAccount();
+      if (!sa) return json({ ok: false, error: "Kunci akun layanan belum terpasang" });
+      try {
+        await getAccessToken(sa);
+        return json({ ok: true, service_email: sa.client_email });
+      } catch (e) {
+        return json({ ok: false, error: e instanceof Error ? e.message : String(e) });
+      }
+    }
+
     // Admin-only actions
     const auth = req.headers.get("Authorization") ?? "";
     const { data: { user } } = await admin.auth.getUser(auth.replace("Bearer ", ""));
