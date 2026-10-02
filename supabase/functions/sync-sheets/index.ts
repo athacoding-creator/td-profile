@@ -164,7 +164,7 @@ Deno.serve(async (req) => {
       const sa = serviceAccount();
       if (!sa) return json({ ok: false, error: "Kunci akun layanan belum terpasang" });
       try {
-        await getAccessToken(sa);
+        await googleToken(sa);
         return json({ ok: true, service_email: sa.client_email });
       } catch (e) {
         return json({ ok: false, error: e instanceof Error ? e.message : String(e) });
