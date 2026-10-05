@@ -67,7 +67,7 @@ export default function EventDetail() {
     (async () => {
       let eventData: any = null;
       const { data, error } = await supabase.from("events")
-        .select("id,title,description,venue,city,starts_at,ends_at,status,gender,event_type,poster_url,group_link,points_reward,program_id,created_at,is_pinned,allow_group_registration,is_recurring,recurring_days,recurring_start_time,recurring_end_time,recurring_until,registration_type,price,min_infaq,max_infaq,max_participants,speaker,payment_category_id,qris_method_id,is_online,youtube_url,episode_count,episode_youtube_urls, programs(category,name,code)")
+        .select("id,title,description,venue,city,starts_at,ends_at,status,gender,event_type,poster_url,group_link,registration_link,points_reward,program_id,created_at,is_pinned,allow_group_registration,is_recurring,recurring_days,recurring_start_time,recurring_end_time,recurring_until,registration_type,price,min_infaq,max_infaq,max_participants,speaker,payment_category_id,qris_method_id,is_online,youtube_url,episode_count,episode_youtube_urls, programs(category,name,code)")
         .eq("id", id)
         .maybeSingle();
 
@@ -156,6 +156,10 @@ export default function EventDetail() {
   };
 
   const handleRegisterClick = () => {
+    if (event?.registration_link) {
+      window.open(event.registration_link, "_blank", "noopener,noreferrer");
+      return;
+    }
     if (!user) return navigate("/auth");
     if (isPositionEvent(event?.event_type)) {
       if (!positionPricing.length) return toast.error(`Pilihan ${isClassEvent(event?.event_type) ? "kelas" : "posisi"} belum dikonfigurasi oleh admin.`);
