@@ -115,6 +115,7 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
       title: form.title, description: form.description, venue: form.venue, city: form.city,
       poster_url: form.poster_url, event_type: form.event_type, gender: form.gender,
       starts_at: localInputToISO(form.starts_at)!, ends_at: localInputToISO(form.ends_at), group_link: form.group_link,
+      registration_link: form.registration_link || null,
       points_reward: Number(form.points_reward ?? defaultPoints),
       program_id: form.program_id || null, status: "active",
       success_message: form.success_message || null,
@@ -177,6 +178,7 @@ function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; 
         <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Kota</Label><Input value={form.city ?? ""} onChange={(e) => setForm({ ...form, city: e.target.value })} className="text-sm h-9 sm:h-10" /></div>
         <div className="space-y-1.5 md:col-span-2"><Label className="text-xs sm:text-sm">Poster Event</Label><ImagePicker bucket="events" value={form.poster_url ?? ""} onChange={(url) => setForm({ ...form, poster_url: url })} /></div>
         <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Link Grup (WA/TG)</Label><Input value={form.group_link ?? ""} onChange={(e) => setForm({ ...form, group_link: e.target.value })} className="text-sm h-9 sm:h-10" /></div>
+        <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Link Pendaftaran Khusus (opsional)</Label><Input placeholder="https://forms.gle/..." value={form.registration_link ?? ""} onChange={(e) => setForm({ ...form, registration_link: e.target.value })} className="text-sm h-9 sm:h-10" /><p className="text-[11px] text-muted-foreground">Jika diisi, tombol daftar akan membuka link ini (misal Google Form) menggantikan pendaftaran di web.</p></div>
         <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Mulai</Label><Input type="datetime-local" required value={form.starts_at ?? ""} onChange={(e) => setForm({ ...form, starts_at: e.target.value })} className="text-sm h-9 sm:h-10" /></div>
         <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Selesai</Label><Input type="datetime-local" value={form.ends_at ?? ""} onChange={(e) => setForm({ ...form, ends_at: e.target.value })} className="text-sm h-9 sm:h-10" /></div>
         <div className="space-y-1.5">
@@ -512,6 +514,7 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
       starts_at: toLocalInput(ev.starts_at),
       ends_at: toLocalInput(ev.ends_at),
       group_link: ev.group_link ?? "",
+      registration_link: ev.registration_link ?? "",
       points_reward: ev.points_reward ?? 10,
       program_id: ev.program_id ?? "",
       status: ev.status ?? "active",
@@ -571,6 +574,7 @@ function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; p
       title: form.title, description: form.description, venue: form.venue, city: form.city,
       poster_url: form.poster_url, event_type: form.event_type, gender: form.gender,
       starts_at: localInputToISO(form.starts_at)!, ends_at: localInputToISO(form.ends_at), group_link: form.group_link,
+      registration_link: form.registration_link || null,
       points_reward: Number(form.points_reward),
       max_participants: form.max_participants === "" ? null : Number(form.max_participants),
       program_id: form.program_id || null,
