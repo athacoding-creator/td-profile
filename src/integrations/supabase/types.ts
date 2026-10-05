@@ -167,6 +167,7 @@ export type Database = {
           recurring_end_time: string | null
           recurring_start_time: string | null
           recurring_until: string | null
+          registration_link: string | null
           registration_type: string | null
           speaker: string | null
           starts_at: string
@@ -207,6 +208,7 @@ export type Database = {
           recurring_end_time?: string | null
           recurring_start_time?: string | null
           recurring_until?: string | null
+          registration_link?: string | null
           registration_type?: string | null
           speaker?: string | null
           starts_at: string
@@ -247,6 +249,7 @@ export type Database = {
           recurring_end_time?: string | null
           recurring_start_time?: string | null
           recurring_until?: string | null
+          registration_link?: string | null
           registration_type?: string | null
           speaker?: string | null
           starts_at?: string
