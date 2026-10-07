@@ -161,6 +161,13 @@ export default function EventDetail() {
       return;
     }
     if (!user) return navigate("/auth");
+    if (event && event.gender !== "ALL" && !computeScanWindow(event).expired && profile?.gender !== event.gender) {
+      if (!profile?.gender) {
+        toast.error("Lengkapi gender di profil kamu dulu untuk mendaftar event ini.");
+        return navigate("/profil");
+      }
+      return toast.error(`Maaf, event ini khusus untuk ${event.gender === "L" ? "Laki-laki" : "Perempuan"}. Video rekaman bisa diakses setelah event selesai.`);
+    }
     if (isPositionEvent(event?.event_type)) {
       if (!positionPricing.length) return toast.error(`Pilihan ${isClassEvent(event?.event_type) ? "kelas" : "posisi"} belum dikonfigurasi oleh admin.`);
       setPositionChoiceOpen(true);
