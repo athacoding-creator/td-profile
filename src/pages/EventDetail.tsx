@@ -161,6 +161,13 @@ export default function EventDetail() {
       return;
     }
     if (!user) return navigate("/auth");
+    if (event && event.gender !== "ALL" && !computeScanWindow(event).expired && profile?.gender !== event.gender) {
+      if (!profile?.gender) {
+        toast.error("Lengkapi gender di profil kamu dulu untuk mendaftar event ini.");
+        return navigate("/profil");
+      }
+      return toast.error(`Maaf, event ini khusus untuk ${event.gender === "L" ? "Laki-laki" : "Perempuan"}. Video rekaman bisa diakses setelah event selesai.`);
+    }
     if (isPositionEvent(event?.event_type)) {
       if (!positionPricing.length) return toast.error(`Pilihan ${isClassEvent(event?.event_type) ? "kelas" : "posisi"} belum dikonfigurasi oleh admin.`);
       setPositionChoiceOpen(true);
@@ -176,7 +183,7 @@ export default function EventDetail() {
 
   const selectPosition = async (pricing: { position: string; price: number; max_slots?: number | null; description?: string | null }) => {
     if (quotaFull) return toast.error("Maaf, kuota peserta untuk event ini sudah penuh.");
-    if (event.gender !== "ALL" && profile?.gender && profile.gender !== event.gender) {
+    if (event.gender !== "ALL" && !computeScanWindow(event).expired && profile?.gender !== event.gender) {
       return toast.error(`Maaf, event ini khusus untuk ${event.gender === "L" ? "Laki-laki" : "Perempuan"}.`);
     }
     try {
@@ -209,7 +216,7 @@ export default function EventDetail() {
     }
     const total = withGuests ? 1 + guests.length : 1;
     const participantGenders = [profile?.gender, ...(withGuests ? guests.map((guest) => guest.gender) : [])];
-    if (event.gender !== "ALL" && participantGenders.some((gender) => gender !== event.gender)) {
+    if (event.gender !== "ALL" && !computeScanWindow(event).expired && participantGenders.some((gender) => gender !== event.gender)) {
       return toast.error(`Maaf, event ini khusus untuk ${event.gender === "L" ? "Laki-laki" : "Perempuan"}.`);
     }
     setSubmitting(true);
@@ -252,7 +259,7 @@ export default function EventDetail() {
       ...(includeSelf ? [profile?.gender] : []),
       ...(includeGuests ? guests.map((guest) => guest.gender) : []),
     ];
-    if (event.gender !== "ALL" && participantGenders.some((gender) => gender !== event.gender)) {
+    if (event.gender !== "ALL" && !computeScanWindow(event).expired && participantGenders.some((gender) => gender !== event.gender)) {
       return toast.error(`Maaf, event ini khusus untuk ${event.gender === "L" ? "Laki-laki" : "Perempuan"}.`);
     }
     setSubmitting(true);
@@ -654,6 +661,11 @@ export default function EventDetail() {
                     : `Kuota: ${regCount ?? 0}/${event.max_participants} terisi`}
                 </p>
               )}
+              {genderMismatch && !sw.expired ? (
+                <div className="rounded-xl bg-muted p-4 text-center text-xs sm:text-sm font-medium text-muted-foreground border border-border">
+                  🔒 Event ini khusus {event.gender === "L" ? "Laki-laki" : "Perempuan"}. Video rekaman bisa diakses setelah event selesai.
+                </div>
+              ) : (
               <Button
                 onClick={handleRegisterClick}
                 disabled={submitting || quotaFull}
@@ -670,6 +682,7 @@ export default function EventDetail() {
                         : "Daftar Event"
                 }
               </Button>
+              )}
             </div>
           )}
         </div>
