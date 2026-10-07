@@ -682,6 +682,7 @@ export default function EventDetail() {
                         : "Daftar Event"
                 }
               </Button>
+              )}
             </div>
           )}
         </div>
