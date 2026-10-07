@@ -661,6 +661,11 @@ export default function EventDetail() {
                     : `Kuota: ${regCount ?? 0}/${event.max_participants} terisi`}
                 </p>
               )}
+              {genderMismatch && !sw.expired ? (
+                <div className="rounded-xl bg-muted p-4 text-center text-xs sm:text-sm font-medium text-muted-foreground border border-border">
+                  🔒 Event ini khusus {event.gender === "L" ? "Laki-laki" : "Perempuan"}. Video rekaman bisa diakses setelah event selesai.
+                </div>
+              ) : (
               <Button
                 onClick={handleRegisterClick}
                 disabled={submitting || quotaFull}
