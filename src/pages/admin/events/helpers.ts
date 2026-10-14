@@ -1,5 +1,5 @@
 import { isEventExpired } from "@/lib/eventSchedule";
-import { POSITION_EVENT_TYPES } from "@/lib/eventTypes";
+import { POSITION_EVENT_TYPES, isClassEvent } from "@/lib/eventTypes";
 
 // datetime-local value -> ISO string with local timezone offset preserved
 export const localInputToISO = (v?: string | null) => {

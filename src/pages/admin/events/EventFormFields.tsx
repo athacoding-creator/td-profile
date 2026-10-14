@@ -1,24 +1,10 @@
-import { confirmDelete } from "@/lib/confirmDelete";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { toast } from "sonner";
-import QRCode from "qrcode";
-import { QrCode as QrIcon, Trash2, Pencil, Lock, Pin, Repeat, Camera, Plus, Users } from "lucide-react";
-import { useAdmin } from "../AdminLayout";
-import { Section } from "../components";
-import { ImagePicker } from "@/components/admin/ImagePicker";
-import { isEventExpired, describeRecurring, DAY_NAMES } from "@/lib/eventSchedule";
-import { buildEventQrUrl, buildProgramQrUrl } from "@/lib/qrUrl";
-import { POSITION_EVENT_TYPES, EVENT_TYPE_OPTIONS, isClassEvent } from "@/lib/eventTypes";
-import { localInputToISO, buildEpisodeUrls, isExpired, SPORT_EVENT_TYPES, DEFAULT_POSITIONS, DEFAULT_CLASSES, defaultRowsFor, toLocalInput } from "./helpers";
-import { EpisodeFields, OnlineFields, RecurringPinFields, PaymentCategoryFields } from "./EventFormFields";
-import { EditEventDialog } from "./EditEventDialog";
+import {Pin, Repeat, Camera, Users} from "lucide-react";
+import {DAY_NAMES} from "@/lib/eventSchedule";
+import {buildEpisodeUrls} from "./helpers";
 
 /** Bagian-bagian form event yang dipakai bersama oleh form Buat & Edit. */
 export function EpisodeFields({ form, setForm, program }: { form: any; setForm: (f: any) => void; program?: any }) {
