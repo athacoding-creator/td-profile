@@ -12,9 +12,6 @@ import { PhoneInput } from "@/components/PhoneInput";
 import { Eye, EyeOff, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const cn = (...classes: string[]) => {
-  return classes.filter(Boolean).join(" ");
-};
 
 // Animated background with decorative elements
 const BackgroundPattern = () => {

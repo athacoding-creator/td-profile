@@ -56,7 +56,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       setProfile(prof as any);
       const isAdminUser = (roles ?? []).some((r: any) => r.role === "admin");
-      console.log(`[Auth] User ${uid} admin status: ${isAdminUser}, roles:`, roles);
       setIsAdmin(isAdminUser);
     } catch (err) {
       console.error("Error loading extras:", err);
@@ -69,7 +68,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(s);
       setUser(s?.user ?? null);
       if (s?.user) {
-        console.log(`[Auth] Auth state changed: ${e}, user: ${s.user.id}`);
         setTimeout(() => loadExtras(s.user.id), 0);
         if (e === "SIGNED_IN") {
           setTimeout(() => {
@@ -85,7 +83,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(s);
       setUser(s?.user ?? null);
       if (s?.user) {
-        console.log(`[Auth] Session loaded for user: ${s.user.id}`);
         loadExtras(s.user.id).finally(() => {
           // Add a small delay to ensure states are propagated
           setTimeout(() => setLoading(false), 100);
@@ -102,13 +99,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const refreshProfile = async () => {
     if (user) {
-      console.log(`[Auth] Refreshing profile for user: ${user.id}`);
       await loadExtras(user.id);
     }
   };
 
   const signOut = async () => {
-    console.log(`[Auth] Signing out user: ${user?.id}`);
     await supabase.auth.signOut();
   };
 

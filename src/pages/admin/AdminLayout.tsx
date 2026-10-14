@@ -1,11 +1,10 @@
 import { useLocation, NavLink, Outlet, useOutletContext } from "react-router-dom";
 import { Header } from "@/components/Header";
 import {
-  LayoutDashboard, CalendarDays, Sparkles, Gift, Users, Settings as SettingsIcon, ShoppingBag, Image as ImageIcon, UserCircle, Download, ClipboardCheck, CreditCard, Camera, QrCode, Menu, X, Lock
+  LayoutDashboard, CalendarDays, Sparkles, Gift, Users, Settings as SettingsIcon, ShoppingBag, UserCircle, ClipboardCheck, CreditCard, Camera, QrCode, Menu, X, Lock
 } from "lucide-react";
 import { useAdminData, AdminData } from "./useAdminData";
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
 
 const navItems = [
   { to: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },

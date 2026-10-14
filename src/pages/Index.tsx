@@ -1,7 +1,7 @@
 import { useT } from "@/i18n";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { MapPin, Lock, CheckCircle2, UserCircle, CreditCard as CreditCardIcon } from "lucide-react";
+import { MapPin, Lock, } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Header } from "@/components/Header";
@@ -13,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Index() {
   const { t } = useT();
-  const { profile, user } = useAuth();
+  const { profile } = useAuth();
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -78,8 +78,6 @@ export default function Index() {
               <>
                 {events.map((e) => {
                   const locked = profile?.gender && e.gender !== "ALL" && e.gender !== profile.gender;
-                  const endTime = e.ends_at ? new Date(e.ends_at).getTime() : new Date(e.starts_at).getTime() + 6 * 3600 * 1000;
-                  const finished = e.status === "finished" || Date.now() > endTime;
                   return (
                     <Link
                       to={`/event/${e.id}`}

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
-import { MapPin, Calendar, Users, Lock, Link2, ChevronLeft, Upload, ChevronDown, ChevronUp, Info, MessageCircle, CreditCard, Landmark, Wallet, Video } from "lucide-react";
+import { MapPin, Calendar, Users, Link2, ChevronLeft, Upload, ChevronDown, ChevronUp, Info, MessageCircle, CreditCard, Landmark, Wallet, Video } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { YoutubeEmbed } from "@/components/YoutubeEmbed";
 import DonorWall from "@/components/DonorWall";
@@ -392,10 +392,7 @@ export default function EventDetail() {
   const sw = computeScanWindow(event);
   // Untuk online event, abaikan expired status agar video tetap bisa diakses selamanya
   // Namun pendaftaran tetap mengikuti aturan sw.expired kecuali jika is_online aktif
-  const expired = event.is_online ? false : sw.expired;
   const scanAvailable = sw.scanAvailable;
-  const scanNotYetAvailable = sw.scanNotYetAvailable;
-  const scanStartTime = sw.scanStartTime;
 
   const canShowOnlineVideo =
     event.is_online &&

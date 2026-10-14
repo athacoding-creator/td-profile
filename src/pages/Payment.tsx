@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
-import { ChevronLeft, CreditCard, Info, MessageCircle, CheckCircle2, Heart, Coins, Star, Download, Smartphone, Wallet, Check } from "lucide-react";
+import { ChevronLeft, CreditCard, MessageCircle, CheckCircle2, Download, Smartphone, Wallet, Check } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { resolveEventQris } from "@/lib/resolveQris";
@@ -78,7 +78,6 @@ export default function Payment() {
         sportPositionPrice = Number(positionData.price);
       }
       
-      const isOnline = !!eventData.is_online;
       // Default amount: for online, it must be >= min_infaq. For offline infaq, it can be 0 if prayer is chosen.
       const defaultAmount = eventData.registration_type === "paid"
         ? (sportPositionPrice ?? eventData.price) * participantCount
