@@ -44,5 +44,6 @@ export function PositionChoiceDialog({ open, onOpenChange, eventType, positionPr
         })}
       </div>
     </DialogContent>
+  </Dialog>
   );
 }
