@@ -73,7 +73,6 @@ export default function ProgramsPage() {
 
   const showQR = async (p: any) => {
     try {
-      console.log(`[Admin QR] Fetching program QR for ${p.id}`);
       const { data: token, error } = await supabase.rpc("admin_get_program_qr", { _id: p.id });
       if (error) {
         console.error("[Admin QR] Error fetching program QR:", error);
@@ -85,10 +84,8 @@ export default function ProgramsPage() {
         toast.error("QR program tidak ditemukan atau belum di-generate");
         return;
       }
-      console.log(`[Admin QR] Program token retrieved, generating QR image`);
       const url = await QRCode.toDataURL(token, { width: 400, margin: 2 });
       setQr({ id: p.id, url });
-      console.log(`[Admin QR] Program QR display ready`);
     } catch (err: any) {
       console.error("[Admin QR] Unexpected error:", err);
       toast.error(`Error: ${err?.message || "Failed to generate QR"}`);

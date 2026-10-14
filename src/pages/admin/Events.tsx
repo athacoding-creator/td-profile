@@ -374,7 +374,6 @@ function EventList({ events, programs, onChanged }: { events: any[]; programs: a
 
   const showQR = async (ev: any) => {
     try {
-      console.log(`[Admin QR] Fetching QR for event ${ev.id}`);
       const { data: evToken, error: e1 } = await supabase.rpc("admin_get_event_qr", { _id: ev.id });
       if (e1) {
         console.error("[Admin QR] Error fetching event QR:", e1);
@@ -386,14 +385,12 @@ function EventList({ events, programs, onChanged }: { events: any[]; programs: a
         toast.error("QR event tidak ditemukan atau belum di-generate");
         return;
       }
-      console.log(`[Admin QR] Event token retrieved, generating QR image`);
       const eventUrl = await QRCode.toDataURL(
         buildEventQrUrl(ev.id, evToken),
         { width: 400, margin: 2 },
       );
       let programUrl: string | undefined;
       if (ev.program_id) {
-        console.log(`[Admin QR] Fetching program QR for ${ev.program_id}`);
         const { data: progToken, error: e2 } = await supabase.rpc("admin_get_program_qr", { _id: ev.program_id });
         if (e2) {
           console.error("[Admin QR] Error fetching program QR:", e2);
@@ -404,11 +401,9 @@ function EventList({ events, programs, onChanged }: { events: any[]; programs: a
             buildProgramQrUrl(ev.program_id, progToken),
             { width: 400, margin: 2 },
           );
-          console.log(`[Admin QR] Program QR generated successfully`);
         }
       }
       setQr({ id: ev.id, eventUrl, programUrl, programName: ev.programs?.name });
-      console.log(`[Admin QR] QR display ready`);
     } catch (err: any) {
       console.error("[Admin QR] Unexpected error:", err);
       toast.error(`Error: ${err?.message || "Failed to generate QR"}`);
