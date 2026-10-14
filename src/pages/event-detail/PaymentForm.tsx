@@ -1,23 +1,9 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import {useState} from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Header } from "@/components/Header";
-import { BottomNav } from "@/components/BottomNav";
-import { MapPin, Calendar, Users, Link2, ChevronLeft, Upload, ChevronDown, ChevronUp, Info, MessageCircle, CreditCard, Landmark, Wallet, Video } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
-import { YoutubeEmbed } from "@/components/YoutubeEmbed";
-import DonorWall from "@/components/DonorWall";
+import {Upload, ChevronDown, ChevronUp, Info, MessageCircle, CreditCard, Landmark, Wallet} from "lucide-react";
 import { toast } from "sonner";
-import { format } from "date-fns";
-import { id as idLocale } from "date-fns/locale";
-import { computeScanWindow, isRecurring, describeRecurring } from "@/lib/eventSchedule";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { resolveEventQris } from "@/lib/resolveQris";
-import { isPositionEvent, isClassEvent } from "@/lib/eventTypes";
 
 export function PaymentForm({ event, paymentMethod, paymentForm, setPaymentForm, submitting, onSubmit, onCancel }: any) {
   const isPaid = event.registration_type === "paid";
