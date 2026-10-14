@@ -78,7 +78,6 @@ export default function Index() {
               <>
                 {events.map((e) => {
                   const locked = profile?.gender && e.gender !== "ALL" && e.gender !== profile.gender;
-                  const endTime = e.ends_at ? new Date(e.ends_at).getTime() : new Date(e.starts_at).getTime() + 6 * 3600 * 1000;
                   return (
                     <Link
                       to={`/event/${e.id}`}

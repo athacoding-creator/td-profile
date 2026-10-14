@@ -39,11 +39,6 @@ export default function PendaftarPage() {
       e.title?.toLowerCase().includes(searchPast.toLowerCase())
     );
 
-  const eventById = useMemo(() => {
-    const m: Record<string, any> = {};
-    events.forEach((e) => { m[e.id] = e; });
-    return m;
-  }, [events]);
 
   const fmtRp = (n: number | null | undefined) =>
     n && n > 0 ? `Rp ${Number(n).toLocaleString("id-ID")}` : "—";

@@ -11,7 +11,6 @@ import { Section } from "./components";
 import { SheetSyncSection } from "./SheetSyncSection";
 
 export default function SettingsPage() {
-  const navigate = useNavigate();
   const { settings, setSettings } = useAdmin();
   const [loading, setLoading] = useState(true);
 
