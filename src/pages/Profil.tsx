@@ -30,7 +30,6 @@ import {
   Moon,
   AlertTriangle,
   Loader2,
-  CheckCircle2,
 } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
 import { useT } from "@/i18n";
