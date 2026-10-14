@@ -1,13 +1,13 @@
 import { useT } from "@/i18n";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { MapPin, Lock, CheckCircle2, Search, X, AlertTriangle } from "lucide-react";
+import { MapPin, Lock, Search, X, AlertTriangle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
-import { isEventExpired, isRecurring } from "@/lib/eventSchedule";
+import { isEventExpired } from "@/lib/eventSchedule";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type Ev = {

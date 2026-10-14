@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
-import { ChevronLeft, CreditCard, Info, MessageCircle, CheckCircle2, Heart, Coins, Star, Download, Smartphone, Wallet, Check } from "lucide-react";
+import { ChevronLeft, CreditCard, MessageCircle, CheckCircle2, Download, Smartphone, Wallet, Check } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { resolveEventQris } from "@/lib/resolveQris";

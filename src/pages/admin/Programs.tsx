@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import QRCode from "qrcode";
-import { QrCode as QrIcon, Trash2, Pencil, X } from "lucide-react";
+import { QrCode as QrIcon, Trash2, Pencil } from "lucide-react";
 import { useAdmin } from "./AdminLayout";
 import { Section } from "./components";
 
