@@ -392,10 +392,7 @@ export default function EventDetail() {
   const sw = computeScanWindow(event);
   // Untuk online event, abaikan expired status agar video tetap bisa diakses selamanya
   // Namun pendaftaran tetap mengikuti aturan sw.expired kecuali jika is_online aktif
-  const expired = event.is_online ? false : sw.expired;
   const scanAvailable = sw.scanAvailable;
-  const scanNotYetAvailable = sw.scanNotYetAvailable;
-  const scanStartTime = sw.scanStartTime;
 
   const canShowOnlineVideo =
     event.is_online &&

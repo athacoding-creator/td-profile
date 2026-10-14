@@ -78,7 +78,6 @@ export default function Payment() {
         sportPositionPrice = Number(positionData.price);
       }
       
-      const isOnline = !!eventData.is_online;
       // Default amount: for online, it must be >= min_infaq. For offline infaq, it can be 0 if prayer is chosen.
       const defaultAmount = eventData.registration_type === "paid"
         ? (sportPositionPrice ?? eventData.price) * participantCount

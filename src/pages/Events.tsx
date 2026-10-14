@@ -34,7 +34,7 @@ export default function Events() {
   const [events, setEvents] = useState<Ev[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterGender, setFilterGender] = useState<string>("ALL");
+  const [filterGender] = useState<string>("ALL");
   const [showIncompletePopup, setShowIncompletePopup] = useState(false);
 
   useEffect(() => {
