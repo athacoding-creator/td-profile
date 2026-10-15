@@ -112,9 +112,9 @@ export default function Events() {
             <div className="flex h-full items-center justify-center bg-muted text-muted-foreground">No poster</div>
           )}
         </div>
-        {locked && (
-          <div className="absolute right-2 top-2 rounded-full bg-card/90 p-1.5">
-            <Lock className="h-4 w-4 text-muted-foreground" />
+        {e.gender !== "ALL" && (
+          <div className="absolute right-2 top-2 rounded-full bg-card/90 px-2.5 py-1 text-[10px] font-semibold text-foreground">
+            {e.gender === "L" ? "Khusus Ikhwan" : "Khusus Akhwat"}
           </div>
         )}
 
