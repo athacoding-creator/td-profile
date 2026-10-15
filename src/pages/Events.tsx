@@ -1,7 +1,7 @@
 import { useT } from "@/i18n";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { MapPin, Search, X, AlertTriangle } from "lucide-react";
+import { MapPin, Search, X, AlertTriangle, SlidersHorizontal, Check } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -9,6 +9,35 @@ import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
 import { isEventExpired } from "@/lib/eventSchedule";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
+
+/** Baris pilihan filter yang nyaman disentuh (min. 44px). */
+function FilterOption({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={cn(
+        "flex min-h-11 w-full items-center justify-between gap-2 rounded-xl border px-3.5 text-left text-sm transition-colors",
+        active
+          ? "border-accent bg-accent/10 font-semibold text-accent"
+          : "border-border bg-card text-foreground active:bg-muted",
+      )}
+    >
+      <span className="line-clamp-1">{label}</span>
+      {active && <Check className="h-4 w-4 shrink-0" />}
+    </button>
+  );
+}
 
 type Ev = {
   id: string;
@@ -38,6 +67,7 @@ export default function Events() {
   const [filterGender] = useState<string>("ALL");
   const [filterProgram, setFilterProgram] = useState<string>("ALL");
   const [filterMonth, setFilterMonth] = useState<string>("ALL");
+  const [filterOpen, setFilterOpen] = useState(false);
   const [programs, setPrograms] = useState<{ id: string; name: string }[]>([]);
   const [showIncompletePopup, setShowIncompletePopup] = useState(false);
 
@@ -90,6 +120,8 @@ export default function Events() {
       label: d.toLocaleDateString("id-ID", { month: "long", year: "numeric" }),
     };
   });
+
+  const activeFilters = (filterProgram !== "ALL" ? 1 : 0) + (filterMonth !== "ALL" ? 1 : 0);
 
   // Filter events based on search query and gender
   const filteredEvents = events.filter((e) => {
