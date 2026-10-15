@@ -65,6 +65,25 @@ export default function EventDetail() {
     if (firstIndex >= 0) setSelectedEpisode(firstIndex);
   }, [event]);
 
+  // Pasang Google Tag (gtag.js) jika admin mengisi Google Pixel ID pada event ini
+  useEffect(() => {
+    const pixelId = event?.google_pixel_id?.trim();
+    if (!pixelId) return;
+    const scriptId = `gtag-${pixelId}`;
+    if (!document.getElementById(scriptId)) {
+      const script = document.createElement("script");
+      script.id = scriptId;
+      script.async = true;
+      script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(pixelId)}`;
+      document.head.appendChild(script);
+    }
+    const w = window as any;
+    w.dataLayer = w.dataLayer || [];
+    w.gtag = w.gtag || function gtag() { w.dataLayer.push(arguments); };
+    w.gtag("js", new Date());
+    w.gtag("config", pixelId);
+  }, [event?.google_pixel_id]);
+
   useEffect(() => {
     (async () => {
       let eventData: any = null;
