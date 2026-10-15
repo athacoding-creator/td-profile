@@ -222,10 +222,34 @@ export default function Events() {
             )}
           </div>
 
+          <div className="grid grid-cols-2 gap-3">
+            <select
+              value={filterProgram}
+              onChange={(e) => setFilterProgram(e.target.value)}
+              className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+            >
+              <option value="ALL">Semua Program</option>
+              {programs.map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+            <select
+              value={filterMonth}
+              onChange={(e) => setFilterMonth(e.target.value)}
+              className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+            >
+              <option value="ALL">Semua Bulan</option>
+              {monthOptions.map((m) => (
+                <option key={m.value} value={m.value}>{m.label}</option>
+              ))}
+            </select>
+          </div>
+
           {/* Search Results Info */}
-          {searchQuery && (
+          {(searchQuery || filterProgram !== "ALL" || filterMonth !== "ALL") && (
             <p className="text-sm text-muted-foreground">
-              Ditemukan {upcoming.length + finished.length} event untuk "{searchQuery}"
+              Ditemukan {upcoming.length + finished.length} event
+              {searchQuery ? ` untuk "${searchQuery}"` : ""}
             </p>
           )}
         </section>
