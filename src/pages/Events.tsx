@@ -73,7 +73,23 @@ export default function Events() {
         setEvents((data ?? []) as Ev[]);
         setLoading(false);
       });
+    supabase
+      .from("programs")
+      .select("id,name")
+      .order("name")
+      .then(({ data }) => setPrograms((data ?? []) as { id: string; name: string }[]));
   }, []);
+
+  // Opsi bulan: 12 bulan terakhir (untuk mencari event yang sudah selesai)
+  const monthOptions = Array.from({ length: 12 }, (_, i) => {
+    const d = new Date();
+    d.setDate(1);
+    d.setMonth(d.getMonth() - i);
+    return {
+      value: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
+      label: d.toLocaleDateString("id-ID", { month: "long", year: "numeric" }),
+    };
+  });
 
   // Filter events based on search query and gender
   const filteredEvents = events.filter((e) => {
@@ -82,8 +98,10 @@ export default function Events() {
       e.venue.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesGender = filterGender === "ALL" || e.gender === "ALL" || e.gender === filterGender;
-    
-    return matchesSearch && matchesGender;
+    const matchesProgram = filterProgram === "ALL" || e.program_id === filterProgram;
+    const matchesMonth = filterMonth === "ALL" || e.starts_at.slice(0, 7) === filterMonth;
+
+    return matchesSearch && matchesGender && matchesProgram && matchesMonth;
   });
 
   const upcoming = filteredEvents
