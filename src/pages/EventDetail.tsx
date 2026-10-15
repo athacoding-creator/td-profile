@@ -69,7 +69,7 @@ export default function EventDetail() {
     (async () => {
       let eventData: any = null;
       const { data, error } = await supabase.from("events")
-        .select("id,title,description,venue,city,starts_at,ends_at,status,gender,event_type,poster_url,group_link,registration_link,points_reward,program_id,created_at,is_pinned,allow_group_registration,is_recurring,recurring_days,recurring_start_time,recurring_end_time,recurring_until,registration_type,price,min_infaq,max_infaq,max_participants,speaker,payment_category_id,qris_method_id,is_online,youtube_url,episode_count,episode_youtube_urls, programs(category,name,code)")
+        .select("id,title,description,venue,city,starts_at,ends_at,status,gender,event_type,poster_url,group_link,registration_link,points_reward,program_id,created_at,is_pinned,allow_group_registration,is_recurring,recurring_days,recurring_start_time,recurring_end_time,recurring_until,registration_type,price,min_infaq,max_infaq,max_participants,speaker,payment_category_id,qris_method_id,is_online,youtube_url,episode_count,episode_youtube_urls,google_pixel_id, programs(category,name,code)")
         .eq("id", id)
         .maybeSingle();
 
@@ -662,7 +662,7 @@ export default function EventDetail() {
               )}
               {genderMismatch && !sw.expired ? (
                 <div className="rounded-xl bg-muted p-4 text-center text-xs sm:text-sm font-medium text-muted-foreground border border-border">
-                  🔒 Event ini khusus {event.gender === "L" ? "Laki-laki" : "Perempuan"}. Video rekaman bisa diakses setelah event selesai.
+                  Event ini khusus {event.gender === "L" ? "Ikhwan (Laki-laki)" : "Akhwat (Perempuan)"}. Video rekaman bisa diakses setelah event selesai.
                 </div>
               ) : (
               <Button
