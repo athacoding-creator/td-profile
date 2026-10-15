@@ -1,7 +1,7 @@
 import { useT } from "@/i18n";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { MapPin, Lock, Search, X, AlertTriangle } from "lucide-react";
+import { MapPin, Search, X, AlertTriangle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -26,6 +26,7 @@ type Ev = {
   recurring_end_time?: string | null;
   recurring_until?: string | null;
   is_online?: boolean;
+  program_id?: string | null;
 };
 
 export default function Events() {
@@ -35,6 +36,9 @@ export default function Events() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterGender] = useState<string>("ALL");
+  const [filterProgram, setFilterProgram] = useState<string>("ALL");
+  const [filterMonth, setFilterMonth] = useState<string>("ALL");
+  const [programs, setPrograms] = useState<{ id: string; name: string }[]>([]);
   const [showIncompletePopup, setShowIncompletePopup] = useState(false);
 
   useEffect(() => {
@@ -57,7 +61,7 @@ export default function Events() {
     setLoading(true);
     supabase
       .from("events")
-      .select("id,title,venue,poster_url,gender,starts_at,ends_at,status,is_pinned,is_recurring,recurring_days,recurring_start_time,recurring_end_time,recurring_until,is_online")
+      .select("id,title,venue,poster_url,gender,starts_at,ends_at,status,is_pinned,is_recurring,recurring_days,recurring_start_time,recurring_end_time,recurring_until,is_online,program_id")
       .in("status", ["active", "finished"])
       .order("is_pinned", { ascending: false })
       .order("starts_at", { ascending: false })
@@ -69,7 +73,23 @@ export default function Events() {
         setEvents((data ?? []) as Ev[]);
         setLoading(false);
       });
+    supabase
+      .from("programs")
+      .select("id,name")
+      .order("name")
+      .then(({ data }) => setPrograms((data ?? []) as { id: string; name: string }[]));
   }, []);
+
+  // Opsi bulan: 12 bulan terakhir (untuk mencari event yang sudah selesai)
+  const monthOptions = Array.from({ length: 12 }, (_, i) => {
+    const d = new Date();
+    d.setDate(1);
+    d.setMonth(d.getMonth() - i);
+    return {
+      value: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
+      label: d.toLocaleDateString("id-ID", { month: "long", year: "numeric" }),
+    };
+  });
 
   // Filter events based on search query and gender
   const filteredEvents = events.filter((e) => {
@@ -78,8 +98,10 @@ export default function Events() {
       e.venue.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesGender = filterGender === "ALL" || e.gender === "ALL" || e.gender === filterGender;
-    
-    return matchesSearch && matchesGender;
+    const matchesProgram = filterProgram === "ALL" || e.program_id === filterProgram;
+    const matchesMonth = filterMonth === "ALL" || e.starts_at.slice(0, 7) === filterMonth;
+
+    return matchesSearch && matchesGender && matchesProgram && matchesMonth;
   });
 
   const upcoming = filteredEvents
@@ -112,9 +134,9 @@ export default function Events() {
             <div className="flex h-full items-center justify-center bg-muted text-muted-foreground">No poster</div>
           )}
         </div>
-        {locked && (
-          <div className="absolute right-2 top-2 rounded-full bg-card/90 p-1.5">
-            <Lock className="h-4 w-4 text-muted-foreground" />
+        {e.gender !== "ALL" && (
+          <div className="absolute right-2 top-2 rounded-full bg-card/90 px-2.5 py-1 text-[10px] font-semibold text-foreground">
+            {e.gender === "L" ? "Khusus Ikhwan" : "Khusus Akhwat"}
           </div>
         )}
 
@@ -200,10 +222,34 @@ export default function Events() {
             )}
           </div>
 
+          <div className="grid grid-cols-2 gap-3">
+            <select
+              value={filterProgram}
+              onChange={(e) => setFilterProgram(e.target.value)}
+              className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+            >
+              <option value="ALL">Semua Program</option>
+              {programs.map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+            <select
+              value={filterMonth}
+              onChange={(e) => setFilterMonth(e.target.value)}
+              className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+            >
+              <option value="ALL">Semua Bulan</option>
+              {monthOptions.map((m) => (
+                <option key={m.value} value={m.value}>{m.label}</option>
+              ))}
+            </select>
+          </div>
+
           {/* Search Results Info */}
-          {searchQuery && (
+          {(searchQuery || filterProgram !== "ALL" || filterMonth !== "ALL") && (
             <p className="text-sm text-muted-foreground">
-              Ditemukan {upcoming.length + finished.length} event untuk "{searchQuery}"
+              Ditemukan {upcoming.length + finished.length} event
+              {searchQuery ? ` untuk "${searchQuery}"` : ""}
             </p>
           )}
         </section>
