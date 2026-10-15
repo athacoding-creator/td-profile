@@ -1,7 +1,7 @@
 import { useT } from "@/i18n";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { MapPin, Lock, Search, X, AlertTriangle } from "lucide-react";
+import { MapPin, Search, X, AlertTriangle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -26,6 +26,7 @@ type Ev = {
   recurring_end_time?: string | null;
   recurring_until?: string | null;
   is_online?: boolean;
+  program_id?: string | null;
 };
 
 export default function Events() {
