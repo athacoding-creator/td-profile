@@ -36,6 +36,9 @@ export default function Events() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterGender] = useState<string>("ALL");
+  const [filterProgram, setFilterProgram] = useState<string>("ALL");
+  const [filterMonth, setFilterMonth] = useState<string>("ALL");
+  const [programs, setPrograms] = useState<{ id: string; name: string }[]>([]);
   const [showIncompletePopup, setShowIncompletePopup] = useState(false);
 
   useEffect(() => {
@@ -58,7 +61,7 @@ export default function Events() {
     setLoading(true);
     supabase
       .from("events")
-      .select("id,title,venue,poster_url,gender,starts_at,ends_at,status,is_pinned,is_recurring,recurring_days,recurring_start_time,recurring_end_time,recurring_until,is_online")
+      .select("id,title,venue,poster_url,gender,starts_at,ends_at,status,is_pinned,is_recurring,recurring_days,recurring_start_time,recurring_end_time,recurring_until,is_online,program_id")
       .in("status", ["active", "finished"])
       .order("is_pinned", { ascending: false })
       .order("starts_at", { ascending: false })
