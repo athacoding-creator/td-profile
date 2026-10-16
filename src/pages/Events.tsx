@@ -123,9 +123,10 @@ export default function Events() {
     
     const matchesGender = filterGender === "ALL" || e.gender === "ALL" || e.gender === filterGender;
     const matchesProgram = filterProgram === "ALL" || e.program_id === filterProgram;
-    const matchesMonth = filterMonth === "ALL" || e.starts_at.slice(0, 7) === filterMonth;
+    const matchesDate =
+      !filterDate || format(new Date(e.starts_at), "yyyy-MM-dd") === format(filterDate, "yyyy-MM-dd");
 
-    return matchesSearch && matchesGender && matchesProgram && matchesMonth;
+    return matchesSearch && matchesGender && matchesProgram && matchesDate;
   });
 
   const upcoming = filteredEvents
