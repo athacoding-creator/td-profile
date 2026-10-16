@@ -301,23 +301,29 @@ export default function Events() {
               </div>
 
               <p className="mb-2 mt-6 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                {t("Bulan")}
+                {t("Tanggal")}
               </p>
-              <div className="grid grid-cols-2 gap-2">
-                <FilterOption
-                  label={t("Semua Bulan")}
-                  active={filterMonth === "ALL"}
-                  onClick={() => setFilterMonth("ALL")}
+              <div className="flex justify-center rounded-xl border border-border bg-card">
+                <Calendar
+                  mode="single"
+                  selected={filterDate}
+                  onSelect={setFilterDate}
+                  captionLayout="dropdown-buttons"
+                  fromYear={2020}
+                  toYear={new Date().getFullYear() + 2}
+                  locale={idLocale}
+                  className="pointer-events-auto p-3"
                 />
-                {monthOptions.map((m) => (
-                  <FilterOption
-                    key={m.value}
-                    label={m.label}
-                    active={filterMonth === m.value}
-                    onClick={() => setFilterMonth(m.value)}
-                  />
-                ))}
               </div>
+              {filterDate && (
+                <button
+                  type="button"
+                  onClick={() => setFilterDate(undefined)}
+                  className="mt-2 w-full rounded-xl border border-border py-2.5 text-sm font-medium text-foreground transition-colors active:bg-muted"
+                >
+                  {t("Semua Tanggal")}
+                </button>
+              )}
             </div>
 
             <DrawerFooter className="flex-row gap-2 border-t border-border">
