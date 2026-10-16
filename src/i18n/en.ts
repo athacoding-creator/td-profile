@@ -68,5 +68,6 @@ export const EN: Record<string, string> = {
   // Events filter sheet
   "Filter Event": "Filter Events", "Filter event": "Filter events", "Pilih program atau bulan": "Choose a program or month",
   "Program": "Program", "Bulan": "Month", "Semua Program": "All Programs", "Semua Bulan": "All Months",
+  "Tanggal": "Date", "Semua Tanggal": "All Dates",
   "Reset": "Reset", "Tampilkan": "Show", "event": "events", "Ditemukan": "Found", "Hapus pencarian": "Clear search",
 };

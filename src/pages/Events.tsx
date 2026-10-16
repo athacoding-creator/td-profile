@@ -331,7 +331,7 @@ export default function Events() {
                 type="button"
                 onClick={() => {
                   setFilterProgram("ALL");
-                  setFilterMonth("ALL");
+                  setFilterDate(undefined);
                 }}
                 className="h-12 flex-1 rounded-xl border border-border text-sm font-medium text-foreground transition-colors active:bg-muted"
               >
