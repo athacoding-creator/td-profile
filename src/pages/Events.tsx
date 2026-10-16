@@ -313,6 +313,13 @@ export default function Events() {
                   toYear={new Date().getFullYear() + 2}
                   locale={idLocale}
                   className="pointer-events-auto p-3"
+                  classNames={{
+                    caption_label: "hidden",
+                    caption_dropdowns: "flex items-center gap-2",
+                    dropdown:
+                      "h-9 rounded-lg border border-border bg-background px-2 text-sm font-medium text-foreground",
+                    vhidden: "hidden",
+                  }}
                 />
               </div>
               {filterDate && (
