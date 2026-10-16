@@ -1,7 +1,7 @@
 import { useT } from "@/i18n";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { MapPin, Lock, } from "lucide-react";
+import { MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Header } from "@/components/Header";
