@@ -9,6 +9,9 @@ import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
 import { isEventExpired } from "@/lib/eventSchedule";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { id as idLocale } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import {
   Drawer,
@@ -66,7 +69,7 @@ export default function Events() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterGender] = useState<string>("ALL");
   const [filterProgram, setFilterProgram] = useState<string>("ALL");
-  const [filterMonth, setFilterMonth] = useState<string>("ALL");
+  const [filterDate, setFilterDate] = useState<Date | undefined>(undefined);
   const [filterOpen, setFilterOpen] = useState(false);
   const [programs, setPrograms] = useState<{ id: string; name: string }[]>([]);
   const [showIncompletePopup, setShowIncompletePopup] = useState(false);
@@ -110,18 +113,7 @@ export default function Events() {
       .then(({ data }) => setPrograms((data ?? []) as { id: string; name: string }[]));
   }, []);
 
-  // Opsi bulan: 12 bulan terakhir (untuk mencari event yang sudah selesai)
-  const monthOptions = Array.from({ length: 12 }, (_, i) => {
-    const d = new Date();
-    d.setDate(1);
-    d.setMonth(d.getMonth() - i);
-    return {
-      value: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
-      label: d.toLocaleDateString("id-ID", { month: "long", year: "numeric" }),
-    };
-  });
-
-  const activeFilters = (filterProgram !== "ALL" ? 1 : 0) + (filterMonth !== "ALL" ? 1 : 0);
+  const activeFilters = (filterProgram !== "ALL" ? 1 : 0) + (filterDate ? 1 : 0);
 
   // Filter events based on search query and gender
   const filteredEvents = events.filter((e) => {
@@ -131,9 +123,10 @@ export default function Events() {
     
     const matchesGender = filterGender === "ALL" || e.gender === "ALL" || e.gender === filterGender;
     const matchesProgram = filterProgram === "ALL" || e.program_id === filterProgram;
-    const matchesMonth = filterMonth === "ALL" || e.starts_at.slice(0, 7) === filterMonth;
+    const matchesDate =
+      !filterDate || format(new Date(e.starts_at), "yyyy-MM-dd") === format(filterDate, "yyyy-MM-dd");
 
-    return matchesSearch && matchesGender && matchesProgram && matchesMonth;
+    return matchesSearch && matchesGender && matchesProgram && matchesDate;
   });
 
   const upcoming = filteredEvents
@@ -274,7 +267,7 @@ export default function Events() {
             <p className="mt-2 px-1 text-xs text-muted-foreground">
               {t("Ditemukan")} {upcoming.length + finished.length} {t("event")}
               {filterProgram !== "ALL" && ` · ${programs.find((p) => p.id === filterProgram)?.name ?? ""}`}
-              {filterMonth !== "ALL" && ` · ${monthOptions.find((m) => m.value === filterMonth)?.label ?? ""}`}
+              {filterDate && ` · ${format(filterDate, "d MMM yyyy")}`}
             </p>
           )}
         </section>
@@ -308,23 +301,36 @@ export default function Events() {
               </div>
 
               <p className="mb-2 mt-6 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                {t("Bulan")}
+                {t("Tanggal")}
               </p>
-              <div className="grid grid-cols-2 gap-2">
-                <FilterOption
-                  label={t("Semua Bulan")}
-                  active={filterMonth === "ALL"}
-                  onClick={() => setFilterMonth("ALL")}
+              <div className="flex justify-center rounded-xl border border-border bg-card">
+                <Calendar
+                  mode="single"
+                  selected={filterDate}
+                  onSelect={setFilterDate}
+                  captionLayout="dropdown-buttons"
+                  fromYear={2020}
+                  toYear={new Date().getFullYear() + 2}
+                  locale={idLocale}
+                  className="pointer-events-auto p-3"
+                  classNames={{
+                    caption_label: "hidden",
+                    caption_dropdowns: "flex items-center gap-2",
+                    dropdown:
+                      "h-9 rounded-lg border border-border bg-background px-2 text-sm font-medium text-foreground",
+                    vhidden: "hidden",
+                  }}
                 />
-                {monthOptions.map((m) => (
-                  <FilterOption
-                    key={m.value}
-                    label={m.label}
-                    active={filterMonth === m.value}
-                    onClick={() => setFilterMonth(m.value)}
-                  />
-                ))}
               </div>
+              {filterDate && (
+                <button
+                  type="button"
+                  onClick={() => setFilterDate(undefined)}
+                  className="mt-2 w-full rounded-xl border border-border py-2.5 text-sm font-medium text-foreground transition-colors active:bg-muted"
+                >
+                  {t("Semua Tanggal")}
+                </button>
+              )}
             </div>
 
             <DrawerFooter className="flex-row gap-2 border-t border-border">
@@ -332,7 +338,7 @@ export default function Events() {
                 type="button"
                 onClick={() => {
                   setFilterProgram("ALL");
-                  setFilterMonth("ALL");
+                  setFilterDate(undefined);
                 }}
                 className="h-12 flex-1 rounded-xl border border-border text-sm font-medium text-foreground transition-colors active:bg-muted"
               >
