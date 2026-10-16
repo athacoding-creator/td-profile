@@ -9,6 +9,9 @@ import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
 import { isEventExpired } from "@/lib/eventSchedule";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { id as idLocale } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import {
   Drawer,
@@ -66,7 +69,7 @@ export default function Events() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterGender] = useState<string>("ALL");
   const [filterProgram, setFilterProgram] = useState<string>("ALL");
-  const [filterMonth, setFilterMonth] = useState<string>("ALL");
+  const [filterDate, setFilterDate] = useState<Date | undefined>(undefined);
   const [filterOpen, setFilterOpen] = useState(false);
   const [programs, setPrograms] = useState<{ id: string; name: string }[]>([]);
   const [showIncompletePopup, setShowIncompletePopup] = useState(false);
