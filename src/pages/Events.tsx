@@ -233,58 +233,121 @@ export default function Events() {
         <h1 className="font-display text-2xl font-bold text-foreground">{t("Event")}</h1>
         <p className="text-sm text-muted-foreground">{t("Semua event mendatang dan yang telah selesai.")}</p>
 
-        {/* Search and Filter Section */}
-        <section className="mt-6 space-y-4">
+        {/* Search + satu tombol filter di ujung kanan (sheet terbuka dari bawah) */}
+        <section className="mt-6">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="text"
+              inputMode="search"
               placeholder={t("Cari event...")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-8"
+              className="h-12 pl-10 pr-[5.5rem] text-base"
             />
             {searchQuery && (
               <button
+                type="button"
                 onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                aria-label={t("Hapus pencarian")}
+                className="absolute right-[3.5rem] top-1/2 -translate-y-1/2 p-1.5 text-muted-foreground transition-colors hover:text-foreground"
               >
                 <X className="h-5 w-5" />
               </button>
             )}
+            <button
+              type="button"
+              onClick={() => setFilterOpen(true)}
+              aria-label={t("Filter event")}
+              className="absolute right-2 top-1/2 flex h-9 -translate-y-1/2 items-center gap-1.5 rounded-full bg-accent/10 px-3 text-accent transition-colors hover:bg-accent/20 active:bg-accent/25"
+            >
+              <SlidersHorizontal className="h-[18px] w-[18px]" />
+              {activeFilters > 0 && (
+                <span className="flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold text-accent-foreground">
+                  {activeFilters}
+                </span>
+              )}
+            </button>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <select
-              value={filterProgram}
-              onChange={(e) => setFilterProgram(e.target.value)}
-              className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-            >
-              <option value="ALL">Semua Program</option>
-              {programs.map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
-            <select
-              value={filterMonth}
-              onChange={(e) => setFilterMonth(e.target.value)}
-              className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-            >
-              <option value="ALL">Semua Bulan</option>
-              {monthOptions.map((m) => (
-                <option key={m.value} value={m.value}>{m.label}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Search Results Info */}
-          {(searchQuery || filterProgram !== "ALL" || filterMonth !== "ALL") && (
-            <p className="text-sm text-muted-foreground">
-              Ditemukan {upcoming.length + finished.length} event
-              {searchQuery ? ` untuk "${searchQuery}"` : ""}
+          {(searchQuery || activeFilters > 0) && (
+            <p className="mt-2 px-1 text-xs text-muted-foreground">
+              {t("Ditemukan")} {upcoming.length + finished.length} {t("event")}
+              {filterProgram !== "ALL" && ` · ${programs.find((p) => p.id === filterProgram)?.name ?? ""}`}
+              {filterMonth !== "ALL" && ` · ${monthOptions.find((m) => m.value === filterMonth)?.label ?? ""}`}
             </p>
           )}
         </section>
+
+        {/* Sheet filter: program & bulan, mobile-first (tarik dari bawah) */}
+        <Drawer open={filterOpen} onOpenChange={setFilterOpen} shouldScaleBackground={false}>
+          <DrawerContent className="mx-auto max-h-[85dvh] w-full max-w-md">
+            <DrawerHeader className="text-center">
+              <DrawerTitle className="font-display text-lg">{t("Filter Event")}</DrawerTitle>
+              <DrawerDescription className="sr-only">{t("Pilih program atau bulan")}</DrawerDescription>
+            </DrawerHeader>
+
+            <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {t("Program")}
+              </p>
+              <div className="space-y-1.5">
+                <FilterOption
+                  label={t("Semua Program")}
+                  active={filterProgram === "ALL"}
+                  onClick={() => setFilterProgram("ALL")}
+                />
+                {programs.map((p) => (
+                  <FilterOption
+                    key={p.id}
+                    label={p.name}
+                    active={filterProgram === p.id}
+                    onClick={() => setFilterProgram(p.id)}
+                  />
+                ))}
+              </div>
+
+              <p className="mb-2 mt-6 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {t("Bulan")}
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                <FilterOption
+                  label={t("Semua Bulan")}
+                  active={filterMonth === "ALL"}
+                  onClick={() => setFilterMonth("ALL")}
+                />
+                {monthOptions.map((m) => (
+                  <FilterOption
+                    key={m.value}
+                    label={m.label}
+                    active={filterMonth === m.value}
+                    onClick={() => setFilterMonth(m.value)}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <DrawerFooter className="flex-row gap-2 border-t border-border">
+              <button
+                type="button"
+                onClick={() => {
+                  setFilterProgram("ALL");
+                  setFilterMonth("ALL");
+                }}
+                className="h-12 flex-1 rounded-xl border border-border text-sm font-medium text-foreground transition-colors active:bg-muted"
+              >
+                {t("Reset")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilterOpen(false)}
+                className="h-12 flex-1 rounded-xl bg-accent text-sm font-semibold text-accent-foreground transition-colors active:bg-accent/90"
+              >
+                {t("Tampilkan")} {upcoming.length + finished.length} {t("event")}
+              </button>
+            </DrawerFooter>
+          </DrawerContent>
+        </Drawer>
 
         <section className="mt-6">
           <h2 className="font-display text-lg font-semibold text-foreground">{t("Event Mendatang")}</h2>

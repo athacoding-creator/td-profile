@@ -65,4 +65,8 @@ export const EN: Record<string, string> = {
   "PNS / ASN": "Civil servant", "Wiraswasta": "Entrepreneur", "Guru / Dosen": "Teacher / Lecturer",
   "Profesional (Dokter, Pengacara, dll)": "Professional (Doctor, Lawyer, etc.)",
   "Ibu Rumah Tangga": "Homemaker", "Belum Bekerja": "Unemployed", "Lainnya": "Other",
+  // Events filter sheet
+  "Filter Event": "Filter Events", "Filter event": "Filter events", "Pilih program atau bulan": "Choose a program or month",
+  "Program": "Program", "Bulan": "Month", "Semua Program": "All Programs", "Semua Bulan": "All Months",
+  "Reset": "Reset", "Tampilkan": "Show", "event": "events", "Ditemukan": "Found", "Hapus pencarian": "Clear search",
 };
