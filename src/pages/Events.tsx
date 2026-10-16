@@ -267,7 +267,7 @@ export default function Events() {
             <p className="mt-2 px-1 text-xs text-muted-foreground">
               {t("Ditemukan")} {upcoming.length + finished.length} {t("event")}
               {filterProgram !== "ALL" && ` · ${programs.find((p) => p.id === filterProgram)?.name ?? ""}`}
-              {filterMonth !== "ALL" && ` · ${monthOptions.find((m) => m.value === filterMonth)?.label ?? ""}`}
+              {filterDate && ` · ${format(filterDate, "d MMM yyyy")}`}
             </p>
           )}
         </section>
