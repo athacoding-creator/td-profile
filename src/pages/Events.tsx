@@ -113,18 +113,7 @@ export default function Events() {
       .then(({ data }) => setPrograms((data ?? []) as { id: string; name: string }[]));
   }, []);
 
-  // Opsi bulan: 12 bulan terakhir (untuk mencari event yang sudah selesai)
-  const monthOptions = Array.from({ length: 12 }, (_, i) => {
-    const d = new Date();
-    d.setDate(1);
-    d.setMonth(d.getMonth() - i);
-    return {
-      value: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
-      label: d.toLocaleDateString("id-ID", { month: "long", year: "numeric" }),
-    };
-  });
-
-  const activeFilters = (filterProgram !== "ALL" ? 1 : 0) + (filterMonth !== "ALL" ? 1 : 0);
+  const activeFilters = (filterProgram !== "ALL" ? 1 : 0) + (filterDate ? 1 : 0);
 
   // Filter events based on search query and gender
   const filteredEvents = events.filter((e) => {
