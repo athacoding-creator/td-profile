@@ -38,6 +38,7 @@ const AdminRedemptions = lazy(() => import("./pages/admin/Redemptions"));
 const AdminMerchandise = lazy(() => import("./pages/admin/Merchandise"));
 
 const AdminSettings = lazy(() => import("./pages/admin/Settings"));
+const AdminBanners = lazy(() => import("./pages/admin/Banners"));
 const AdminDonations = lazy(() => import("./pages/admin/Donations"));
 const AdminQrisManager = lazy(() => import("./pages/admin/QrisManager"));
 const AdminScan = lazy(() => import("./pages/admin/Scan"));
@@ -105,6 +106,7 @@ const App = () => (
                     <Route index element={<AdminDashboard />} />
                     <Route path="dashboard" element={<AdminDashboard />} />
                     <Route path="event" element={<AdminEvents />} />
+                    <Route path="banner" element={<AdminBanners />} />
                     <Route path="program" element={<AdminPrograms />} />
                     <Route path="pendaftar" element={<AdminPendaftar />} />
                     <Route path="kehadiran" element={<AdminKehadiran />} />

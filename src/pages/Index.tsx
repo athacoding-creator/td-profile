@@ -9,6 +9,7 @@ import { BottomNav } from "@/components/BottomNav";
 import SEO from "@/components/SEO";
 import { generateOrganizationSchema, generateWebsiteSchema } from "@/utils/structuredData";
 import { Skeleton } from "@/components/ui/skeleton";
+import HomeBanners from "@/components/HomeBanners";
 
 
 export default function Index() {
@@ -55,8 +56,7 @@ export default function Index() {
       />
       <div className="min-h-screen bg-background pb-24">
         <Header />
-
-
+        <HomeBanners />
         <section className="container mt-4 md:mt-6">
           <div className="flex items-end justify-between">
             <h2 className="font-display text-2xl md:text-3xl font-semibold text-foreground">{t("Event terbaru")}</h2>
