@@ -65,30 +65,34 @@ export default function EventDetail() {
     if (firstIndex >= 0) setSelectedEpisode(firstIndex);
   }, [event]);
 
-  // Pasang Google Tag (gtag.js) jika admin mengisi Google Pixel ID pada event ini
+  // Pasang Facebook Pixel jika admin mengisi Pixel ID pada event ini.
   useEffect(() => {
-    const pixelId = event?.google_pixel_id?.trim();
-    if (!pixelId) return;
-    const scriptId = `gtag-${pixelId}`;
-    if (!document.getElementById(scriptId)) {
+    const pixelId = event?.facebook_pixel_id?.trim();
+    if (!pixelId || !/^\d+$/.test(pixelId)) return;
+    const w = window as any;
+    w.fbq = w.fbq || function fbq() {
+      w.fbq.callMethod ? w.fbq.callMethod.apply(w.fbq, arguments) : w.fbq.queue.push(arguments);
+    };
+    w.fbq.push = w.fbq.push || w.fbq;
+    w.fbq.loaded = true;
+    w.fbq.version = "2.0";
+    w.fbq.queue = w.fbq.queue || [];
+    if (!document.getElementById(`facebook-pixel-${pixelId}`)) {
       const script = document.createElement("script");
-      script.id = scriptId;
+      script.id = `facebook-pixel-${pixelId}`;
       script.async = true;
-      script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(pixelId)}`;
+      script.src = "https://connect.facebook.net/en_US/fbevents.js";
       document.head.appendChild(script);
     }
-    const w = window as any;
-    w.dataLayer = w.dataLayer || [];
-    w.gtag = w.gtag || function gtag() { w.dataLayer.push(arguments); };
-    w.gtag("js", new Date());
-    w.gtag("config", pixelId);
-  }, [event?.google_pixel_id]);
+    w.fbq("init", pixelId);
+    w.fbq("track", "PageView");
+  }, [event?.facebook_pixel_id]);
 
   useEffect(() => {
     (async () => {
       let eventData: any = null;
       const { data, error } = await supabase.from("events")
-        .select("id,title,description,venue,city,starts_at,ends_at,status,gender,event_type,poster_url,group_link,registration_link,points_reward,program_id,created_at,is_pinned,allow_group_registration,is_recurring,recurring_days,recurring_start_time,recurring_end_time,recurring_until,registration_type,price,min_infaq,max_infaq,max_participants,speaker,payment_category_id,qris_method_id,is_online,youtube_url,episode_count,episode_youtube_urls,google_pixel_id, programs(category,name,code)")
+        .select("id,title,description,venue,city,starts_at,ends_at,status,gender,event_type,poster_url,group_link,registration_link,points_reward,program_id,created_at,is_pinned,allow_group_registration,is_recurring,recurring_days,recurring_start_time,recurring_end_time,recurring_until,registration_type,price,min_infaq,max_infaq,max_participants,speaker,payment_category_id,qris_method_id,is_online,youtube_url,episode_count,episode_youtube_urls,facebook_pixel_id, programs(category,name,code)")
         .eq("id", id)
         .maybeSingle();
 
@@ -319,6 +323,9 @@ export default function EventDetail() {
       }
       setRegistrationChoiceOpen(false);
 
+      if (typeof (window as any).fbq === "function") {
+        (window as any).fbq("track", "Lead", { event_id: event.id });
+      }
       toast.success(event.is_online ? "Pendaftaran berhasil! Akses video tersedia di halaman event." : "Pendaftaran offline berhasil!");
     } catch (error: any) {
       setSubmitting(false);

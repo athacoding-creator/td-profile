@@ -33,7 +33,7 @@ export function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | 
       ends_at: toLocalInput(ev.ends_at),
       group_link: ev.group_link ?? "",
       registration_link: ev.registration_link ?? "",
-      google_pixel_id: ev.google_pixel_id ?? "",
+      facebook_pixel_id: ev.facebook_pixel_id ?? "",
       points_reward: ev.points_reward ?? 10,
       program_id: ev.program_id ?? "",
       status: ev.status ?? "active",
@@ -94,7 +94,7 @@ export function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | 
       poster_url: form.poster_url, event_type: form.event_type, gender: form.gender,
       starts_at: localInputToISO(form.starts_at)!, ends_at: localInputToISO(form.ends_at), group_link: form.group_link,
       registration_link: form.registration_link || null,
-      google_pixel_id: form.google_pixel_id?.trim() || null,
+      facebook_pixel_id: form.facebook_pixel_id?.trim() || null,
       points_reward: Number(form.points_reward),
       max_participants: form.max_participants === "" ? null : Number(form.max_participants),
       program_id: form.program_id || null,
@@ -182,7 +182,7 @@ export function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | 
           <div className="space-y-1.5"><Label>Kota</Label><Input value={form.city ?? ""} onChange={(e) => setForm({ ...form, city: e.target.value })} /></div>
           <div className="space-y-1.5 md:col-span-2"><Label>Poster Event</Label><ImagePicker bucket="events" value={form.poster_url ?? ""} onChange={(url) => setForm({ ...form, poster_url: url })} /></div>
           <div className="space-y-1.5"><Label>Link Grup</Label><Input value={form.group_link ?? ""} onChange={(e) => setForm({ ...form, group_link: e.target.value })} /></div>
-          <div className="space-y-1.5"><Label>Google Pixel / Tag ID (opsional)</Label><Input placeholder="G-XXXXXXX atau AW-XXXXXXX" value={form.google_pixel_id ?? ""} onChange={(e) => setForm({ ...form, google_pixel_id: e.target.value })} /><p className="text-[11px] text-muted-foreground">Jika diisi, Google Tag (gtag.js) dipasang di halaman event ini.</p></div>
+          <div className="space-y-1.5"><Label>Facebook Pixel ID (opsional)</Label><Input inputMode="numeric" placeholder="Contoh: 123456789012345" value={form.facebook_pixel_id ?? ""} onChange={(e) => setForm({ ...form, facebook_pixel_id: e.target.value.replace(/[^0-9]/g, "") })} /><p className="text-[11px] text-muted-foreground">Jika diisi, Facebook Pixel dipasang di halaman event ini untuk pelacakan iklan dan konversi.</p></div>
           <div className="space-y-1.5"><Label>Mulai</Label><Input type="datetime-local" value={form.starts_at ?? ""} onChange={(e) => setForm({ ...form, starts_at: e.target.value })} /></div>
           <div className="space-y-1.5"><Label>Selesai</Label><Input type="datetime-local" value={form.ends_at ?? ""} onChange={(e) => setForm({ ...form, ends_at: e.target.value })} /></div>
           <div className="space-y-1.5">
