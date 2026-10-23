@@ -148,7 +148,7 @@ export type Database = {
           episode_youtube_urls: Json
           event_type: string | null
           gender: Database["public"]["Enums"]["event_gender"]
-          facebook_pixel_id: string | null
+          google_pixel_id: string | null
           group_link: string | null
           id: string
           is_online: boolean
@@ -190,7 +190,7 @@ export type Database = {
           episode_youtube_urls?: Json
           event_type?: string | null
           gender?: Database["public"]["Enums"]["event_gender"]
-          facebook_pixel_id?: string | null
+          google_pixel_id?: string | null
           group_link?: string | null
           id?: string
           is_online?: boolean
@@ -232,7 +232,7 @@ export type Database = {
           episode_youtube_urls?: Json
           event_type?: string | null
           gender?: Database["public"]["Enums"]["event_gender"]
-          facebook_pixel_id?: string | null
+          google_pixel_id?: string | null
           group_link?: string | null
           id?: string
           is_online?: boolean

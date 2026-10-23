@@ -77,7 +77,7 @@ export function CreateEvent({ programs, defaultPoints, onCreated }: { programs: 
       episode_youtube_urls: isEpisodeProgram ? buildEpisodeUrls(form.episode_youtube_urls ?? [], Number(form.episode_count)) : [],
       payment_category_id: form.payment_category_id || null,
       qris_method_id: form.qris_method_id || null,
-      facebook_pixel_id: form.facebook_pixel_id?.trim() || null,
+      google_pixel_id: form.google_pixel_id?.trim() || null,
     } as any).select("id").single();
 
 
@@ -118,7 +118,7 @@ export function CreateEvent({ programs, defaultPoints, onCreated }: { programs: 
         <div className="space-y-1.5 md:col-span-2"><Label className="text-xs sm:text-sm">Poster Event</Label><ImagePicker bucket="events" value={form.poster_url ?? ""} onChange={(url) => setForm({ ...form, poster_url: url })} /></div>
         <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Link Grup (WA/TG)</Label><Input value={form.group_link ?? ""} onChange={(e) => setForm({ ...form, group_link: e.target.value })} className="text-sm h-9 sm:h-10" /></div>
         <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Link Pendaftaran Khusus (opsional)</Label><Input placeholder="https://forms.gle/..." value={form.registration_link ?? ""} onChange={(e) => setForm({ ...form, registration_link: e.target.value })} className="text-sm h-9 sm:h-10" /><p className="text-[11px] text-muted-foreground">Jika diisi, tombol daftar akan membuka link ini (misal Google Form) menggantikan pendaftaran di web.</p></div>
-        <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Facebook Pixel ID (opsional)</Label><Input inputMode="numeric" placeholder="Contoh: 123456789012345" value={form.facebook_pixel_id ?? ""} onChange={(e) => setForm({ ...form, facebook_pixel_id: e.target.value.replace(/[^0-9]/g, "") })} className="text-sm h-9 sm:h-10" /><p className="text-[11px] text-muted-foreground">Jika diisi, Facebook Pixel dipasang di halaman event ini untuk pelacakan iklan dan konversi.</p></div>
+        <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Facebook Pixel ID (opsional)</Label><Input inputMode="numeric" placeholder="Contoh: 123456789012345" value={form.google_pixel_id ?? ""} onChange={(e) => setForm({ ...form, google_pixel_id: e.target.value.replace(/[^0-9]/g, "") })} className="text-sm h-9 sm:h-10" /><p className="text-[11px] text-muted-foreground">Jika diisi, Facebook Pixel dipasang di halaman event ini untuk pelacakan iklan dan konversi.</p></div>
         <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Mulai</Label><Input type="datetime-local" required value={form.starts_at ?? ""} onChange={(e) => setForm({ ...form, starts_at: e.target.value })} className="text-sm h-9 sm:h-10" /></div>
         <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Selesai</Label><Input type="datetime-local" value={form.ends_at ?? ""} onChange={(e) => setForm({ ...form, ends_at: e.target.value })} className="text-sm h-9 sm:h-10" /></div>
         <div className="space-y-1.5">
