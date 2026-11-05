@@ -291,14 +291,17 @@ export default function Payment() {
 
   // Check if event is expired to determine if it should be treated as online access
   const isExpired = event ? (
-    event.is_recurring 
+    event.is_recurring
       ? (event.recurring_until ? new Date(event.recurring_until + "T23:59:59").getTime() < Date.now() : false)
       : (new Date(event.ends_at || new Date(new Date(event.starts_at).getTime() + 6 * 3600 * 1000)).getTime() < Date.now())
   ) : false;
 
-  const isOnline = registration?.attendance_mode === "online" || (isExpired && !event?.is_online);
-  const isInfaq = event?.registration_type === "infaq" || isOnline;
-  const isPaid = event?.registration_type === "paid" && !isOnline;
+  // Event berbayar tetap wajib konfirmasi pembayaran walau tanggal event sudah lewat —
+  // jalur "infaq online" hanya untuk event infaq/gratis yang sudah lewat.
+  const isPaidType = event?.registration_type === "paid";
+  const isOnline = registration?.attendance_mode === "online" || (isExpired && !event?.is_online && !isPaidType);
+  const isInfaq = (event?.registration_type === "infaq" || isOnline) && !isPaidType;
+  const isPaid = isPaidType && !isOnline;
   const alreadyApproved = isPaid && registration?.payment_status === "approved";
 
   const handleInfaqSubmit = async () => {
