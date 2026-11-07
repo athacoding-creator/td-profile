@@ -1,4 +1,5 @@
 import { useT } from "@/i18n";
+import { isClassEvent } from "@/lib/eventTypes";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { MapPin, Search, X, AlertTriangle, SlidersHorizontal, Check } from "lucide-react";
@@ -59,9 +60,10 @@ type Ev = {
   recurring_until?: string | null;
   is_online?: boolean;
   program_id?: string | null;
+  event_type?: string | null;
 };
 
-export default function Events() {
+export default function Events({ classOnly = false }: { classOnly?: boolean }) {
   const { t } = useT();
   const { profile } = useAuth();
   const [events, setEvents] = useState<Ev[]>([]);
@@ -94,7 +96,7 @@ export default function Events() {
     setLoading(true);
     supabase
       .from("events")
-      .select("id,title,venue,poster_url,gender,starts_at,ends_at,status,is_pinned,is_recurring,recurring_days,recurring_start_time,recurring_end_time,recurring_until,is_online,program_id")
+      .select("id,title,venue,poster_url,gender,starts_at,ends_at,status,is_pinned,is_recurring,recurring_days,recurring_start_time,recurring_end_time,recurring_until,is_online,program_id,event_type")
       .in("status", ["active", "finished"])
       .order("is_pinned", { ascending: false })
       .order("starts_at", { ascending: false })
@@ -126,6 +128,7 @@ export default function Events() {
     const matchesDate =
       !filterDate || format(new Date(e.starts_at), "yyyy-MM-dd") === format(filterDate, "yyyy-MM-dd");
 
+    if (classOnly && !isClassEvent(e.event_type)) return false;
     return matchesSearch && matchesGender && matchesProgram && matchesDate;
   });
 
@@ -223,7 +226,7 @@ export default function Events() {
       )}
       
       <main className="container py-6">
-        <h1 className="font-display text-2xl font-bold text-foreground">{t("Event")}</h1>
+        <h1 className="font-display text-2xl font-bold text-foreground">{classOnly ? t("Kelas") : t("Event")}</h1>
         <p className="text-sm text-muted-foreground">{t("Semua event mendatang dan yang telah selesai.")}</p>
 
         {/* Search + satu tombol filter di ujung kanan (sheet terbuka dari bawah) */}
