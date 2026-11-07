@@ -1,10 +1,11 @@
-import { Home, Calendar, Ticket, User } from "lucide-react";
+import { Home, Calendar, GraduationCap, Ticket, User } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useT } from "@/i18n";
 
 const items = [
   { to: "/", icon: Home, label: "Beranda" },
   { to: "/event", icon: Calendar, label: "Event" },
+  { to: "/kelas", icon: GraduationCap, label: "Kelas" },
   { to: "/riwayat", icon: Ticket, label: "Riwayat" },
   { to: "/profil", icon: User, label: "Profil" },
 ];
@@ -13,7 +14,7 @@ export const BottomNav = () => {
   const { t } = useT();
   return (
   <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 z-40 w-full max-w-[480px] border-t border-border/60 bg-card/95 md:backdrop-blur-md">
-    <div className="grid grid-cols-4">
+    <div className="grid grid-cols-5">
       {items.map(({ to, icon: Icon, label }) => (
         <NavLink
           key={to}

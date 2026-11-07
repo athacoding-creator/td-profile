@@ -99,6 +99,7 @@ const App = () => (
                   <Route path="/poin" element={<RequireAuth><Poin /></RequireAuth>} />
                   <Route path="/riwayat" element={<RequireAuth><Riwayat /></RequireAuth>} />
                   <Route path="/event" element={<Events />} />
+                  <Route path="/kelas" element={<Events classOnly />} />
                   <Route path="/profil" element={<RequireAuth><Profil /></RequireAuth>} />
                   <Route path="/profil/qr" element={<RequireAuth><AttendanceQR /></RequireAuth>} />
                   <Route path="/profil/download" element={<DownloadApp />} />
