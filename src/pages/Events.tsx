@@ -1,9 +1,10 @@
 import { useT } from "@/i18n";
-import { isClassEvent } from "@/lib/eventTypes";
+import { getCurriculumProgramIds, isCurriculumEvent } from "@/lib/classListing";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { MapPin, Search, X, AlertTriangle, SlidersHorizontal, Check } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Header } from "@/components/Header";
@@ -68,12 +69,14 @@ export default function Events({ classOnly = false }: { classOnly?: boolean }) {
   const { profile } = useAuth();
   const [events, setEvents] = useState<Ev[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterGender] = useState<string>("ALL");
   const [filterProgram, setFilterProgram] = useState<string>("ALL");
   const [filterDate, setFilterDate] = useState<Date | undefined>(undefined);
   const [filterOpen, setFilterOpen] = useState(false);
-  const [programs, setPrograms] = useState<{ id: string; name: string }[]>([]);
+  const [programs, setPrograms] = useState<{ id: string; name: string; category: string | null }[]>([]);
   const [showIncompletePopup, setShowIncompletePopup] = useState(false);
 
   useEffect(() => {
@@ -93,29 +96,74 @@ export default function Events({ classOnly = false }: { classOnly?: boolean }) {
   };
 
   useEffect(() => {
+    let cancelled = false;
     setLoading(true);
-    supabase
-      .from("events")
-      .select("id,title,venue,poster_url,gender,starts_at,ends_at,status,is_pinned,is_recurring,recurring_days,recurring_start_time,recurring_end_time,recurring_until,is_online,program_id,event_type")
-      .in("status", ["active", "finished"])
-      .order("is_pinned", { ascending: false })
-      .order("starts_at", { ascending: false })
-      .limit(200)
-      .then(({ data, error }) => {
-        if (error) {
-          console.error("loadEvents error", error);
+    setLoadError(false);
+
+    const loadListing = async () => {
+      const { data: programRows, error: programError } = await supabase
+        .from("programs")
+        .select("id,name,category")
+        .order("name");
+
+      if (programError) {
+        console.error("loadPrograms error", programError);
+        if (!cancelled) {
+          setPrograms([]);
+          setEvents([]);
+          setLoadError(true);
+          setLoading(false);
         }
+        return;
+      }
+
+      const availablePrograms = (programRows ?? []) as { id: string; name: string; category: string | null }[];
+      if (!cancelled) setPrograms(availablePrograms);
+
+      const curriculumProgramIds = getCurriculumProgramIds(availablePrograms);
+      if (classOnly && curriculumProgramIds.length === 0) {
+        if (!cancelled) {
+          setEvents([]);
+          setLoading(false);
+        }
+        return;
+      }
+
+      let query = supabase
+        .from("events")
+        .select("id,title,venue,poster_url,gender,starts_at,ends_at,status,is_pinned,is_recurring,recurring_days,recurring_start_time,recurring_end_time,recurring_until,is_online,program_id,event_type")
+        .in("status", ["active", "finished"])
+        .order("is_pinned", { ascending: false })
+        .order("starts_at", { ascending: false });
+
+      if (classOnly) query = query.in("program_id", curriculumProgramIds);
+
+      const { data, error } = await query.limit(200);
+      if (error) {
+        console.error("loadEvents error", error);
+        if (!cancelled) {
+          setEvents([]);
+          setLoadError(true);
+          setLoading(false);
+        }
+        return;
+      }
+
+      if (!cancelled) {
         setEvents((data ?? []) as Ev[]);
         setLoading(false);
-      });
-    supabase
-      .from("programs")
-      .select("id,name")
-      .order("name")
-      .then(({ data }) => setPrograms((data ?? []) as { id: string; name: string }[]));
-  }, []);
+      }
+    };
+
+    void loadListing();
+    return () => {
+      cancelled = true;
+    };
+  }, [classOnly, reloadKey]);
 
   const activeFilters = (filterProgram !== "ALL" ? 1 : 0) + (filterDate ? 1 : 0);
+  const curriculumProgramIds = new Set(getCurriculumProgramIds(programs));
+  const visiblePrograms = classOnly ? programs.filter((program) => program.category === "episode") : programs;
 
   // Filter events based on search query and gender
   const filteredEvents = events.filter((e) => {
@@ -128,7 +176,7 @@ export default function Events({ classOnly = false }: { classOnly?: boolean }) {
     const matchesDate =
       !filterDate || format(new Date(e.starts_at), "yyyy-MM-dd") === format(filterDate, "yyyy-MM-dd");
 
-    if (classOnly && !isClassEvent(e.event_type)) return false;
+    if (classOnly && !isCurriculumEvent(e, curriculumProgramIds)) return false;
     return matchesSearch && matchesGender && matchesProgram && matchesDate;
   });
 
@@ -293,7 +341,7 @@ export default function Events({ classOnly = false }: { classOnly?: boolean }) {
                   active={filterProgram === "ALL"}
                   onClick={() => setFilterProgram("ALL")}
                 />
-                {programs.map((p) => (
+                {visiblePrograms.map((p) => (
                   <FilterOption
                     key={p.id}
                     label={p.name}
@@ -358,6 +406,15 @@ export default function Events({ classOnly = false }: { classOnly?: boolean }) {
           </DrawerContent>
         </Drawer>
 
+        {loadError ? (
+          <section className="mt-10 flex flex-col items-center gap-3 py-10 text-center">
+            <p className="text-sm text-muted-foreground">{t("Daftar kelas tidak dapat dimuat. Periksa koneksi lalu coba lagi.")}</p>
+            <Button type="button" variant="outline" onClick={() => setReloadKey((key) => key + 1)}>
+              {t("Coba Lagi")}
+            </Button>
+          </section>
+        ) : (
+        <>
         <section className="mt-6">
           <h2 className="font-display text-lg font-semibold text-foreground">{t("Event Mendatang")}</h2>
           <div className="mt-3 grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6">
@@ -405,6 +462,8 @@ export default function Events({ classOnly = false }: { classOnly?: boolean }) {
             )}
           </div>
         </section>
+        </>
+        )}
       </main>
       <BottomNav />
     </div>
