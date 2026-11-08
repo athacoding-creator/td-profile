@@ -275,7 +275,9 @@ export default function Events({ classOnly = false }: { classOnly?: boolean }) {
       
       <main className="container py-6">
         <h1 className="font-display text-2xl font-bold text-foreground">{classOnly ? t("Kelas") : t("Event")}</h1>
-        <p className="text-sm text-muted-foreground">{t("Semua event mendatang dan yang telah selesai.")}</p>
+        <p className="text-sm text-muted-foreground">
+          {t(classOnly ? "Semua kajian berkurikulum mendatang dan yang telah selesai." : "Semua event mendatang dan yang telah selesai.")}
+        </p>
 
         {/* Search + satu tombol filter di ujung kanan (sheet terbuka dari bawah) */}
         <section className="mt-6">
@@ -284,7 +286,7 @@ export default function Events({ classOnly = false }: { classOnly?: boolean }) {
             <Input
               type="text"
               inputMode="search"
-              placeholder={t("Cari event...")}
+              placeholder={t(classOnly ? "Cari kelas..." : "Cari event...")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="h-12 pl-10 pr-[5.5rem] text-base"
@@ -316,7 +318,7 @@ export default function Events({ classOnly = false }: { classOnly?: boolean }) {
 
           {(searchQuery || activeFilters > 0) && (
             <p className="mt-2 px-1 text-xs text-muted-foreground">
-              {t("Ditemukan")} {upcoming.length + finished.length} {t("event")}
+              {t("Ditemukan")} {upcoming.length + finished.length} {t(classOnly ? "kelas" : "event")}
               {filterProgram !== "ALL" && ` · ${programs.find((p) => p.id === filterProgram)?.name ?? ""}`}
               {filterDate && ` · ${format(filterDate, "d MMM yyyy")}`}
             </p>
@@ -327,7 +329,7 @@ export default function Events({ classOnly = false }: { classOnly?: boolean }) {
         <Drawer open={filterOpen} onOpenChange={setFilterOpen} shouldScaleBackground={false}>
           <DrawerContent className="mx-auto max-h-[85dvh] w-full max-w-md">
             <DrawerHeader className="text-center">
-              <DrawerTitle className="font-display text-lg">{t("Filter Event")}</DrawerTitle>
+              <DrawerTitle className="font-display text-lg">{t(classOnly ? "Filter Kelas" : "Filter Event")}</DrawerTitle>
               <DrawerDescription className="sr-only">{t("Pilih program atau bulan")}</DrawerDescription>
             </DrawerHeader>
 
@@ -408,7 +410,9 @@ export default function Events({ classOnly = false }: { classOnly?: boolean }) {
 
         {loadError ? (
           <section className="mt-10 flex flex-col items-center gap-3 py-10 text-center">
-            <p className="text-sm text-muted-foreground">{t("Daftar kelas tidak dapat dimuat. Periksa koneksi lalu coba lagi.")}</p>
+            <p className="text-sm text-muted-foreground">
+              {t(classOnly ? "Daftar kelas tidak dapat dimuat. Periksa koneksi lalu coba lagi." : "Daftar event tidak dapat dimuat. Periksa koneksi lalu coba lagi.")}
+            </p>
             <Button type="button" variant="outline" onClick={() => setReloadKey((key) => key + 1)}>
               {t("Coba Lagi")}
             </Button>
@@ -432,7 +436,9 @@ export default function Events({ classOnly = false }: { classOnly?: boolean }) {
               <>
                 {upcoming.map((e) => <Card key={e.id} e={e} isFinished={false} />)}
                 {!upcoming.length && (
-                  <p className="col-span-full py-8 text-center text-sm text-muted-foreground">{t("Belum ada event mendatang.")}</p>
+                <p className="col-span-full py-8 text-center text-sm text-muted-foreground">
+                  {t(classOnly ? "Belum ada kelas mendatang." : "Belum ada event mendatang.")}
+                </p>
                 )}
               </>
             )}
@@ -456,7 +462,9 @@ export default function Events({ classOnly = false }: { classOnly?: boolean }) {
               <>
                 {finished.map((e) => <Card key={e.id} e={e} isFinished={true} />)}
                 {!finished.length && (
-                  <p className="col-span-full py-8 text-center text-sm text-muted-foreground">{t("Belum ada event selesai.")}</p>
+                <p className="col-span-full py-8 text-center text-sm text-muted-foreground">
+                  {t(classOnly ? "Belum ada kelas selesai." : "Belum ada event selesai.")}
+                </p>
                 )}
               </>
             )}
