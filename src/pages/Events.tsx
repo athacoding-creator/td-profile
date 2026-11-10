@@ -311,7 +311,7 @@ export default function Events({ classOnly = false }: { classOnly?: boolean }) {
             <button
               type="button"
               onClick={() => setFilterOpen(true)}
-              aria-label={t("Filter event")}
+              aria-label={t(classOnly ? "Filter Kelas" : "Filter event")}
               className="absolute right-2 top-1/2 flex h-9 -translate-y-1/2 items-center gap-1.5 rounded-full bg-accent/10 px-3 text-accent transition-colors hover:bg-accent/20 active:bg-accent/25"
             >
               <SlidersHorizontal className="h-[18px] w-[18px]" />
@@ -337,7 +337,7 @@ export default function Events({ classOnly = false }: { classOnly?: boolean }) {
           <DrawerContent className="mx-auto max-h-[85dvh] w-full max-w-md">
             <DrawerHeader className="text-center">
               <DrawerTitle className="font-display text-lg">{t(classOnly ? "Filter Kelas" : "Filter Event")}</DrawerTitle>
-              <DrawerDescription className="sr-only">{t("Pilih program atau bulan")}</DrawerDescription>
+              <DrawerDescription className="sr-only">{t("Pilih program atau tanggal")}</DrawerDescription>
             </DrawerHeader>
 
             <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
@@ -409,7 +409,7 @@ export default function Events({ classOnly = false }: { classOnly?: boolean }) {
                 onClick={() => setFilterOpen(false)}
                 className="h-12 flex-1 rounded-xl bg-accent text-sm font-semibold text-accent-foreground transition-colors active:bg-accent/90"
               >
-                {t("Tampilkan")} {upcoming.length + finished.length} {t("event")}
+                {t("Tampilkan")} {upcoming.length + finished.length} {t(classOnly ? "kelas" : "event")}
               </button>
             </DrawerFooter>
           </DrawerContent>
