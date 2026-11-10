@@ -132,7 +132,7 @@ export default function Events({ classOnly = false }: { classOnly?: boolean }) {
       let query = supabase
         .from("events")
         .select("id,title,venue,poster_url,gender,starts_at,ends_at,status,is_pinned,is_recurring,recurring_days,recurring_start_time,recurring_end_time,recurring_until,is_online,program_id,event_type")
-        .in("status", ["active", "finished"])
+        .in("status", classOnly ? ["active", "finished", "archived"] : ["active", "finished"])
         .order("is_pinned", { ascending: false })
         .order("starts_at", { ascending: false });
 
@@ -161,6 +161,11 @@ export default function Events({ classOnly = false }: { classOnly?: boolean }) {
     };
   }, [classOnly, reloadKey]);
 
+  useEffect(() => {
+    setFilterProgram("ALL");
+    setFilterDate(undefined);
+  }, [classOnly]);
+
   const activeFilters = (filterProgram !== "ALL" ? 1 : 0) + (filterDate ? 1 : 0);
   const curriculumProgramIds = new Set(getCurriculumProgramIds(programs));
   const visiblePrograms = classOnly ? programs.filter((program) => program.category === "episode") : programs;
@@ -186,7 +191,9 @@ export default function Events({ classOnly = false }: { classOnly?: boolean }) {
       if (!!b.is_pinned !== !!a.is_pinned) return b.is_pinned ? 1 : -1;
       return new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime();
     });
-  const finished = filteredEvents.filter((e) => e.status === "finished" || isEventExpired(e));
+  const finished = filteredEvents.filter(
+    (e) => e.status === "finished" || e.status === "archived" || isEventExpired(e),
+  );
 
   const Card = ({ e, isFinished }: { e: Ev; isFinished: boolean }) => {
     const locked = profile?.gender && e.gender !== "ALL" && e.gender !== profile.gender;
@@ -325,7 +332,7 @@ export default function Events({ classOnly = false }: { classOnly?: boolean }) {
           )}
         </section>
 
-        {/* Sheet filter: program & bulan, mobile-first (tarik dari bawah) */}
+        {/* Panel filter program dan tanggal untuk daftar yang sedang dibuka. */}
         <Drawer open={filterOpen} onOpenChange={setFilterOpen} shouldScaleBackground={false}>
           <DrawerContent className="mx-auto max-h-[85dvh] w-full max-w-md">
             <DrawerHeader className="text-center">
@@ -420,7 +427,9 @@ export default function Events({ classOnly = false }: { classOnly?: boolean }) {
         ) : (
         <>
         <section className="mt-6">
-          <h2 className="font-display text-lg font-semibold text-foreground">{t("Event Mendatang")}</h2>
+          <h2 className="font-display text-lg font-semibold text-foreground">
+            {t(classOnly ? "Kelas Mendatang" : "Event Mendatang")}
+          </h2>
           <div className="mt-3 grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6">
             {loading ? (
               Array.from({ length: 4 }).map((_, i) => (
@@ -446,7 +455,9 @@ export default function Events({ classOnly = false }: { classOnly?: boolean }) {
         </section>
 
         <section className="mt-10">
-          <h2 className="font-display text-lg font-semibold text-foreground">{t("Event Selesai (Tonton Ulang)")}</h2>
+          <h2 className="font-display text-lg font-semibold text-foreground">
+            {t(classOnly ? "Kelas Selesai (Tonton Ulang)" : "Event Selesai (Tonton Ulang)")}
+          </h2>
           <div className="mt-3 grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6">
             {loading ? (
               Array.from({ length: 2 }).map((_, i) => (
