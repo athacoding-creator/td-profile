@@ -132,7 +132,7 @@ export default function Events({ classOnly = false }: { classOnly?: boolean }) {
       let query = supabase
         .from("events")
         .select("id,title,venue,poster_url,gender,starts_at,ends_at,status,is_pinned,is_recurring,recurring_days,recurring_start_time,recurring_end_time,recurring_until,is_online,program_id,event_type")
-        .in("status", classOnly ? ["active", "finished", "archived"] : ["active", "finished"])
+        .in("status", ["active", "finished"])
         .order("is_pinned", { ascending: false })
         .order("starts_at", { ascending: false });
 
