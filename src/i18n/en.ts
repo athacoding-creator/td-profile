@@ -34,6 +34,13 @@ export const EN: Record<string, string> = {
   "Profil Anda belum lengkap. Lengkapi data diri Anda sekarang untuk mendapatkan akses penuh.": "Your profile is incomplete. Complete it now to get full access.",
   "Profil Belum Lengkap": "Incomplete Profile",
   "Semua event mendatang dan yang telah selesai.": "All upcoming and finished events.",
+  "Semua kajian berkurikulum, termasuk kelas yang telah selesai.": "All curriculum-based studies, including finished classes.",
+  "Cari kelas...": "Search classes...", "kelas": "classes", "Filter Kelas": "Filter Classes",
+  "Kelas Mendatang": "Upcoming Classes", "Kelas Selesai (Tonton Ulang)": "Finished Classes (Rewatch)",
+  "Belum ada kelas mendatang.": "No upcoming classes yet.", "Belum ada kelas selesai.": "No finished classes yet.",
+  "Daftar kelas tidak dapat dimuat. Periksa koneksi lalu coba lagi.": "Classes could not be loaded. Check your connection and try again.",
+  "Daftar event tidak dapat dimuat. Periksa koneksi lalu coba lagi.": "Events could not be loaded. Check your connection and try again.",
+  "Coba Lagi": "Try Again",
   // Forgot
   "Lupa password": "Forgot password", "Nomor WhatsApp tidak valid": "Invalid WhatsApp number",
   "klik di sini": "click here", "Konfirmasi": "Confirm",
