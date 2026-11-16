@@ -120,8 +120,13 @@ export default function RegistrationsPage() {
         </Button>
       </div>
 
-      <Section title="Jamaah per Event">
+      <Section title="Pilih Event untuk Unduhan">
         <div className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            {eventFilter
+              ? `Event dipilih: ${events.find((event) => event.id === eventFilter)?.title ?? "Event terpilih"}`
+              : "Pilih satu event untuk mengunduh daftar kehadirannya saja."}
+          </p>
           {programs && programs.length > 0 && (
             <div className="space-y-2">
               <p className="text-xs font-medium text-muted-foreground">Program</p>
