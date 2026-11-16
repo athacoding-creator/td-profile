@@ -14,6 +14,8 @@ export function prepareAttendanceExport<T extends AttendanceEventRecord>(
   eventId: string,
   events: { id: string; title: string }[],
 ) {
+  if (!eventId) return [];
+
   const eventNames = new Map(events.map((event) => [event.id, event.title]));
 
   return filterAttendanceByEvent(attendance, eventId).map((record, index) => ({
