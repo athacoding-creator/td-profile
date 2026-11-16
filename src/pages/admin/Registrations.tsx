@@ -115,8 +115,8 @@ export default function RegistrationsPage() {
             Jamaah yang benar-benar hadir (sudah scan QR)
           </p>
         </div>
-        <Button onClick={exportXLSX} disabled={filtered.length === 0} className="w-full sm:w-auto">
-          <Download className="mr-2 h-4 w-4" /> Download Excel ({filtered.length})
+        <Button onClick={exportXLSX} disabled={!eventFilter || filtered.length === 0} className="w-full sm:w-auto">
+          <Download className="mr-2 h-4 w-4" /> Download Excel ({eventFilter ? filtered.length : "Pilih Event"})
         </Button>
       </div>
 
