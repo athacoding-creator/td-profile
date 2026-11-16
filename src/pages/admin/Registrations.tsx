@@ -6,7 +6,7 @@ import { Section } from "./components";
 import { MessageCircle, Download, ChevronDown } from "lucide-react";
 import * as XLSX from "xlsx";
 import { isEventExpired } from "@/lib/eventSchedule";
-import { filterAttendanceByEvent } from "@/lib/attendanceExport";
+import { filterAttendanceByEvent, prepareAttendanceExport } from "@/lib/attendanceExport";
 
 export default function RegistrationsPage() {
   const { events, attendance, registrations, programs } = useAdmin();
@@ -56,7 +56,8 @@ export default function RegistrationsPage() {
   );
 
   const exportXLSX = () => {
-    const rows = filtered.map((a, i) => {
+    const exportRows = prepareAttendanceExport(filtered, eventFilter, events);
+    const rows = exportRows.map(({ record: a, number, eventName }) => {
       const reg = getReg(a);
       const birthDate = a.profiles?.birth_date;
       let tglLahir = "-";
@@ -67,7 +68,7 @@ export default function RegistrationsPage() {
         }
       }
       return ({
-        No: i + 1,
+        No: number,
         "Waktu Hadir": new Date(a.scanned_at).toLocaleString("id-ID"),
         Nama: a.profiles?.full_name ?? "-",
         WhatsApp: a.profiles?.phone ?? "-",
@@ -81,7 +82,7 @@ export default function RegistrationsPage() {
             : (a.profiles?.gender ?? "-"),
         Kota: a.profiles?.city ?? "-",
         Email: a.profiles?.email ?? "-",
-        Event: events.find((event) => event.id === a.event_id)?.title ?? "-",
+        Event: eventName,
         "Poin Diperoleh": a.points_awarded ?? 0,
         Nominal: reg.amount_paid && reg.amount_paid > 0 ? Number(reg.amount_paid) : 0,
         "Pesan Doa": reg.donor_message ?? "",
