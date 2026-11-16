@@ -6,6 +6,7 @@ import { Section } from "./components";
 import { MessageCircle, Download, ChevronDown } from "lucide-react";
 import * as XLSX from "xlsx";
 import { isEventExpired } from "@/lib/eventSchedule";
+import { filterAttendanceByEvent, prepareAttendanceExport } from "@/lib/attendanceExport";
 
 export default function RegistrationsPage() {
   const { events, attendance, registrations, programs } = useAdmin();
@@ -37,11 +38,10 @@ export default function RegistrationsPage() {
   const eventIdsInProgram = useMemo(() => new Set(eventsInProgram.map((e) => e.id)), [eventsInProgram]);
 
   // Hanya tampilkan jamaah yang sudah scan QR (tercatat di attendance)
-  const filtered = attendance.filter((a) => {
-    if (eventFilter) return a.event_id === eventFilter;
-    if (programFilter) return eventIdsInProgram.has(a.event_id);
-    return true;
-  });
+  const filteredByProgram = programFilter
+    ? attendance.filter((a) => eventIdsInProgram.has(a.event_id))
+    : attendance;
+  const filtered = filterAttendanceByEvent(filteredByProgram, eventFilter);
 
   // Hitung jumlah hadir per event
   const counts: Record<string, number> = {};
@@ -56,8 +56,8 @@ export default function RegistrationsPage() {
   );
 
   const exportXLSX = () => {
-    const ev = eventFilter ? events.find((e) => e.id === eventFilter) : null;
-    const rows = filtered.map((a, i) => {
+    const exportRows = prepareAttendanceExport(filtered, eventFilter, events);
+    const rows = exportRows.map(({ record: a, number, eventName }) => {
       const reg = getReg(a);
       const birthDate = a.profiles?.birth_date;
       let tglLahir = "-";
@@ -68,7 +68,7 @@ export default function RegistrationsPage() {
         }
       }
       return ({
-        No: i + 1,
+        No: number,
         "Waktu Hadir": new Date(a.scanned_at).toLocaleString("id-ID"),
         Nama: a.profiles?.full_name ?? "-",
         WhatsApp: a.profiles?.phone ?? "-",
@@ -82,7 +82,7 @@ export default function RegistrationsPage() {
             : (a.profiles?.gender ?? "-"),
         Kota: a.profiles?.city ?? "-",
         Email: a.profiles?.email ?? "-",
-        Event: ev?.title ?? (eventFilter ? "-" : "Semua Event"),
+        Event: eventName,
         "Poin Diperoleh": a.points_awarded ?? 0,
         Nominal: reg.amount_paid && reg.amount_paid > 0 ? Number(reg.amount_paid) : 0,
         "Pesan Doa": reg.donor_message ?? "",
@@ -97,7 +97,8 @@ export default function RegistrationsPage() {
     ];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Kehadiran");
-    const slug = (ev?.title || "semua-event")
+    const selectedEvent = eventFilter ? events.find((event) => event.id === eventFilter) : null;
+    const slug = (selectedEvent?.title || "semua-event")
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "_")
       .replace(/^_|_$/g, "");
@@ -114,13 +115,18 @@ export default function RegistrationsPage() {
             Jamaah yang benar-benar hadir (sudah scan QR)
           </p>
         </div>
-        <Button onClick={exportXLSX} disabled={filtered.length === 0} className="w-full sm:w-auto">
-          <Download className="mr-2 h-4 w-4" /> Download Excel ({filtered.length})
+        <Button onClick={exportXLSX} disabled={!eventFilter || filtered.length === 0} className="w-full sm:w-auto">
+          <Download className="mr-2 h-4 w-4" /> Download Excel ({eventFilter ? filtered.length : "Pilih Event"})
         </Button>
       </div>
 
-      <Section title="Jamaah per Event">
+      <Section title="Pilih Event untuk Unduhan">
         <div className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            {eventFilter
+              ? `Event dipilih: ${events.find((event) => event.id === eventFilter)?.title ?? "Event terpilih"}`
+              : "Pilih satu event untuk mengunduh daftar kehadirannya saja."}
+          </p>
           {programs && programs.length > 0 && (
             <div className="space-y-2">
               <p className="text-xs font-medium text-muted-foreground">Program</p>
