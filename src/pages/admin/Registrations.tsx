@@ -6,6 +6,7 @@ import { Section } from "./components";
 import { MessageCircle, Download, ChevronDown } from "lucide-react";
 import * as XLSX from "xlsx";
 import { isEventExpired } from "@/lib/eventSchedule";
+import { filterAttendanceByEvent } from "@/lib/attendanceExport";
 
 export default function RegistrationsPage() {
   const { events, attendance, registrations, programs } = useAdmin();
@@ -37,11 +38,10 @@ export default function RegistrationsPage() {
   const eventIdsInProgram = useMemo(() => new Set(eventsInProgram.map((e) => e.id)), [eventsInProgram]);
 
   // Hanya tampilkan jamaah yang sudah scan QR (tercatat di attendance)
-  const filtered = attendance.filter((a) => {
-    if (eventFilter) return a.event_id === eventFilter;
-    if (programFilter) return eventIdsInProgram.has(a.event_id);
-    return true;
-  });
+  const filteredByProgram = programFilter
+    ? attendance.filter((a) => eventIdsInProgram.has(a.event_id))
+    : attendance;
+  const filtered = filterAttendanceByEvent(filteredByProgram, eventFilter);
 
   // Hitung jumlah hadir per event
   const counts: Record<string, number> = {};
@@ -56,7 +56,6 @@ export default function RegistrationsPage() {
   );
 
   const exportXLSX = () => {
-    const ev = eventFilter ? events.find((e) => e.id === eventFilter) : null;
     const rows = filtered.map((a, i) => {
       const reg = getReg(a);
       const birthDate = a.profiles?.birth_date;
@@ -82,7 +81,7 @@ export default function RegistrationsPage() {
             : (a.profiles?.gender ?? "-"),
         Kota: a.profiles?.city ?? "-",
         Email: a.profiles?.email ?? "-",
-        Event: ev?.title ?? (eventFilter ? "-" : "Semua Event"),
+        Event: events.find((event) => event.id === a.event_id)?.title ?? "-",
         "Poin Diperoleh": a.points_awarded ?? 0,
         Nominal: reg.amount_paid && reg.amount_paid > 0 ? Number(reg.amount_paid) : 0,
         "Pesan Doa": reg.donor_message ?? "",
@@ -97,7 +96,8 @@ export default function RegistrationsPage() {
     ];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Kehadiran");
-    const slug = (ev?.title || "semua-event")
+    const selectedEvent = eventFilter ? events.find((event) => event.id === eventFilter) : null;
+    const slug = (selectedEvent?.title || "semua-event")
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "_")
       .replace(/^_|_$/g, "");
