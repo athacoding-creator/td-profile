@@ -33,4 +33,9 @@ describe("attendance export event selection", () => {
       { record: { id: "a2", event_id: "event-2" }, number: 1, eventName: "Kajian B" },
     ]);
   });
+
+  it("does not prepare an all-events download without a selected event", () => {
+    const attendees = [{ id: "a1", event_id: "event-1" }];
+    expect(prepareAttendanceExport(attendees, "", [{ id: "event-1", title: "Kajian A" }])).toEqual([]);
+  });
 });
