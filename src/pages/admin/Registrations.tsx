@@ -6,7 +6,7 @@ import { Section } from "./components";
 import { MessageCircle, Download, ChevronDown } from "lucide-react";
 import * as XLSX from "xlsx";
 import { isEventExpired } from "@/lib/eventSchedule";
-import { filterAttendanceByEvent, prepareAttendanceExport } from "@/lib/attendanceExport";
+import { filterAttendanceByEvent, prepareAttendanceExport, prepareAttendanceExportByProgram } from "@/lib/attendanceExport";
 
 export default function RegistrationsPage() {
   const { events, attendance, registrations, programs } = useAdmin();
@@ -56,7 +56,9 @@ export default function RegistrationsPage() {
   );
 
   const exportXLSX = () => {
-    const exportRows = prepareAttendanceExport(filtered, eventFilter, events);
+    const exportRows = eventFilter
+      ? prepareAttendanceExport(attendance, eventFilter, events)
+      : prepareAttendanceExportByProgram(attendance, programFilter, events);
     const rows = exportRows.map(({ record: a, number, eventName }) => {
       const reg = getReg(a);
       const birthDate = a.profiles?.birth_date;
@@ -98,7 +100,8 @@ export default function RegistrationsPage() {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Kehadiran");
     const selectedEvent = eventFilter ? events.find((event) => event.id === eventFilter) : null;
-    const slug = (selectedEvent?.title || "semua-event")
+    const selectedProgram = programFilter ? programs.find((program) => program.id === programFilter) : null;
+    const slug = (selectedEvent?.title || selectedProgram?.name || "semua-event")
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "_")
       .replace(/^_|_$/g, "");
@@ -115,8 +118,8 @@ export default function RegistrationsPage() {
             Jamaah yang benar-benar hadir (sudah scan QR)
           </p>
         </div>
-        <Button onClick={exportXLSX} disabled={!eventFilter || filtered.length === 0} className="w-full sm:w-auto">
-          <Download className="mr-2 h-4 w-4" /> Download Excel ({eventFilter ? filtered.length : "Pilih Event"})
+        <Button onClick={exportXLSX} disabled={(!eventFilter && !programFilter) || filtered.length === 0} className="w-full sm:w-auto">
+          <Download className="mr-2 h-4 w-4" /> Download Excel ({eventFilter || programFilter ? filtered.length : "Pilih Event atau Program"})
         </Button>
       </div>
 
@@ -125,7 +128,7 @@ export default function RegistrationsPage() {
           <p className="text-xs text-muted-foreground">
             {eventFilter
               ? `Event dipilih: ${events.find((event) => event.id === eventFilter)?.title ?? "Event terpilih"}`
-              : "Pilih satu event untuk mengunduh daftar kehadirannya saja."}
+              : "Pilih satu event untuk mengunduh satu event, atau pilih program untuk mengunduh semua event di dalamnya."}
           </p>
           {programs && programs.length > 0 && (
             <div className="space-y-2">
