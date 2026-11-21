@@ -456,7 +456,7 @@ export default function Payment() {
             <div className="space-y-3">
               <Label className="text-sm font-semibold">Pilih Nominal (Rp)</Label>
               <div className="flex flex-col gap-2">
-                {[50000, 20000, 10000, 5000].map((amt) => (
+                {[100000, 50000, 20000, 10000, 5000].map((amt) => (
                   <Button
                     key={amt}
                     variant={paymentForm.amount === amt && infaqType === "money" ? "default" : "outline"}

@@ -58,7 +58,7 @@ export function EditEventDialog({ ev, programs, eventTypes, onClose, onSaved }: 
       registration_type: ev.registration_type ?? "free",
       price: ev.price ?? 0,
       min_infaq: ev.min_infaq ?? 0,
-      max_infaq: ev.max_infaq ?? 50000,
+      max_infaq: ev.max_infaq ?? 100000,
       payment_category_id: ev.payment_category_id ?? "",
       qris_method_id: ev.qris_method_id ?? "",
     });
@@ -211,7 +211,7 @@ export function EditEventDialog({ ev, programs, eventTypes, onClose, onSaved }: 
           <div className="space-y-1.5"><Label>Tipe Pendaftaran</Label><select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.registration_type ?? "free"} onChange={(e) => setForm({ ...form, registration_type: e.target.value })}>{REGISTRATION_TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></div>
           {form.registration_type === "paid" && !isSportEvent && <div className="space-y-1.5"><Label>Harga (Rp)</Label><Input type="number" value={form.price ?? 0} onChange={(e) => setForm({ ...form, price: e.target.value })} /></div>}
           <PaymentCategoryFields form={form} setForm={setForm} show={isSportEvent || form.registration_type === "paid"} />
-          {form.registration_type === "infaq" && <><div className="space-y-1.5"><Label>Min Infaq (Rp)</Label><Input type="number" value={form.min_infaq ?? 0} onChange={(e) => setForm({ ...form, min_infaq: e.target.value })} /></div><div className="space-y-1.5"><Label>Max Infaq (Rp)</Label><Input type="number" value={form.max_infaq ?? 50000} onChange={(e) => setForm({ ...form, max_infaq: e.target.value })} /></div></>}
+          {form.registration_type === "infaq" && <><div className="space-y-1.5"><Label>Min Infaq (Rp)</Label><Input type="number" value={form.min_infaq ?? 0} onChange={(e) => setForm({ ...form, min_infaq: e.target.value })} /></div><div className="space-y-1.5"><Label>Max Infaq (Rp)</Label><Input type="number" value={form.max_infaq ?? 100000} onChange={(e) => setForm({ ...form, max_infaq: e.target.value })} /></div></>}
           <div className="space-y-1.5 md:col-span-2">
             <Label>Pesan Sukses (ditampilkan setelah user scan QR)</Label>
             <Textarea rows={3} placeholder="Selamat, kamu telah berhasil mendaftar! Sampai jumpa di acara 🎉" value={form.success_message ?? ""} onChange={(e) => setForm({ ...form, success_message: e.target.value })} />

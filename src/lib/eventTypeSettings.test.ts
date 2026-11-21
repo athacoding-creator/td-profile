@@ -37,9 +37,9 @@ describe("event type payment defaults", () => {
 
   it.each([
     ["free", { registration_type: "free", price: 0, min_infaq: 0, max_infaq: 0 }],
-    ["infaq", { registration_type: "infaq", price: 0, min_infaq: 5000, max_infaq: 50000 }],
+    ["infaq", { registration_type: "infaq", price: 0, min_infaq: 5000, max_infaq: 100000 }],
     ["paid", { registration_type: "paid", price: 125000, min_infaq: 0, max_infaq: 0 }],
   ])("serializes the event-level %s override without changing the type default", (registrationType, expected) => {
-    expect(paymentFieldsForEvent({ registrationType, price: 125000, minInfaq: 5000, maxInfaq: 50000 })).toEqual(expected);
+    expect(paymentFieldsForEvent({ registrationType, price: 125000, minInfaq: 5000, maxInfaq: 100000 })).toEqual(expected);
   });
 });

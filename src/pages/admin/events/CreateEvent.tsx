@@ -16,7 +16,7 @@ import { EpisodeFields, OnlineFields, RecurringPinFields, PaymentCategoryFields 
 /** Form "Buat Event Baru". */
 export function CreateEvent({ programs, eventTypes, defaultPoints, onCreated }: { programs: any[]; eventTypes: EventTypeRecord[]; defaultPoints: number; onCreated: () => void }) {
   // fields kategori pembayaran (kelas, futsal, dll)
-  const [form, setForm] = useState<any>({ gender: "ALL", points_reward: defaultPoints, program_id: "", is_pinned: false, allow_group_registration: false, is_recurring: false, recurring_days: [], registration_type: "free", price: 0, min_infaq: 0, max_infaq: 50000, max_participants: "", is_online: false, youtube_url: "", episode_count: 0, episode_youtube_urls: [], event_type: "kajian" });
+  const [form, setForm] = useState<any>({ gender: "ALL", points_reward: defaultPoints, program_id: "", is_pinned: false, allow_group_registration: false, is_recurring: false, recurring_days: [], registration_type: "free", price: 0, min_infaq: 0, max_infaq: 100000, max_participants: "", is_online: false, youtube_url: "", episode_count: 0, episode_youtube_urls: [], event_type: "kajian" });
   useEffect(() => { setForm((f: any) => ({ ...f, points_reward: f.points_reward ?? defaultPoints })); }, [defaultPoints]);
   useEffect(() => {
     if (!eventTypes.length) return;
@@ -96,7 +96,7 @@ export function CreateEvent({ programs, eventTypes, defaultPoints, onCreated }: 
     }
     toast.success("Event dibuat");
     setForm({ gender: "ALL", points_reward: defaultPoints, program_id: "", is_pinned: false, allow_group_registration: false
-    , is_recurring: false, recurring_days: [], registration_type: "free", price: 0, min_infaq: 0, max_infaq: 50000, max_participants: "", is_online: false, youtube_url: "", episode_count: 0, episode_youtube_urls: [], event_type: "kajian" });
+    , is_recurring: false, recurring_days: [], registration_type: "free", price: 0, min_infaq: 0, max_infaq: 100000, max_participants: "", is_online: false, youtube_url: "", episode_count: 0, episode_youtube_urls: [], event_type: "kajian" });
     setPositions(defaultRowsFor("olahraga"));
     onCreated();
   };
@@ -166,7 +166,7 @@ export function CreateEvent({ programs, eventTypes, defaultPoints, onCreated }: 
         {form.registration_type === "infaq" && (
           <>
             <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Min Infaq (Rp)</Label><Input type="number" value={form.min_infaq ?? 0} onChange={(e) => setForm({ ...form, min_infaq: e.target.value })} className="text-sm h-9 sm:h-10" /></div>
-            <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Max Infaq (Rp)</Label><Input type="number" value={form.max_infaq ?? 50000} onChange={(e) => setForm({ ...form, max_infaq: e.target.value })} className="text-sm h-9 sm:h-10" /></div>
+            <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Max Infaq (Rp)</Label><Input type="number" value={form.max_infaq ?? 100000} onChange={(e) => setForm({ ...form, max_infaq: e.target.value })} className="text-sm h-9 sm:h-10" /></div>
           </>
         )}
         <div className="space-y-1.5 md:col-span-2">
