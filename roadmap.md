@@ -5,4 +5,4 @@
 - [x] Pasang kunci akun layanan Google (GOOGLE_SERVICE_ACCOUNT_JSON) — terpasang & teruji
 - [x] Filter event: satu tombol filter di ujung kanan kolom cari (sheet dari bawah), hapus dropdown program/bulan di bawah search — utamakan mobile
 - [x] Perbaiki daftar Kelas agar semua kajian berkurikulum dan filter programnya tampil benar.
-- [ ] CRUD tipe event di admin; metode pembayaran per tipe menjadi nilai awal dan admin dapat memilih gratis, infaq, atau wajib bayar pada tiap event.
+ - [x] CRUD tipe event di admin; metode pembayaran per tipe menjadi nilai awal dan admin dapat memilih gratis, infaq, atau wajib bayar pada tiap event.

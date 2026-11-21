@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useAdmin } from "./AdminLayout";
 import {
-  CalendarDays, Sparkles, Users, Gift, ShoppingBag, Settings as SettingsIcon, Hand, UserCircle, ClipboardCheck, CreditCard, Camera, QrCode, Lock, Image
+  CalendarDays, Sparkles, Users, Gift, ShoppingBag, Settings as SettingsIcon, Hand, UserCircle, ClipboardCheck, CreditCard, Camera, QrCode, Lock, Image, Tags
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import ActivityStatsCard from "./ActivityStatsCard";
@@ -14,6 +14,7 @@ const groups = [
       { to: "/admin/event", icon: CalendarDays, title: "Event", desc: "Buat & kelola event, export peserta, QR absensi", tag: "Real-time" },
       { to: "/admin/banner", icon: Image, title: "Banner Home", desc: "Foto banner & tombol CTA" },
       { to: "/admin/program", icon: Sparkles, title: "Program", desc: "Kategori payung event (Ngaji Asyik, AMIDA, dll)" },
+      { to: "/admin/tipe-event", icon: Tags, title: "Tipe Event", desc: "Nama tipe dan metode pendaftaran bawaan" },
     ],
   },
   {

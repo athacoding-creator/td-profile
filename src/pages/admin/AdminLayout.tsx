@@ -1,7 +1,7 @@
 import { useLocation, NavLink, Outlet, useOutletContext } from "react-router-dom";
 import { Header } from "@/components/Header";
 import {
-  LayoutDashboard, CalendarDays, Sparkles, Gift, Users, Settings as SettingsIcon, ShoppingBag, UserCircle, ClipboardCheck, CreditCard, Camera, QrCode, Menu, X, Lock, Image
+  LayoutDashboard, CalendarDays, Sparkles, Gift, Users, Settings as SettingsIcon, ShoppingBag, UserCircle, ClipboardCheck, CreditCard, Camera, QrCode, Menu, X, Lock, Image, Tags
 } from "lucide-react";
 import { useAdminData, AdminData } from "./useAdminData";
 import { useState, useEffect } from "react";
@@ -12,6 +12,7 @@ const navItems = [
   { to: "/admin/event", label: "Event", icon: CalendarDays },
   { to: "/admin/banner", label: "Banner Home", icon: Image },
   { to: "/admin/program", label: "Program", icon: Sparkles },
+  { to: "/admin/tipe-event", label: "Tipe Event", icon: Tags },
   { to: "/admin/pendaftar", label: "Pendaftar", icon: Users },
   { to: "/admin/kehadiran", label: "Kehadiran", icon: ClipboardCheck },
   { to: "/admin/scan", label: "Scan QR", icon: Camera },

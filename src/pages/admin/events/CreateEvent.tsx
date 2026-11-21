@@ -8,15 +8,20 @@ import { toast } from "sonner";
 import {Trash2, Plus} from "lucide-react";
 import { Section } from "../components";
 import { ImagePicker } from "@/components/admin/ImagePicker";
-import {EVENT_TYPE_OPTIONS, isClassEvent} from "@/lib/eventTypes";
+import {isClassEvent} from "@/lib/eventTypes";
+import { EventTypeRecord, getDefaultRegistrationType, paymentFieldsForEvent, REGISTRATION_TYPE_OPTIONS } from "@/lib/eventTypeSettings";
 import {localInputToISO, buildEpisodeUrls, SPORT_EVENT_TYPES, defaultRowsFor} from "./helpers";
 import { EpisodeFields, OnlineFields, RecurringPinFields, PaymentCategoryFields } from "./EventFormFields";
 
 /** Form "Buat Event Baru". */
-export function CreateEvent({ programs, defaultPoints, onCreated }: { programs: any[]; defaultPoints: number; onCreated: () => void }) {
+export function CreateEvent({ programs, eventTypes, defaultPoints, onCreated }: { programs: any[]; eventTypes: EventTypeRecord[]; defaultPoints: number; onCreated: () => void }) {
   // fields kategori pembayaran (kelas, futsal, dll)
   const [form, setForm] = useState<any>({ gender: "ALL", points_reward: defaultPoints, program_id: "", is_pinned: false, allow_group_registration: false, is_recurring: false, recurring_days: [], registration_type: "free", price: 0, min_infaq: 0, max_infaq: 50000, max_participants: "", is_online: false, youtube_url: "", episode_count: 0, episode_youtube_urls: [], event_type: "kajian" });
   useEffect(() => { setForm((f: any) => ({ ...f, points_reward: f.points_reward ?? defaultPoints })); }, [defaultPoints]);
+  useEffect(() => {
+    if (!eventTypes.length) return;
+    setForm((f: any) => ({ ...f, event_type: eventTypes.some((type) => type.value === f.event_type) ? f.event_type : eventTypes[0].value, registration_type: getDefaultRegistrationType(f.event_type, eventTypes) }));
+  }, [eventTypes]);
   const [positions, setPositions] = useState(() => defaultRowsFor("olahraga"));
   const isSportEvent = SPORT_EVENT_TYPES.includes(form.event_type);
   const isClass = isClassEvent(form.event_type);
@@ -66,10 +71,7 @@ export function CreateEvent({ programs, defaultPoints, onCreated }: { programs: 
       recurring_start_time: form.is_recurring ? form.recurring_start_time : null,
       recurring_end_time: form.is_recurring ? form.recurring_end_time : null,
       recurring_until: form.is_recurring ? (form.recurring_until || null) : null,
-      registration_type: isSportEvent ? "paid" : (form.registration_type || "free"),
-      price: isSportEvent ? 0 : (form.registration_type === "paid" ? Number(form.price ?? 0) : 0),
-      min_infaq: form.registration_type === "infaq" ? Number(form.min_infaq ?? 0) : 0,
-      max_infaq: form.registration_type === "infaq" ? Number(form.max_infaq ?? 50000) : 0,
+      ...paymentFieldsForEvent({ registrationType: form.registration_type, price: form.price, minInfaq: form.min_infaq, maxInfaq: form.max_infaq, usesPositionPricing: isSportEvent }),
       max_participants: form.max_participants === "" ? null : Number(form.max_participants),
       is_online: !!form.is_online,
       youtube_url: form.is_online ? (form.youtube_url || null) : null,
@@ -111,7 +113,7 @@ export function CreateEvent({ programs, defaultPoints, onCreated }: { programs: 
             {programs.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
         </div>
-        <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Tipe</Label><select value={form.event_type ?? "kajian"} onChange={(e) => setForm({ ...form, event_type: e.target.value })} className="h-9 sm:h-10 w-full rounded-md border border-input bg-background px-3 text-xs sm:text-sm">{EVENT_TYPE_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}</select></div>
+        <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Tipe</Label><select required value={form.event_type ?? ""} onChange={(e) => setForm({ ...form, event_type: e.target.value, registration_type: getDefaultRegistrationType(e.target.value, eventTypes) })} className="h-9 sm:h-10 w-full rounded-md border border-input bg-background px-3 text-xs sm:text-sm"><option value="" disabled>Pilih tipe event</option>{eventTypes.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}</select></div>
         <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Venue</Label><Input required value={form.venue ?? ""} onChange={(e) => setForm({ ...form, venue: e.target.value })} className="text-sm h-9 sm:h-10" /></div>
         <div className="space-y-1.5 md:col-span-2"><Label className="text-xs sm:text-sm">Deskripsi</Label><Textarea rows={3} value={form.description ?? ""} onChange={(e) => setForm({ ...form, description: e.target.value })} className="text-sm" /></div>
         <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Kota</Label><Input value={form.city ?? ""} onChange={(e) => setForm({ ...form, city: e.target.value })} className="text-sm h-9 sm:h-10" /></div>
@@ -133,10 +135,8 @@ export function CreateEvent({ programs, defaultPoints, onCreated }: { programs: 
         <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Max Peserta (opsional)</Label><Input type="number" min="1" value={form.max_participants} onChange={(e) => setForm({ ...form, max_participants: e.target.value })} placeholder="Tanpa batas" className="text-sm h-9 sm:h-10" /></div>
         <div className="space-y-1.5">
           <Label className="text-xs sm:text-sm">Tipe Pendaftaran</Label>
-          <select disabled={isSportEvent} className="h-9 sm:h-10 w-full rounded-md border border-input bg-background px-3 text-xs sm:text-sm disabled:opacity-70" value={isSportEvent ? "paid" : form.registration_type} onChange={(e) => setForm({ ...form, registration_type: e.target.value })}>
-            <option value="free">Gratis</option>
-            <option value="infaq">Berinfaq</option>
-            <option value="paid">Wajib Bayar</option>
+          <select className="h-9 sm:h-10 w-full rounded-md border border-input bg-background px-3 text-xs sm:text-sm" value={form.registration_type} onChange={(e) => setForm({ ...form, registration_type: e.target.value })}>
+            {REGISTRATION_TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
           </select>
         </div>
         {form.registration_type === "paid" && !isSportEvent && (
@@ -181,4 +181,3 @@ export function CreateEvent({ programs, defaultPoints, onCreated }: { programs: 
     </Section>
   );
 }
-

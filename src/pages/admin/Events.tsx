@@ -1,12 +1,22 @@
-import {useEffect} from "react";
+import {useEffect, useState} from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "./AdminLayout";
 import { isExpired } from "./events/helpers";
 import { CreateEvent } from "./events/CreateEvent";
 import { EventList } from "./events/EventList";
+import { EventTypeRecord } from "@/lib/eventTypeSettings";
 
 export default function EventsPage() {
   const { events, programs, settings, reloadEvents } = useAdmin();
+  const [eventTypes, setEventTypes] = useState<EventTypeRecord[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const { data, error } = await supabase.from("event_types").select("*").eq("is_active", true).order("sort_order").order("label");
+      if (error) console.error("Gagal memuat tipe event", error);
+      setEventTypes((data ?? []) as EventTypeRecord[]);
+    })();
+  }, []);
 
   // Auto-mark expired events as 'finished' so the lock is reflected globally
   useEffect(() => {
@@ -24,9 +34,8 @@ export default function EventsPage() {
         <h1 className="font-display text-3xl font-bold">Event</h1>
         <p className="text-sm text-muted-foreground">Buat & kelola event Teras Dakwah</p>
       </div>
-      <CreateEvent programs={programs} defaultPoints={settings.default_attendance_points} onCreated={reloadEvents} />
-      <EventList events={events} programs={programs} onChanged={reloadEvents} />
+      <CreateEvent programs={programs} eventTypes={eventTypes} defaultPoints={settings.default_attendance_points} onCreated={reloadEvents} />
+      <EventList events={events} programs={programs} eventTypes={eventTypes} onChanged={reloadEvents} />
     </>
   );
 }
-

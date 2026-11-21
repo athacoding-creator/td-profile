@@ -8,16 +8,20 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { toast } from "sonner";
 import {Trash2, Plus} from "lucide-react";
 import { ImagePicker } from "@/components/admin/ImagePicker";
-import {EVENT_TYPE_OPTIONS, isClassEvent} from "@/lib/eventTypes";
+import {isClassEvent} from "@/lib/eventTypes";
+import { EventTypeRecord, getDefaultRegistrationType, paymentFieldsForEvent, REGISTRATION_TYPE_OPTIONS } from "@/lib/eventTypeSettings";
 import {localInputToISO, buildEpisodeUrls, SPORT_EVENT_TYPES, defaultRowsFor, toLocalInput} from "./helpers";
 import { EpisodeFields, OnlineFields, RecurringPinFields, PaymentCategoryFields } from "./EventFormFields";
 
 /** Dialog edit event. */
-export function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | null; programs: any[]; onClose: () => void; onSaved: () => void }) {
+export function EditEventDialog({ ev, programs, eventTypes, onClose, onSaved }: { ev: any | null; programs: any[]; eventTypes: EventTypeRecord[]; onClose: () => void; onSaved: () => void }) {
   const [form, setForm] = useState<any>({});
   const [positions, setPositions] = useState<any[]>([]);
   const isSportEvent = SPORT_EVENT_TYPES.includes(form.event_type);
   const isClass = isClassEvent(form.event_type);
+  const availableEventTypes = ev && form.event_type && !eventTypes.some((type) => type.value === form.event_type)
+    ? [...eventTypes, { value: form.event_type, label: `${form.event_type} (nonaktif)`, default_registration_type: form.registration_type ?? "free", is_active: false, sort_order: 999 } as EventTypeRecord]
+    : eventTypes;
 
   useEffect(() => {
     if (!ev) return;
@@ -52,6 +56,9 @@ export function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | 
       episode_count: ev.episode_count ?? 0,
       episode_youtube_urls: ev.episode_youtube_urls ?? [],
       registration_type: ev.registration_type ?? "free",
+      price: ev.price ?? 0,
+      min_infaq: ev.min_infaq ?? 0,
+      max_infaq: ev.max_infaq ?? 50000,
       payment_category_id: ev.payment_category_id ?? "",
       qris_method_id: ev.qris_method_id ?? "",
     });
@@ -114,10 +121,8 @@ export function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | 
       episode_youtube_urls: isEpisodeProgram ? buildEpisodeUrls(form.episode_youtube_urls ?? [], Number(form.episode_count)) : [],
       payment_category_id: form.payment_category_id || null,
       qris_method_id: form.qris_method_id || null,
+      ...paymentFieldsForEvent({ registrationType: form.registration_type, price: form.price, minInfaq: form.min_infaq, maxInfaq: form.max_infaq, usesPositionPricing: isSportEvent }),
     } as any).eq("id", ev.id);
-    if (isSportEvent) {
-      await supabase.from("events").update({ registration_type: "paid", price: 0 } as any).eq("id", ev.id);
-    }
     if (error) return toast.error(error.message);
 
     if (isSportEvent) {
@@ -156,7 +161,7 @@ export function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | 
               {programs.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           </div>
-          <div className="space-y-1.5"><Label>Tipe</Label><select value={form.event_type ?? "kajian"} onChange={(e) => setForm({ ...form, event_type: e.target.value })} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">{EVENT_TYPE_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}</select></div>
+          <div className="space-y-1.5"><Label>Tipe</Label><select value={form.event_type ?? ""} onChange={(e) => setForm({ ...form, event_type: e.target.value, registration_type: getDefaultRegistrationType(e.target.value, eventTypes) })} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">{availableEventTypes.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}</select></div>
           <div className="space-y-1.5"><Label>Venue</Label><Input value={form.venue ?? ""} onChange={(e) => setForm({ ...form, venue: e.target.value })} /></div>
           {isSportEvent && (
             <div className="md:col-span-2 space-y-3 rounded-xl border border-primary/20 bg-primary/5 p-3">
@@ -203,7 +208,10 @@ export function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | 
               <option value="archived">archived</option>
             </select>
           </div>
+          <div className="space-y-1.5"><Label>Tipe Pendaftaran</Label><select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.registration_type ?? "free"} onChange={(e) => setForm({ ...form, registration_type: e.target.value })}>{REGISTRATION_TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></div>
+          {form.registration_type === "paid" && !isSportEvent && <div className="space-y-1.5"><Label>Harga (Rp)</Label><Input type="number" value={form.price ?? 0} onChange={(e) => setForm({ ...form, price: e.target.value })} /></div>}
           <PaymentCategoryFields form={form} setForm={setForm} show={isSportEvent || form.registration_type === "paid"} />
+          {form.registration_type === "infaq" && <><div className="space-y-1.5"><Label>Min Infaq (Rp)</Label><Input type="number" value={form.min_infaq ?? 0} onChange={(e) => setForm({ ...form, min_infaq: e.target.value })} /></div><div className="space-y-1.5"><Label>Max Infaq (Rp)</Label><Input type="number" value={form.max_infaq ?? 50000} onChange={(e) => setForm({ ...form, max_infaq: e.target.value })} /></div></>}
           <div className="space-y-1.5 md:col-span-2">
             <Label>Pesan Sukses (ditampilkan setelah user scan QR)</Label>
             <Textarea rows={3} placeholder="Selamat, kamu telah berhasil mendaftar! Sampai jumpa di acara 🎉" value={form.success_message ?? ""} onChange={(e) => setForm({ ...form, success_message: e.target.value })} />
@@ -220,4 +228,3 @@ export function EditEventDialog({ ev, programs, onClose, onSaved }: { ev: any | 
     </Dialog>
   );
 }
-

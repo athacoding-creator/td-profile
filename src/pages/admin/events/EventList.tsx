@@ -11,9 +11,10 @@ import {describeRecurring} from "@/lib/eventSchedule";
 import { buildEventQrUrl, buildProgramQrUrl } from "@/lib/qrUrl";
 import {isExpired} from "./helpers";
 import { EditEventDialog } from "./EditEventDialog";
+import { EventTypeRecord } from "@/lib/eventTypeSettings";
 
 /** Daftar event + QR, edit, hapus. */
-export function EventList({ events, programs, onChanged }: { events: any[]; programs: any[]; onChanged: () => void }) {
+export function EventList({ events, programs, eventTypes, onChanged }: { events: any[]; programs: any[]; eventTypes: EventTypeRecord[]; onChanged: () => void }) {
   const [qr, setQr] = useState<{ id: string; eventUrl: string; programUrl?: string; programName?: string } | null>(null);
   const [editing, setEditing] = useState<any | null>(null);
 
@@ -130,8 +131,7 @@ export function EventList({ events, programs, onChanged }: { events: any[]; prog
           );
         })}
       </div>
-      <EditEventDialog ev={editing} programs={programs} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); onChanged(); }} />
+      <EditEventDialog ev={editing} programs={programs} eventTypes={eventTypes} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); onChanged(); }} />
     </Section>
   );
 }
-
