@@ -36,6 +36,7 @@ const AdminPendaftar = lazy(() => import("./pages/admin/Pendaftar"));
 const AdminKehadiran = lazy(() => import("./pages/admin/Registrations"));
 const AdminUsers = lazy(() => import("./pages/admin/Users"));
 const AdminRedemptions = lazy(() => import("./pages/admin/Redemptions"));
+const AdminPoin = lazy(() => import("./pages/admin/Poin"));
 const AdminMerchandise = lazy(() => import("./pages/admin/Merchandise"));
 
 const AdminSettings = lazy(() => import("./pages/admin/Settings"));
@@ -113,6 +114,7 @@ const App = () => (
                     <Route path="tipe-event" element={<AdminEventTypes />} />
                     <Route path="pendaftar" element={<AdminPendaftar />} />
                     <Route path="kehadiran" element={<AdminKehadiran />} />
+                    <Route path="poin" element={<AdminPoin />} />
                     <Route path="penukaran" element={<AdminRedemptions />} />
                     <Route path="akun" element={<AdminUsers />} />
                     <Route path="pembayaran" element={<AdminDonations />} />

@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useAdmin } from "./AdminLayout";
 import {
-  CalendarDays, Sparkles, Users, Gift, ShoppingBag, Settings as SettingsIcon, Hand, UserCircle, ClipboardCheck, CreditCard, Camera, QrCode, Lock, Image, Tags
+  CalendarDays, Sparkles, Users, Gift, ShoppingBag, Settings as SettingsIcon, Hand, UserCircle, ClipboardCheck, CreditCard, Camera, QrCode, Lock, Image, Tags, Award
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import ActivityStatsCard from "./ActivityStatsCard";
@@ -30,6 +30,7 @@ const groups = [
   {
     title: "Reward & Pengaturan",
     items: [
+      { to: "/admin/poin", icon: Award, title: "Poin User", desc: "Lihat rekap poin berdasarkan program/event" },
       { to: "/admin/merchandise", icon: ShoppingBag, title: "Merchandise", desc: "Kelola katalog reward & stok" },
       { to: "/admin/penukaran", icon: Gift, title: "Penukaran", desc: "Verifikasi & approve penukaran poin" },
       { to: "/admin/pembayaran", icon: CreditCard, title: "Pembayaran", desc: "Kelola data pembayaran" },
