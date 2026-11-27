@@ -911,6 +911,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_adjust_points: {
+        Args: { _amount: number; _reason?: string; _user_id: string }
+        Returns: number
+      }
       admin_get_event_qr: { Args: { _id: string }; Returns: string }
       admin_get_program_qr: { Args: { _id: string }; Returns: string }
       archive_old_events: { Args: never; Returns: undefined }

@@ -16,6 +16,7 @@ export type AdminData = {
   reloadEvents: () => Promise<void>;
   reloadPrograms: () => Promise<void>;
   reloadRegistrations: () => Promise<void>;
+  reloadProfiles: () => Promise<void>;
 };
 
 export function useAdminData(): AdminData {
@@ -206,5 +207,5 @@ export function useAdminData(): AdminData {
     };
   }, []);
 
-  return { events, programs, settings, setSettings, redemptions, registrations, attendance, profiles, onlineCount, reloadEvents: loadEvents, reloadPrograms: loadPrograms, reloadRegistrations: loadRegistrations };
+  return { events, programs, settings, setSettings, redemptions, registrations, attendance, profiles, onlineCount, reloadEvents: loadEvents, reloadPrograms: loadPrograms, reloadRegistrations: loadRegistrations, reloadProfiles: loadProfiles };
 }

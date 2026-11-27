@@ -1,6 +1,7 @@
 const reasonLabels: Record<string, string> = {
   profile_complete_bonus: "Melengkapi Profil",
   attendance: "Kehadiran",
+  admin_adjustment: "Penyesuaian Admin",
 };
 
 export function getReasonLabel(reason: string): string {
