@@ -13,8 +13,8 @@ export default function Poin() {
   );
   const selectedProgram = data.programs.find((program) => program.id === selectedProgramId);
   const rows = useMemo(
-    () => buildAttendancePointSummary(data.attendance, eventProgramById, selectedProgramId),
-    [data.attendance, eventProgramById, selectedProgramId],
+    () => buildAttendancePointSummary(data.attendance, eventProgramById, selectedProgramId, data.profiles),
+    [data.attendance, data.profiles, eventProgramById, selectedProgramId],
   );
   const selectedPoints = rows.reduce((sum, row) => sum + row.programPoints, 0);
 

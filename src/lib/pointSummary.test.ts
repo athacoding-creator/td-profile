@@ -58,4 +58,20 @@ describe("attendance point summary", () => {
 
     expect(rows.map((row) => [row.username, row.totalPoints])).toEqual([["Ahmad", 30], ["Siti", 15]]);
   });
+
+  it("uses profile balance as total and includes profile-only users", () => {
+    const rows = buildAttendancePointSummary(
+      [
+        { user_id: "ahmad", event_id: "ngaji-1", points_awarded: 10, profiles: { full_name: "Ahmad" } },
+      ],
+      new Map([["ngaji-1", "ngaji"]]),
+      "",
+      [
+        { id: "ahmad", full_name: "Ahmad", points: 60 },
+        { id: "siti", full_name: "Siti", points: 50 },
+      ],
+    );
+
+    expect(rows.map((row) => [row.username, row.totalPoints])).toEqual([["Ahmad", 60], ["Siti", 50]]);
+  });
 });

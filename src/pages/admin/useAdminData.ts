@@ -11,6 +11,7 @@ export type AdminData = {
   redemptions: any[];
   registrations: any[];
   attendance: any[];
+  profiles: any[];
   onlineCount: number;
   reloadEvents: () => Promise<void>;
   reloadPrograms: () => Promise<void>;
@@ -24,6 +25,7 @@ export function useAdminData(): AdminData {
   const [redemptions, setRedemptions] = useState<any[]>([]);
   const [registrations, setRegistrations] = useState<any[]>([]);
   const [attendance, setAttendance] = useState<any[]>([]);
+  const [profiles, setProfiles] = useState<any[]>([]);
   const [onlineCount, setOnlineCount] = useState(0);
 
   const loadEvents = async () => {
@@ -159,8 +161,17 @@ export function useAdminData(): AdminData {
     setAttendance(allData);
   };
 
+  const loadProfiles = async () => {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, full_name, points")
+      .order("full_name");
+    if (error) console.error("loadProfiles error:", error);
+    setProfiles(data ?? []);
+  };
+
   const reloadAll = async () => {
-    await Promise.all([loadEvents(), loadPrograms(), loadSettings(), loadRedemptions(), loadRegistrations(), loadAttendance()]);
+    await Promise.all([loadEvents(), loadPrograms(), loadSettings(), loadRedemptions(), loadRegistrations(), loadAttendance(), loadProfiles()]);
   };
 
   useEffect(() => {
@@ -173,6 +184,7 @@ export function useAdminData(): AdminData {
       .on("postgres_changes", { event: "*", schema: "public", table: "redemptions" }, loadRedemptions)
       .on("postgres_changes", { event: "*", schema: "public", table: "registrations" }, loadRegistrations)
       .on("postgres_changes", { event: "*", schema: "public", table: "attendance" }, loadAttendance)
+      .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, loadProfiles)
       .subscribe((status) => {
         if (status === "SUBSCRIBED") reloadAll();
       });
@@ -194,5 +206,5 @@ export function useAdminData(): AdminData {
     };
   }, []);
 
-  return { events, programs, settings, setSettings, redemptions, registrations, attendance, onlineCount, reloadEvents: loadEvents, reloadPrograms: loadPrograms, reloadRegistrations: loadRegistrations };
+  return { events, programs, settings, setSettings, redemptions, registrations, attendance, profiles, onlineCount, reloadEvents: loadEvents, reloadPrograms: loadPrograms, reloadRegistrations: loadRegistrations };
 }
