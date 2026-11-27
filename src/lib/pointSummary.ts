@@ -19,8 +19,6 @@ export function buildAttendancePointSummary(
   eventProgramById: ReadonlyMap<string, string | null | undefined>,
   selectedProgramId: string,
 ): AttendancePointSummary[] {
-  if (!selectedProgramId) return [];
-
   const summaries = new Map<string, AttendancePointSummary>();
 
   for (const record of records) {
@@ -35,7 +33,7 @@ export function buildAttendancePointSummary(
       totalAttendance: 0,
     };
     const points = Number(record.points_awarded ?? 0);
-    const isSelectedProgram = eventProgramById.get(record.event_id) === selectedProgramId;
+    const isSelectedProgram = Boolean(selectedProgramId) && eventProgramById.get(record.event_id) === selectedProgramId;
 
     existing.totalPoints += points;
     existing.totalAttendance += 1;
@@ -47,9 +45,9 @@ export function buildAttendancePointSummary(
   }
 
   return [...summaries.values()]
-    .filter((summary) => summary.programAttendance > 0)
+    .filter((summary) => selectedProgramId ? summary.programAttendance > 0 : summary.totalAttendance > 0)
     .sort((a, b) =>
-      b.programPoints - a.programPoints ||
+      (selectedProgramId ? b.programPoints - a.programPoints : b.totalPoints - a.totalPoints) ||
       b.totalPoints - a.totalPoints ||
       a.username.localeCompare(b.username, "id"),
     );

@@ -41,4 +41,21 @@ describe("attendance point summary", () => {
 
     expect(rows.map((row) => row.username)).toEqual(["Andi", "Budi"]);
   });
+
+  it("returns every user's total points when no program is selected", () => {
+    const rows = buildAttendancePointSummary(
+      [
+        { user_id: "ahmad", event_id: "ngaji-1", points_awarded: 10, profiles: { full_name: "Ahmad" } },
+        { user_id: "ahmad", event_id: "amida-1", points_awarded: 20, profiles: { full_name: "Ahmad" } },
+        { user_id: "siti", event_id: "amida-1", points_awarded: 15, profiles: { full_name: "Siti" } },
+      ],
+      new Map([
+        ["ngaji-1", "ngaji"],
+        ["amida-1", "amida"],
+      ]),
+      "",
+    );
+
+    expect(rows.map((row) => [row.username, row.totalPoints])).toEqual([["Ahmad", 30], ["Siti", 15]]);
+  });
 });
