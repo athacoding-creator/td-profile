@@ -10,6 +10,7 @@ import SEO from "@/components/SEO";
 import { generateOrganizationSchema, generateWebsiteSchema } from "@/utils/structuredData";
 import { Skeleton } from "@/components/ui/skeleton";
 import HomeBanners from "@/components/HomeBanners";
+import { sortHomeEvents } from "@/lib/homeEvents";
 
 
 export default function Index() {
@@ -19,21 +20,47 @@ export default function Index() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setLoading(true);
-    supabase
-      .from("events")
-      .select("id,title,venue,poster_url,gender,starts_at,ends_at,status,is_pinned")
-      .in("status", ["active", "finished"])
-      .order("is_pinned", { ascending: false })
-      .order("starts_at", { ascending: false })
-      .limit(6)
-      .then(({ data, error }) => {
-        if (error) {
-          console.error("loadIndexEvents error", error);
-        }
-        setEvents(data ?? []);
+    let cancelled = false;
+
+    const loadIndexEvents = async () => {
+      setLoading(true);
+      const now = new Date();
+      const select = "id,title,venue,poster_url,gender,starts_at,ends_at,status";
+
+      const [upcomingResult, pastResult] = await Promise.all([
+        supabase
+          .from("events")
+          .select(select)
+          .in("status", ["active", "finished"])
+          .gte("starts_at", now.toISOString())
+          .order("starts_at", { ascending: true })
+          .limit(6),
+        supabase
+          .from("events")
+          .select(select)
+          .in("status", ["active", "finished"])
+          .lt("starts_at", now.toISOString())
+          .order("starts_at", { ascending: false })
+          .limit(6),
+      ]);
+
+      if (upcomingResult.error) console.error("loadIndexEvents upcoming error", upcomingResult.error);
+      if (pastResult.error) console.error("loadIndexEvents past error", pastResult.error);
+
+      if (!cancelled) {
+        const orderedEvents = sortHomeEvents(
+          [...(upcomingResult.data ?? []), ...(pastResult.data ?? [])],
+          now,
+        );
+        setEvents(orderedEvents.slice(0, 6));
         setLoading(false);
-      });
+      }
+    };
+
+    void loadIndexEvents();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Combine organization and website schema
